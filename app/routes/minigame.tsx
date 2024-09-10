@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useDebounce from '~/utils/hooks/useDebounce';
-
+import * as Papa from 'papaparse';
 interface Card {
   value: number;
   suit: string;
@@ -38,8 +38,6 @@ const CardGame = () => {
   const [deck, setDeck] = useState(shuffleDeck(createDeck())); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
-  const [team1Input, setTeam1Input] = useState('');
-  const [team2Input, setTeam2Input] = useState('');
   const [currentPlayer1, setCurrentPlayer1] = useState('');
   const [currentPlayer2, setCurrentPlayer2] = useState('');
   const [player1Cards, setPlayer1Cards] = useState<Card[]>([]);
@@ -50,27 +48,44 @@ const CardGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
-  const debouncedTeam1Input = useDebounce<string>(team1Input, 300);
-  const debouncedTeam2Input = useDebounce<string>(team2Input, 300);
+  const inputRef = useRef<HTMLInputElement>(null);
+
 
   const startGame = () => {
-    const newTeam1 = debouncedTeam1Input
-      .split(',')
-      .map((name) => name.trim())
-      .filter((name) => name !== '');
-    const newTeam2 = debouncedTeam2Input
-      .split(',')
-      .map((name) => name.trim())
-      .filter((name) => name !== '');
+  
 
-    if (newTeam1.length === 0 || newTeam2.length === 0) {
+    if (team1.length === 0 || team2.length === 0) {
       alert('Both teams must have at least one player.');
       return;
     }
 
     setGameStarted(true);
     // Start the first round
-    nextRound(newTeam1, newTeam2);
+    nextRound(team1, team2);
+  };
+
+  const triggerLoadTeamMember = () => {
+    inputRef.current?.click();
+  };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      Papa.parse(files[0], {
+        complete: function (results) {
+          const team1Temp: string[] = [];
+          const team2Temp: string[] = [];
+          results.data.slice(1).forEach((item) => {
+            if (Array.isArray(item)) {
+              team1Temp.push(item[0]);
+              team2Temp.push(item[1]);
+            }
+          });
+
+          setTeam1(team1Temp);
+          setTeam2(team2Temp);
+        }
+      });
+    }
   };
 
   // Function to select the next players for each team
@@ -90,6 +105,7 @@ const CardGame = () => {
       setPlayer1Sum(0);
       setPlayer2Sum(0);
       setWinner('');
+      setDeck(shuffleDeck(createDeck()))
     },
     []
   );
@@ -114,6 +130,9 @@ const CardGame = () => {
     if (num === 13) {
       return 'king';
     }
+    if (num === 0) {
+      return 'joker';
+    }
     return num.toString();
   };
 
@@ -124,6 +143,9 @@ const CardGame = () => {
       '♠': 'spades',
       '♣': 'clubs'
     };
+    if (mapNumToCardValues(value) === 'joker') {
+      return '/images/red_joker.png'
+    }
     return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`; // Image file path
   };
   // Function to calculate the sum of the drawn cards' values
@@ -171,10 +193,10 @@ const CardGame = () => {
       const clonedTeam2 = [...team2];
       if (p1Sum > p2Sum) {
         setWinner(`${currentPlayer1} from Team 1 Wins!`);
-        clonedTeam2.shift()
+        clonedTeam2.shift();
       } else if (p2Sum > p1Sum) {
         setWinner(`${currentPlayer2} from Team 2 Wins!`);
-        clonedTeam1.shift()
+        clonedTeam1.shift();
       } else {
         // Tie-breaker logic using suits
         const p1HighestSuit = getHighestSuit(p1Cards);
@@ -182,10 +204,10 @@ const CardGame = () => {
 
         if (suitRank[p1HighestSuit] > suitRank[p2HighestSuit]) {
           setWinner(`${currentPlayer1} from Team 1 Wins by Suit!`);
-          clonedTeam2.shift()
+          clonedTeam2.shift();
         } else {
           setWinner(`${currentPlayer2} from Team 2 Wins by Suit!`);
-          clonedTeam1.shift()
+          clonedTeam1.shift();
         }
       }
 
@@ -201,8 +223,8 @@ const CardGame = () => {
 
       {!gameStarted && !gameOver && (
         <div>
-          <h2>Enter Team Members (comma separated)</h2>
-          <div>
+          {/* <h2>Load the team member</h2> */}
+          {/* <div>
             <label htmlFor="team1Input">Team 1: </label>
             <input
               type="text"
@@ -223,7 +245,26 @@ const CardGame = () => {
               style={{ margin: '10px 0' }}
               id="team2Input"
             />
-          </div>
+          </div> */}
+
+          <input
+            hidden
+            type="file"
+            name="memberListcsv"
+            id="memberListcsv"
+            ref={inputRef}
+            onChange={handleFileChange}
+          />
+          {team1.length === 0 && team2.length === 0 && (
+            <div>
+              <button
+                onClick={triggerLoadTeamMember}
+                style={{ padding: '10px 20px', marginTop: '10px' }}
+              >
+                Load the team members
+              </button>
+            </div>
+          )}
           <button
             onClick={startGame}
             style={{ padding: '10px 20px', marginTop: '10px' }}
@@ -254,14 +295,19 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player1Cards.map((card, index) => (
+                {player1Cards.length > 0 ? player1Cards.map((card, index) => (
                   <img
                     key={index}
                     src={getCardImage(card.value, card.suit)}
                     alt={`${card.value}${card.suit}`}
                     style={{ width: '100px', marginRight: '10px' }}
                   />
-                ))}
+                )) : [{value: 0, suit: ''}, {value: 0, suit: ''}, {value: 0, suit: ''}].map((card, index)=> (<img
+                  key={index}
+                  src={getCardImage(card.value, card.suit)}
+                  alt={`${card.value}${card.suit}`}
+                  style={{ width: '100px', marginRight: '10px' }}
+                />))}
               </div>
               <p>Sum: {player1Sum}</p>
             </div>
@@ -282,14 +328,19 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player2Cards.map((card, index) => (
+                {player2Cards.length > 0 ? player2Cards.map((card, index) => (
                   <img
                     key={index}
                     src={getCardImage(card.value, card.suit)}
                     alt={`${card.value}${card.suit}`}
                     style={{ width: '100px', marginRight: '10px' }}
                   />
-                ))}
+                )) : [{value: 0, suit: ''}, {value: 0, suit: ''}, {value: 0, suit: ''}].map((card, index)=> (<img
+                  key={index}
+                  src={getCardImage(card.value, card.suit)}
+                  alt={`${card.value}${card.suit}`}
+                  style={{ width: '100px', marginRight: '10px' }}
+                />))}
               </div>
               <p>Sum: {player2Sum}</p>
             </div>
