@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import useDebounce from '~/utils/hooks/useDebounce';
 import * as Papa from 'papaparse';
+import { useCallback, useRef, useState } from 'react';
 interface Card {
   value: number;
   suit: string;
@@ -19,6 +18,8 @@ const createDeck = () => {
   return deck;
 };
 
+const DECKS = createDeck();
+
 // Function to shuffle the deck
 const shuffleDeck = (deck: Card[]) => {
   for (let i = deck.length - 1; i > 0; i--) {
@@ -35,7 +36,7 @@ const suitRank: { [key: string]: number } = {
 };
 
 const CardGame = () => {
-  const [deck, setDeck] = useState(shuffleDeck(createDeck())); // Initialize and shuffle the deck
+  const [deck, setDeck] = useState(shuffleDeck(DECKS)); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
   const [currentPlayer1, setCurrentPlayer1] = useState('');
@@ -50,10 +51,7 @@ const CardGame = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-
   const startGame = () => {
-  
-
     if (team1.length === 0 || team2.length === 0) {
       alert('Both teams must have at least one player.');
       return;
@@ -105,7 +103,7 @@ const CardGame = () => {
       setPlayer1Sum(0);
       setPlayer2Sum(0);
       setWinner('');
-      setDeck(shuffleDeck(createDeck()))
+      setDeck(shuffleDeck(DECKS));
     },
     []
   );
@@ -144,7 +142,7 @@ const CardGame = () => {
       '♣': 'clubs'
     };
     if (mapNumToCardValues(value) === 'joker') {
-      return '/images/red_joker.png'
+      return '/images/red_joker.png';
     }
     return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`; // Image file path
   };
@@ -223,30 +221,6 @@ const CardGame = () => {
 
       {!gameStarted && !gameOver && (
         <div>
-          {/* <h2>Load the team member</h2> */}
-          {/* <div>
-            <label htmlFor="team1Input">Team 1: </label>
-            <input
-              type="text"
-              value={team1Input}
-              onChange={(e) => setTeam1Input(e.target.value)}
-              placeholder="e.g. Alice, Bob, Charlie"
-              style={{ margin: '10px 0' }}
-              id="team1Input"
-            />
-          </div>
-          <div>
-            <label htmlFor="team2Input">Team 2: </label>
-            <input
-              type="text"
-              value={team2Input}
-              onChange={(e) => setTeam2Input(e.target.value)}
-              placeholder="e.g. David, Eve, Frank"
-              style={{ margin: '10px 0' }}
-              id="team2Input"
-            />
-          </div> */}
-
           <input
             hidden
             type="file"
@@ -295,19 +269,27 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player1Cards.length > 0 ? player1Cards.map((card, index) => (
-                  <img
-                    key={index}
-                    src={getCardImage(card.value, card.suit)}
-                    alt={`${card.value}${card.suit}`}
-                    style={{ width: '100px', marginRight: '10px' }}
-                  />
-                )) : [{value: 0, suit: ''}, {value: 0, suit: ''}, {value: 0, suit: ''}].map((card, index)=> (<img
-                  key={index}
-                  src={getCardImage(card.value, card.suit)}
-                  alt={`${card.value}${card.suit}`}
-                  style={{ width: '100px', marginRight: '10px' }}
-                />))}
+                {player1Cards.length > 0
+                  ? player1Cards.map((card, index) => (
+                      <img
+                        key={index}
+                        src={getCardImage(card.value, card.suit)}
+                        alt={`${card.value}${card.suit}`}
+                        style={{ width: '100px', marginRight: '10px' }}
+                      />
+                    ))
+                  : [
+                      { value: 0, suit: '' },
+                      { value: 0, suit: '' },
+                      { value: 0, suit: '' }
+                    ].map((card, index) => (
+                      <img
+                        key={index}
+                        src={getCardImage(card.value, card.suit)}
+                        alt={`${card.value}${card.suit}`}
+                        style={{ width: '100px', marginRight: '10px' }}
+                      />
+                    ))}
               </div>
               <p>Sum: {player1Sum}</p>
             </div>
@@ -328,19 +310,27 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player2Cards.length > 0 ? player2Cards.map((card, index) => (
-                  <img
-                    key={index}
-                    src={getCardImage(card.value, card.suit)}
-                    alt={`${card.value}${card.suit}`}
-                    style={{ width: '100px', marginRight: '10px' }}
-                  />
-                )) : [{value: 0, suit: ''}, {value: 0, suit: ''}, {value: 0, suit: ''}].map((card, index)=> (<img
-                  key={index}
-                  src={getCardImage(card.value, card.suit)}
-                  alt={`${card.value}${card.suit}`}
-                  style={{ width: '100px', marginRight: '10px' }}
-                />))}
+                {player2Cards.length > 0
+                  ? player2Cards.map((card, index) => (
+                      <img
+                        key={index}
+                        src={getCardImage(card.value, card.suit)}
+                        alt={`${card.value}${card.suit}`}
+                        style={{ width: '100px', marginRight: '10px' }}
+                      />
+                    ))
+                  : [
+                      { value: 0, suit: '' },
+                      { value: 0, suit: '' },
+                      { value: 0, suit: '' }
+                    ].map((card, index) => (
+                      <img
+                        key={index}
+                        src={getCardImage(card.value, card.suit)}
+                        alt={`${card.value}${card.suit}`}
+                        style={{ width: '100px', marginRight: '10px' }}
+                      />
+                    ))}
               </div>
               <p>Sum: {player2Sum}</p>
             </div>
