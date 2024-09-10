@@ -124,7 +124,7 @@ const CardGame = () => {
       '♠': 'spades',
       '♣': 'clubs'
     };
-    return `public/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`; // Image file path
+    return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`; // Image file path
   };
   // Function to calculate the sum of the drawn cards' values
   const calculateSum = (cards: Card[]) =>
