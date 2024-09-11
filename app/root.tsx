@@ -1,13 +1,8 @@
 import {
-  Form,
-  json,
-  Link,
   Links,
   Meta,
-  Outlet,
   Scripts,
-  ScrollRestoration,
-  useLoaderData
+  ScrollRestoration
 } from '@remix-run/react';
 
 import type { LinksFunction } from '@remix-run/node';
@@ -20,18 +15,10 @@ export const links: LinksFunction = () => [
 ];
 
 // existing imports
-import { getContacts } from './data';
 import CardGame from './routes/minigame';
 
-// existing exports
-
-export const loader = async () => {
-  const contacts = await getContacts();
-  return json({ contacts });
-};
 
 export default function App() {
-  const { contacts } = useLoaderData<typeof loader>();
 
   return (
     <html lang="en">
