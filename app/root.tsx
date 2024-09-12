@@ -1,9 +1,4 @@
-import {
-  Links,
-  Meta,
-  Scripts,
-  ScrollRestoration
-} from '@remix-run/react';
+import { Links, Meta, Scripts, ScrollRestoration } from '@remix-run/react';
 
 import type { LinksFunction } from '@remix-run/node';
 // existing imports
@@ -17,9 +12,7 @@ export const links: LinksFunction = () => [
 // existing imports
 import CardGame from './routes/minigame';
 
-
 export default function App() {
-
   return (
     <html lang="en">
       <head>

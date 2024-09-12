@@ -35,6 +35,12 @@ const suitRank: { [key: string]: number } = {
   '♣': 1
 };
 
+const CARDS_COVER = [
+  { value: 0, suit: '' },
+  { value: 0, suit: '' },
+  { value: 0, suit: '' }
+];
+
 const CardGame = () => {
   const [deck, setDeck] = useState(shuffleDeck(DECKS)); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
@@ -48,7 +54,7 @@ const CardGame = () => {
   const [winner, setWinner] = useState('');
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [roundNumber, setRoundNumber] = useState(0)
+  const [roundNumber, setRoundNumber] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,7 +111,7 @@ const CardGame = () => {
       setPlayer2Sum(0);
       setWinner('');
       setDeck(shuffleDeck(DECKS));
-      setRoundNumber((prev)=> prev+=1)
+      setRoundNumber((prev) => (prev += 1));
     },
     []
   );
@@ -151,24 +157,30 @@ const CardGame = () => {
   // Function to calculate the sum of the drawn cards' values
   const calculateSum = (cards: Card[]) => {
     const sum = cards.reduce((sum, card) => sum + card.value, 0);
-    return sum > 10 ? (sum % 10 === 0 ? 10 : sum % 10) : sum;
+    return sum > 10 ? sum % 10 || 10 : sum;
   };
 
   // Function to determine the highest suit from a player's cards
   const getCardHighestSuitAndValue = useCallback((cards: Card[]) => {
-    const sortedBySuit = cards.sort((a, b) => {
-      if (suitRank[a.suit] === suitRank[b.suit]) {
-        // Ace will be the highest value when comparing in value order
-        return a.value === 1 ? -1 : b.value === 1 ? 1 : b.value - a.value;
-      } else return suitRank[b.suit] - suitRank[a.suit];
+    return cards.reduce((highest, current) => {
+      if (suitRank[current.suit] > suitRank[highest.suit]) {
+        return current;
+      }
+      if (suitRank[current.suit] === suitRank[highest.suit]) {
+        if (
+          current.value === 1 ||
+          (highest.value !== 1 && current.value > highest.value)
+        ) {
+          return current;
+        }
+      }
+      return highest;
     });
-    return sortedBySuit[0];
   }, []);
 
   // Function for player 1 to draw cards
   const player1Draw = () => {
     const p1Cards = drawUniqueCards();
-
     const p1Sum = calculateSum(p1Cards);
 
     setPlayer1Cards(p1Cards);
@@ -182,7 +194,6 @@ const CardGame = () => {
   // Function for player 2 to draw cards
   const player2Draw = () => {
     const p2Cards = drawUniqueCards();
-
     const p2Sum = calculateSum(p2Cards);
 
     setPlayer2Cards(p2Cards);
@@ -196,62 +207,56 @@ const CardGame = () => {
   // Function to calculate the result and handle elimination
   const calculateResult = useCallback(
     (p1Sum: number, p2Sum: number, p1Cards: Card[], p2Cards: Card[]) => {
-      if (p1Sum > p2Sum) {
-        setWinner(`${currentPlayer1} from Team 1 Wins!`);
-        setTeam2(team2.slice(1));
-      } else if (p2Sum > p1Sum) {
-        setWinner(`${currentPlayer2} from Team 2 Wins!`);
-        setTeam1(team1.slice(1));
-      } else {
-        const tempP1Cards = [...p1Cards];
-        const tempP2Cards = [...p2Cards];
-        // Tie-breaker logic using suits
-        const p1HighestCard = getCardHighestSuitAndValue(tempP1Cards);
-        const p2HighestCard = getCardHighestSuitAndValue(tempP2Cards);
+      let winner: string;
+      let losingTeam: string[];
 
-        if (suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit]) {
-          setWinner(`${currentPlayer1} from Team 1 Wins by Suit!`);
-          setTeam2(team2.slice(1));
-        } else if (
-          suitRank[p1HighestCard.suit] < suitRank[p2HighestCard.suit]
-        ) {
-          setWinner(`${currentPlayer2} from Team 2 Wins by Suit!`);
-          setTeam1(team1.slice(1));
+      if (p1Sum !== p2Sum) {
+        const isPlayer1Winner = p1Sum > p2Sum;
+        winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins!`;
+        losingTeam = isPlayer1Winner ? team2 : team1;
+      } else {
+        const p1HighestCard = getCardHighestSuitAndValue(p1Cards);
+        const p2HighestCard = getCardHighestSuitAndValue(p2Cards);
+
+        if (suitRank[p1HighestCard.suit] !== suitRank[p2HighestCard.suit]) {
+          const isPlayer1Winner =
+            suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit];
+          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins by Suit!`;
+          losingTeam = isPlayer1Winner ? team2 : team1;
         } else {
-          // In case two player's largest suit are equal, we need to compare the value of that card
-          // Who has ACE wins, else compare the value of cards
-          if (p1HighestCard.value !== 1 && p2HighestCard.value !== 1) {
-            if (p2HighestCard.value > p1HighestCard.value) {
-              setWinner(
-                `${currentPlayer2} from Team 2 Wins By Highest Card in Suit!`
-              );
-              setTeam1(team1.slice(1));
-            } else {
-              setWinner(
-                `${currentPlayer1} from Team 1 Wins By Highest Card in Suit!`
-              );
-              setTeam2(team2.slice(1));
-            }
-          } else if (p1HighestCard.value === 1) {
-            setWinner(
-              `${currentPlayer1} from Team 1 Wins By Highest Card in Suit!`
-            );
-            setTeam2(team2.slice(1));
-          } else {
-            setWinner(
-              `${currentPlayer2} from Team 2 Wins By Highest Card in Suit!`
-            );
-            setTeam1(team1.slice(1));
-          }
+          const isPlayer1Winner =
+            p1HighestCard.value === 1 ||
+            (p2HighestCard.value !== 1 &&
+              p1HighestCard.value > p2HighestCard.value);
+          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins By Highest Card in Suit!`;
+          losingTeam = isPlayer1Winner ? team2 : team1;
         }
       }
 
+      setWinner(winner);
+      setTeam1((prevTeam1) =>
+        prevTeam1 === losingTeam ? prevTeam1.slice(1) : prevTeam1
+      );
+      setTeam2((prevTeam2) =>
+        prevTeam2 === losingTeam ? prevTeam2.slice(1) : prevTeam2
+      );
+
       // Move to the next round after result
-      // setTimeout(() => nextRound(clonedTeam1, clonedTeam2), 2000);
+      // setTimeout(() => nextRound(team1, team2), 2000);
     },
     [currentPlayer1, currentPlayer2, getCardHighestSuitAndValue, team1, team2]
   );
 
+  const renderTheCards = (cards: Card[]) => {
+    return cards.map((card, index) => (
+      <img
+        key={index}
+        src={getCardImage(card.value, card.suit)}
+        alt={`${card.value}${card.suit}`}
+        style={{ width: '100px', marginRight: '10px' }}
+      />
+    ));
+  };
   return (
     <div style={{ textAlign: 'center', padding: '20px' }}>
       <h1>Thorlit 3Key</h1>
@@ -306,27 +311,9 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player1Cards.length > 0
-                  ? player1Cards.map((card, index) => (
-                      <img
-                        key={index}
-                        src={getCardImage(card.value, card.suit)}
-                        alt={`${card.value}${card.suit}`}
-                        style={{ width: '100px', marginRight: '10px' }}
-                      />
-                    ))
-                  : [
-                      { value: 0, suit: '' },
-                      { value: 0, suit: '' },
-                      { value: 0, suit: '' }
-                    ].map((card, index) => (
-                      <img
-                        key={index}
-                        src={getCardImage(card.value, card.suit)}
-                        alt={`${card.value}${card.suit}`}
-                        style={{ width: '100px', marginRight: '10px' }}
-                      />
-                    ))}
+                {renderTheCards(
+                  player1Cards.length > 0 ? player1Cards : CARDS_COVER
+                )}
               </div>
               <p>Sum: {player1Sum}</p>
             </div>
@@ -347,27 +334,9 @@ const CardGame = () => {
                   marginTop: '10px'
                 }}
               >
-                {player2Cards.length > 0
-                  ? player2Cards.map((card, index) => (
-                      <img
-                        key={index}
-                        src={getCardImage(card.value, card.suit)}
-                        alt={`${card.value}${card.suit}`}
-                        style={{ width: '100px', marginRight: '10px' }}
-                      />
-                    ))
-                  : [
-                      { value: 0, suit: '' },
-                      { value: 0, suit: '' },
-                      { value: 0, suit: '' }
-                    ].map((card, index) => (
-                      <img
-                        key={index}
-                        src={getCardImage(card.value, card.suit)}
-                        alt={`${card.value}${card.suit}`}
-                        style={{ width: '100px', marginRight: '10px' }}
-                      />
-                    ))}
+                {renderTheCards(
+                  player2Cards.length > 0 ? player2Cards : CARDS_COVER
+                )}
               </div>
               <p>Sum: {player2Sum}</p>
             </div>
@@ -392,7 +361,7 @@ const CardGame = () => {
         <div>
           <h2>Game Over</h2>
           <h2>{winner}</h2>
-          <img src="/images/the-end.webp" alt="" width='600' />
+          <img src="/images/the-end.webp" alt="" width="600" />
         </div>
       )}
 
