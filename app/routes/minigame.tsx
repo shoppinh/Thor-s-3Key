@@ -242,7 +242,7 @@ const CardGame = () => {
       );
 
       // Move to the next round after result
-      // setTimeout(() => nextRound(team1, team2), 2000);
+      // setTimeout(() => nextRound(team1After, team2After), 4000);
     },
     [currentPlayer1, currentPlayer2, getCardHighestSuitAndValue, team1, team2]
   );
@@ -253,7 +253,7 @@ const CardGame = () => {
         key={index}
         src={getCardImage(card.value, card.suit)}
         alt={`${card.value}${card.suit}`}
-        style={{ width: '100px', marginRight: '10px' }}
+        style={{ width: '150px', marginRight: '10px' }}
       />
     ));
   };
@@ -299,7 +299,11 @@ const CardGame = () => {
               <h2>Player 1 ({currentPlayer1})</h2>
               <button
                 onClick={player1Draw}
-                style={{ padding: '10px 20px', fontSize: '16px' }}
+                style={{
+                  padding: '20px 40px',
+                  fontSize: '20px',
+                  marginBottom: 10
+                }}
                 disabled={player1Cards.length > 0}
               >
                 Draw Cards
@@ -315,14 +319,18 @@ const CardGame = () => {
                   player1Cards.length > 0 ? player1Cards : CARDS_COVER
                 )}
               </div>
-              <p>Sum: {player1Sum}</p>
+              <h2>Sum: {player1Sum}</h2>
             </div>
 
             <div style={{ marginTop: '20px', flex: 1 }}>
               <h2>Player 2 ({currentPlayer2})</h2>
               <button
                 onClick={player2Draw}
-                style={{ padding: '10px 20px', fontSize: '16px' }}
+                style={{
+                  padding: '20px 40px',
+                  fontSize: '20px',
+                  marginBottom: 10
+                }}
                 disabled={player2Cards.length > 0}
               >
                 Draw Cards
@@ -338,7 +346,7 @@ const CardGame = () => {
                   player2Cards.length > 0 ? player2Cards : CARDS_COVER
                 )}
               </div>
-              <p>Sum: {player2Sum}</p>
+              <h2>Sum: {player2Sum}</h2>
             </div>
           </div>
 
@@ -349,7 +357,11 @@ const CardGame = () => {
           {winner && (
             <button
               onClick={() => nextRound(team1, team2)}
-              style={{ padding: '10px 20px', fontSize: '16px' }}
+              style={{
+                padding: '20px 40px',
+                fontSize: '20px',
+                marginBottom: 10
+              }}
             >
               Next Round
             </button>
@@ -374,7 +386,7 @@ const CardGame = () => {
           }}
         >
           <div>
-            <h3>Team 1 Members:</h3>
+            <h2>Team 1 Members:</h2>
             <ul>
               {team1.map((member, index) => (
                 <li key={index}>{member}</li>
@@ -382,7 +394,7 @@ const CardGame = () => {
             </ul>
           </div>
           <div className="">
-            <h3>Team 2 Members:</h3>
+            <h2>Team 2 Members:</h2>
             <ul>
               {team2.map((member, index) => (
                 <li key={index}>{member}</li>
