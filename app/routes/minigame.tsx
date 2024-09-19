@@ -293,60 +293,126 @@ const CardGame = () => {
       {gameStarted && !gameOver && (
         <div>
           <h2>Current Round {roundNumber}</h2>
-
           <div style={{ marginTop: '20px', display: 'flex' }}>
             <div style={{ marginTop: '20px', flex: 1 }}>
               <h2>Player 1 ({currentPlayer1})</h2>
-              <button
-                onClick={player1Draw}
-                style={{
-                  padding: '20px 40px',
-                  fontSize: '20px',
-                  marginBottom: 10
-                }}
-                disabled={player1Cards.length > 0}
-              >
-                Draw Cards
-              </button>
+
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: '10px'
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start'
                 }}
               >
-                {renderTheCards(
-                  player1Cards.length > 0 ? player1Cards : CARDS_COVER
-                )}
+                <div>
+                  <h2>Team 1 Members:</h2>
+                  <ul>
+                    {team1.map((member, index) => (
+                      <li key={index}>{member}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      marginTop: '10px'
+                    }}
+                  >
+                    <button
+                      onClick={player1Draw}
+                      style={{
+                        padding: '20px 40px',
+                        fontSize: '20px',
+                        marginBottom: 30,
+                        color: 'black'
+                      }}
+                      disabled={player1Cards.length > 0}
+                    >
+                      Draw Cards
+                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                      {renderTheCards(
+                        player1Cards.length > 0 ? player1Cards : CARDS_COVER
+                      )}
+                    </div>
+                  </div>
+                  <h2 style={{ margin: '0 40px', fontSize: 60 }}>
+                    {player1Sum}
+                  </h2>
+                </div>
               </div>
-              <h2>Sum: {player1Sum}</h2>
             </div>
 
             <div style={{ marginTop: '20px', flex: 1 }}>
               <h2>Player 2 ({currentPlayer2})</h2>
-              <button
-                onClick={player2Draw}
-                style={{
-                  padding: '20px 40px',
-                  fontSize: '20px',
-                  marginBottom: 10
-                }}
-                disabled={player2Cards.length > 0}
-              >
-                Draw Cards
-              </button>
+
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: '10px'
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start'
                 }}
               >
-                {renderTheCards(
-                  player2Cards.length > 0 ? player2Cards : CARDS_COVER
-                )}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <h2 style={{ margin: '0 40px', fontSize: 60 }}>
+                    {player2Sum}
+                  </h2>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
+
+                      marginTop: '10px'
+                    }}
+                  >
+                    <button
+                      onClick={player2Draw}
+                      style={{
+                        padding: '20px 40px',
+                        fontSize: '20px',
+                        marginBottom: 30,
+                        color: 'black'
+                      }}
+                      disabled={player2Cards.length > 0}
+                    >
+                      Draw Cards
+                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                      {renderTheCards(
+                        player2Cards.length > 0 ? player2Cards : CARDS_COVER
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h2>Team 2 Members:</h2>
+                  <ul>
+                    {team2.map((member, index) => (
+                      <li key={index}>{member}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <h2>Sum: {player2Sum}</h2>
             </div>
           </div>
 
@@ -374,33 +440,6 @@ const CardGame = () => {
           <h2>Game Over</h2>
           <h2>{winner}</h2>
           <img src="/images/the-end.webp" alt="" width="600" />
-        </div>
-      )}
-
-      {gameStarted && !gameOver && (
-        <div
-          style={{
-            marginTop: '30px',
-            display: 'flex',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div>
-            <h2>Team 1 Members:</h2>
-            <ul>
-              {team1.map((member, index) => (
-                <li key={index}>{member}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="">
-            <h2>Team 2 Members:</h2>
-            <ul>
-              {team2.map((member, index) => (
-                <li key={index}>{member}</li>
-              ))}
-            </ul>
-          </div>
         </div>
       )}
     </div>
