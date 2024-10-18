@@ -1,9 +1,11 @@
 import * as Papa from 'papaparse';
 import { useCallback, useRef, useState } from 'react';
+
 interface Card {
   value: number;
   suit: string;
 }
+
 // Card values (1-9) and suits
 const cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const suits = ['♦', '♥', '♠', '♣']; // Suit hierarchy: Diamond > Heart > Spade > Clu
@@ -28,6 +30,18 @@ const shuffleDeck = (deck: Card[]) => {
   }
   return deck;
 };
+
+// function to shuffle team members
+const shuffleArray = (array: string[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    // Generate a random index from 0 to i
+    const j = Math.floor(Math.random() * (i + 1));
+    // Swap the elements at i and j
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 const suitRank: { [key: string]: number } = {
   '♦': 4,
   '♥': 3,
@@ -41,10 +55,25 @@ const CARDS_COVER = [
   { value: 0, suit: '' }
 ];
 
+// css
+const sumNumber = { margin: '0 40px', fontSize: 60, paddingTop: '213px', width: '48px' };
+const cardContainer = { display: 'flex', justifyContent: 'space-between' };
+const playerContainer = { display: 'flex', flexDirection: 'column', width: '480px' };
+const memberItem = { border: '1px solid #aaa', padding: '0 5px', marginBottom: '5px', minWidth: '120px', width: '140px', fontWeight: 500, maxWidth: '140px' };
+const btnNextRound = { padding: '20px 40px', fontSize: '20px', marginBottom: 10, marginTop: '20px', background: '#222', color: '#fff', minWidth: '400px' };
+const btn = { padding: '20px 40px', fontSize: '20px', marginBottom: 30, marginTop: '20px', background: '#222', color: '#fff', minWidth: '300px' };
+const btnStart = { padding: '20px 40px', fontSize: '20px', marginBottom: 30, marginTop: '20px', background: 'green', color: '#fff', minWidth: '300px' };
+const blinkInfinite = { backgroundColor: 'red', animation: 'blink-bg 1s infinite alternate', display: 'block', padding: '20px 40px', color: '#fff', fontSize: '32px', maxWidth: '400px', margin: '0 auto' };
+const scoreContainer = { width: '140px', height: '140px', background: 'green', display: 'flex', fontSize: '96px', color: '#fff', fontWeight: 'bold', justifyContent: 'center', alignItems: 'center' };
+
 const CardGame = () => {
   const [deck, setDeck] = useState(shuffleDeck(DECKS)); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
+  const [team1Score, setTeam1Score] = useState(0);
+  const [team2Score, setTeam2Score] = useState(0);
+  const [duelIndex, setDuelIndex] = useState(0);// determine turn in a single duel between two players
+  const [currentPlayer, setCurrentPlayer] = useState('');
   const [currentPlayer1, setCurrentPlayer1] = useState('');
   const [currentPlayer2, setCurrentPlayer2] = useState('');
   const [player1Cards, setPlayer1Cards] = useState<Card[]>([]);
@@ -52,9 +81,11 @@ const CardGame = () => {
   const [player1Sum, setPlayer1Sum] = useState(0);
   const [player2Sum, setPlayer2Sum] = useState(0);
   const [winner, setWinner] = useState('');
+  const [isFirstTurn, setIsFirstTurn] = useState(true);// first turn of the entire game
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
+  const [totalRound, setTotalRound] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +96,7 @@ const CardGame = () => {
     }
 
     setGameStarted(true);
+    setTotalRound(Math.max(team1.length, team2.length));
     // Start the first round
     nextRound(team1, team2);
   };
@@ -76,18 +108,18 @@ const CardGame = () => {
     const files = event.target.files;
     if (files && files.length > 0) {
       Papa.parse(files[0], {
-        complete: function (results) {
+        complete: function(results) {
           const team1Temp: string[] = [];
           const team2Temp: string[] = [];
           results.data.slice(1).forEach((item) => {
             if (Array.isArray(item)) {
-              team1Temp.push(item[0]);
-              team2Temp.push(item[1]);
+              team1Temp.push(item[0] ? item[0] : 'ANONYMOUS');
+              team2Temp.push(item[1] ? item[1] : 'ANONYMOUS');
             }
           });
 
-          setTeam1(team1Temp);
-          setTeam2(team2Temp);
+          setTeam1(shuffleArray(team1Temp));
+          setTeam2(shuffleArray(team2Temp));
         }
       });
     }
@@ -101,19 +133,24 @@ const CardGame = () => {
         setGameOver(true);
         return;
       }
-      setTeam1(inputTeam1);
-      setTeam2(inputTeam2);
-      setCurrentPlayer1(inputTeam1[0]);
-      setCurrentPlayer2(inputTeam2[0]);
+
+      setIsFirstTurn(roundNumber == 0);
+
+      if (isFirstTurn) {
+        setCurrentPlayer(Math.random() >= 0.5 ? inputTeam1[0] : inputTeam2[0]);// random team to play first
+      }
+
+      setDuelIndex(0);
+
       setPlayer1Cards([]);
       setPlayer2Cards([]);
       setPlayer1Sum(0);
       setPlayer2Sum(0);
       setWinner('');
       setDeck(shuffleDeck(DECKS));
-      setRoundNumber((prev) => (prev += 1));
+      setRoundNumber((prev) => (prev + 1));
     },
-    []
+    [roundNumber]
   );
 
   // Function to draw 3 unique cards from the deck
@@ -178,30 +215,43 @@ const CardGame = () => {
     });
   }, []);
 
-  // Function for player 1 to draw cards
-  const player1Draw = () => {
-    const p1Cards = drawUniqueCards();
-    const p1Sum = calculateSum(p1Cards);
+  const playerDraw = (side: string) => {
+    const pCards = drawUniqueCards();
+    const pSum = calculateSum(pCards);
 
-    setPlayer1Cards(p1Cards);
-    setPlayer1Sum(p1Sum);
+    setDuelIndex(duelIndex => duelIndex + 1);
+    setIsFirstTurn(false);
+    const opponent = getDuelOpponent();
 
-    if (player2Cards.length > 0) {
-      calculateResult(p1Sum, player2Sum, p1Cards, player2Cards);
+    if (side === 'left') {
+      setCurrentPlayer1(currentPlayer);
+      setCurrentPlayer2(opponent);
+      setCurrentPlayer(opponent);
+      setPlayer1Cards(pCards);
+      setPlayer1Sum(pSum);
+
+      if (player2Cards.length > 0) {
+        calculateResult(pSum, player2Sum, pCards, player2Cards);
+      }
+    } else {
+      setCurrentPlayer2(currentPlayer);
+      setCurrentPlayer1(opponent);
+      setCurrentPlayer(opponent);
+      setPlayer2Cards(pCards);
+      setPlayer2Sum(pSum);
+
+      if (player1Cards.length > 0) {
+        calculateResult(player1Sum, pSum, player1Cards, pCards);
+      }
     }
   };
 
-  // Function for player 2 to draw cards
-  const player2Draw = () => {
-    const p2Cards = drawUniqueCards();
-    const p2Sum = calculateSum(p2Cards);
+  const getTeamByCurrentPlayer = (player: string) => {
+    return team1.includes(player) ? 'team1' : 'team2';
+  };
 
-    setPlayer2Cards(p2Cards);
-    setPlayer2Sum(p2Sum);
-
-    if (player1Cards.length > 0) {
-      calculateResult(player1Sum, p2Sum, player1Cards, p2Cards);
-    }
+  const getDuelOpponent = () => {
+    return getTeamByCurrentPlayer(currentPlayer) === 'team1' ? team2[0] : team1[0];
   };
 
   // Function to calculate the result and handle elimination
@@ -209,27 +259,43 @@ const CardGame = () => {
     (p1Sum: number, p2Sum: number, p1Cards: Card[], p2Cards: Card[]) => {
       let winner: string;
       let losingTeam: string[];
+      let isPlayer1Winner: boolean;
 
       if (p1Sum !== p2Sum) {
-        const isPlayer1Winner = p1Sum > p2Sum;
-        winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins!`;
-        losingTeam = isPlayer1Winner ? team2 : team1;
+        isPlayer1Winner = p1Sum > p2Sum;
+        winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} Wins!`;
       } else {
         const p1HighestCard = getCardHighestSuitAndValue(p1Cards);
         const p2HighestCard = getCardHighestSuitAndValue(p2Cards);
 
         if (suitRank[p1HighestCard.suit] !== suitRank[p2HighestCard.suit]) {
-          const isPlayer1Winner =
+          isPlayer1Winner =
             suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit];
-          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins by Suit!`;
-          losingTeam = isPlayer1Winner ? team2 : team1;
+          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} Wins by Suit!`;
         } else {
-          const isPlayer1Winner =
+          isPlayer1Winner =
             p1HighestCard.value === 1 ||
             (p2HighestCard.value !== 1 &&
               p1HighestCard.value > p2HighestCard.value);
-          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} from Team ${isPlayer1Winner ? '1' : '2'} Wins By Highest Card in Suit!`;
-          losingTeam = isPlayer1Winner ? team2 : team1;
+          winner = `${isPlayer1Winner ? currentPlayer1 : currentPlayer2} Wins By Highest Card in Suit!`;
+        }
+      }
+
+      if (isPlayer1Winner) {
+        if (getTeamByCurrentPlayer(currentPlayer1) === 'team1') {
+          setTeam1Score(score => score + 1);
+          losingTeam = team2;
+        } else {
+          setTeam2Score(score => score + 1);
+          losingTeam = team1;
+        }
+      } else {
+        if (getTeamByCurrentPlayer(currentPlayer2) === 'team1') {
+          setTeam1Score(score => score + 1);
+          losingTeam = team2;
+        } else {
+          setTeam2Score(score => score + 1);
+          losingTeam = team1;
         }
       }
 
@@ -240,6 +306,9 @@ const CardGame = () => {
       setTeam2((prevTeam2) =>
         prevTeam2 === losingTeam ? prevTeam2.slice(1) : prevTeam2
       );
+
+      // select next player from losing team
+      setCurrentPlayer(losingTeam[1]);
 
       // Move to the next round after result
       // setTimeout(() => nextRound(team1After, team2After), 4000);
@@ -253,193 +322,240 @@ const CardGame = () => {
         key={index}
         src={getCardImage(card.value, card.suit)}
         alt={`${card.value}${card.suit}`}
-        style={{ width: '150px', marginRight: '10px' }}
+        style={{ width: '150px' }}
       />
     ));
   };
-  return (
-    <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h1>Thorlit 3Key</h1>
 
+  const renderPlayer1 = () => {
+    switch (duelIndex) {
+      case 0:
+        return <h2>PLAYER</h2>;
+      default:
+        return <>
+          {
+            currentPlayer1 &&
+            <h2>{currentPlayer1}</h2>
+          }
+        </>;
+    }
+  };
+
+  const renderPlayer2 = () => {
+    switch (duelIndex) {
+      case 0:
+        return <h2>PLAYER</h2>;
+      default:
+        return <>
+          {
+            currentPlayer2 &&
+            <h2>{currentPlayer2}</h2>
+          }
+        </>;
+    }
+  };
+
+  const renderRoundStatus = () => {
+    return <>
+      {/*{*/}
+      {/*  winner &&*/}
+      {/*  <h2 style={{ marginTop: '20px' }}>{winner}</h2>*/}
+      {/*}*/}
+
+      {
+        isFirstTurn &&
+        <>
+          <h2 style={{ marginBottom: '20px' }}>FIRST PLAYER IS</h2>
+          <h2 style={blinkInfinite}>{currentPlayer}</h2>
+        </>
+      }
+
+      {
+        !isFirstTurn && currentPlayer &&
+        <>
+          {
+            duelIndex == 2 ? <h2 style={{ marginBottom: '20px' }}>NEXT PLAYER IS</h2> : <h2 style={{ marginBottom: '20px' }}>CURRENT PLAYER IS</h2>
+          }
+          <h2 style={blinkInfinite}>{currentPlayer}</h2>
+        </>
+      }
+
+      {winner && (
+        <button
+          onClick={() => nextRound(team1, team2)}
+          style={btnNextRound}
+        >
+          {Math.min(team1.length, team2.length) == 0 ? 'Finish' : 'Next Round'}
+        </button>
+      )}
+    </>;
+  };
+
+  function renderGameInput() {
+    return <>
       {!gameStarted && !gameOver && (
-        <div>
-          <input
-            hidden
-            type="file"
-            name="memberListcsv"
-            id="memberListcsv"
-            ref={inputRef}
-            onChange={handleFileChange}
-          />
-          {team1.length === 0 && team2.length === 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <div>
+            <h1>Thorlit 3Key</h1>
             <div>
-              <button
-                onClick={triggerLoadTeamMember}
-                style={{ padding: '10px 20px', marginTop: '10px' }}
-              >
-                Load the team members
-              </button>
+              <input
+                hidden
+                type='file'
+                name='memberListcsv'
+                id='memberListcsv'
+                ref={inputRef}
+                onChange={handleFileChange}
+              />
+              {team1.length === 0 && team2.length === 0 && (
+                <div>
+                  <button
+                    onClick={triggerLoadTeamMember}
+                    style={btn}
+                  >
+                    Load Game
+                  </button>
+                </div>
+              )}
+              {
+                team1.length > 0 && team2.length > 0 &&
+                <button
+                  onClick={startGame}
+                  style={btnStart}
+                >
+                  Start Game
+                </button>
+              }
             </div>
-          )}
-          <button
-            onClick={startGame}
-            style={{ padding: '10px 20px', marginTop: '10px' }}
-          >
-            Start Game
-          </button>
+          </div>
         </div>
       )}
+    </>;
+  }
+
+  return (
+    <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
+      {renderGameInput()}
 
       {gameStarted && !gameOver && (
-        <div>
-          <h2>Current Round {roundNumber}</h2>
-          <div style={{ marginTop: '20px', display: 'flex' }}>
-            <div style={{ marginTop: '20px', flex: 1 }}>
-              <h2>Player 1 ({currentPlayer1})</h2>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start'
-                }}
-              >
-                <div>
-                  <h2>Team 1 Members:</h2>
-                  <ul>
-                    {team1.map((member, index) => (
-                      <li key={index}>{member}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
+        <>
+          <div style={{ display: 'flex' }}>
+            <div style={scoreContainer}>
+              <span style={{ paddingBottom: '10px' }}>{team1Score}</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <h1>Thorlit 3Key</h1>
+              <h2>Current Round: {roundNumber}</h2>
+              <h2>Race to {totalRound}</h2>
+            </div>
+            <div style={scoreContainer}>
+              <span style={{ paddingBottom: '10px' }}>{team2Score}</span>
+            </div>
+          </div>
+          <div>
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '140px' }}>
+                <h2>Team 1</h2>
+                <ul style={{ listStyle: 'none' }}>
+                  {team1.map((member, index) => (
+                    <li style={memberItem} key={index}>{member}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex' }}>
                   <div
                     style={{
                       display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      marginTop: '10px'
+                      justifyContent: 'center'
                     }}
                   >
-                    <button
-                      onClick={player1Draw}
+                    <div
                       style={{
-                        padding: '20px 40px',
-                        fontSize: '20px',
-                        marginBottom: 30,
-                        color: 'black'
+                        display: 'flex',
+                        justifyContent: 'space-between'
                       }}
-                      disabled={player1Cards.length > 0}
                     >
-                      Draw Cards
-                    </button>
-                    <div style={{ display: 'flex', flexDirection: 'row' }}>
-                      {renderTheCards(
-                        player1Cards.length > 0 ? player1Cards : CARDS_COVER
-                      )}
+                      <div style={playerContainer}>
+                        {
+                          renderPlayer1()
+                        }
+                        <button
+                          onClick={() => playerDraw('left')}
+                          style={btn}
+                          disabled={player1Cards.length > 0}
+                        >
+                          Draw Cards
+                        </button>
+                        <div style={cardContainer}>
+                          {renderTheCards(
+                            player1Cards.length > 0 ? player1Cards : CARDS_COVER
+                          )}
+                        </div>
+                      </div>
+                      <h2 style={sumNumber}>
+                        {player1Sum}
+                      </h2>
                     </div>
                   </div>
-                  <h2 style={{ margin: '0 40px', fontSize: 60 }}>
-                    {player1Sum}
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '20px', flex: 1 }}>
-              <h2>Player 2 ({currentPlayer2})</h2>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start'
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <h2 style={{ margin: '0 40px', fontSize: 60 }}>
-                    {player2Sum}
-                  </h2>
                   <div
                     style={{
                       display: 'flex',
-                      justifyContent: 'center',
-                      flexDirection: 'column',
-
-                      marginTop: '10px'
+                      justifyContent: 'center'
                     }}
                   >
-                    <button
-                      onClick={player2Draw}
+                    <div
                       style={{
-                        padding: '20px 40px',
-                        fontSize: '20px',
-                        marginBottom: 30,
-                        color: 'black'
+                        display: 'flex',
+                        justifyContent: 'space-between'
                       }}
-                      disabled={player2Cards.length > 0}
                     >
-                      Draw Cards
-                    </button>
-                    <div style={{ display: 'flex', flexDirection: 'row' }}>
-                      {renderTheCards(
-                        player2Cards.length > 0 ? player2Cards : CARDS_COVER
-                      )}
+                      <h2 style={sumNumber}>
+                        {player2Sum}
+                      </h2>
+                      <div style={playerContainer}>
+                        {
+                          renderPlayer2()
+                        }
+                        <button
+                          onClick={() => playerDraw('right')}
+                          style={btn}
+                          disabled={player2Cards.length > 0}
+                        >
+                          Draw Cards
+                        </button>
+                        <div style={cardContainer}>
+                          {renderTheCards(
+                            player2Cards.length > 0 ? player2Cards : CARDS_COVER
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <h2>Team 2 Members:</h2>
-                  <ul>
-                    {team2.map((member, index) => (
-                      <li key={index}>{member}</li>
-                    ))}
-                  </ul>
+                <div style={{ flex: 1, marginTop: '40px' }}>
+                  {renderRoundStatus()}
                 </div>
+              </div>
+              <div style={{ width: '140px' }}>
+                <h2>Team 2</h2>
+                <ul style={{ listStyle: 'none' }}>
+                  {team2.map((member, index) => (
+                    <li style={memberItem} key={index}>{member}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
-
-          <div style={{ marginTop: '20px' }}>
-            <h2>{winner}</h2>
-          </div>
-
-          {winner && (
-            <button
-              onClick={() => nextRound(team1, team2)}
-              style={{
-                padding: '20px 40px',
-                fontSize: '20px',
-                marginBottom: 10
-              }}
-            >
-              Next Round
-            </button>
-          )}
-        </div>
+        </>
       )}
 
       {gameOver && (
-        <div>
-          <h2>Game Over</h2>
-          <h2>{winner}</h2>
-          <img src="/images/the-end.webp" alt="" width="600" />
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <div>
+            <h2 style={{ color: 'red' }}>Game Over</h2>
+            <h2 style={{ fontSize: '48px', fontWeight: 'bold' }}>{winner}</h2>
+            <img style={{ marginTop: '20px' }} src='/images/the-end.webp' alt='' width='600' />
+          </div>
         </div>
       )}
     </div>
