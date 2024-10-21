@@ -111,10 +111,22 @@ const CardGame = () => {
         complete: function(results) {
           const team1Temp: string[] = [];
           const team2Temp: string[] = [];
+          let index = 1;
           results.data.slice(1).forEach((item) => {
             if (Array.isArray(item)) {
-              team1Temp.push(item[0] ? item[0] : 'ANONYMOUS');
-              team2Temp.push(item[1] ? item[1] : 'ANONYMOUS');
+              if (item[0]) {
+                team1Temp.push(item[0]);
+              } else {
+                team1Temp.push(`ANONYMOUS #${index}`);
+                index++;
+              }
+
+              if (item[1]) {
+                team2Temp.push(item[1]);
+              } else {
+                team2Temp.push(`ANONYMOUS #${index}`);
+                index++;
+              }
             }
           });
 
