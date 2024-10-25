@@ -99,7 +99,7 @@ const CardGame = () => {
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
   const SHEET_RANGE = '3Key Game!A1:B30';
-  const API_KEY = 'AIzaSyCrqoI0XIFLTXcbIHS8xrdNRmeRAB4VV4o';
+  const API_KEY = process.env.API_KEY;
 
   const startGame = () => {
     if (team1.length === 0 || team2.length === 0) {
