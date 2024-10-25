@@ -1,5 +1,4 @@
-import * as Papa from 'papaparse';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 interface Card {
   value: number;
@@ -72,9 +71,12 @@ const relativeContainer = { position: 'relative', width: '400px', margin: '0 aut
 const drawCardsContainer = { position: 'relative' };
 const leftHandPointer = { position: 'absolute', top: '50px', right: '-50px', width: '100px', animation: 'left-point-to-button 1.5s infinite ease-in-out', pointerEvents: 'none' };
 const rightHandPointer = { position: 'absolute', top: '50px', left: '-50px', width: '100px', animation: 'right-point-to-button 1.5s infinite ease-in-out', pointerEvents: 'none' };
+const labelControl = { width: '100px', display: 'inline-block', textAlign: 'left' };
+const textControl = { width: '300px', border: '1px solid #aaa' };
+const controlContainer = { margin: '20px 0 0 0' };
 
 const CardGame = () => {
-  const [deck, setDeck] = useState(shuffleDeck(DECKS)); // Initialize and shuffle the deck
+  const [deck, setDeck] = useState<Card[]>(shuffleDeck(DECKS)); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
   const [team1Score, setTeam1Score] = useState(0);
@@ -91,12 +93,13 @@ const CardGame = () => {
   const [player2Sum, setPlayer2Sum] = useState(0);
   const [winner, setWinner] = useState('');
   const [isFirstTurn, setIsFirstTurn] = useState(true);// first turn of the entire game
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
+  const [gameState, setGameState] = useState('welcome');// welcome -> gameLoading -> gameLoaded -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [totalRound, setTotalRound] = useState(0);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
+  const SHEET_RANGE = '3Key Game!A1:B30';
+  const API_KEY = 'AIzaSyCrqoI0XIFLTXcbIHS8xrdNRmeRAB4VV4o';
 
   const startGame = () => {
     if (team1.length === 0 || team2.length === 0) {
@@ -104,46 +107,44 @@ const CardGame = () => {
       return;
     }
 
-    setGameStarted(true);
+    setGameState('gamePlaying');
     setTotalRound(Math.max(team1.length, team2.length));
     // Start the first round
     nextRound(team1, team2);
   };
 
-  const triggerLoadTeamMember = () => {
-    inputRef.current?.click();
-  };
+  const loadDataFromGoogleSheet = async () => {
+    setGameState('gameLoading');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      Papa.parse(files[0], {
-        complete: function(results) {
-          const team1Temp: string[] = [];
-          const team2Temp: string[] = [];
-          let index = 1;
-          results.data.slice(1).forEach((item) => {
-            if (Array.isArray(item)) {
-              if (item[0]) {
-                team1Temp.push(item[0]);
-              } else {
-                team1Temp.push(`ANONYMOUS #${index}`);
-                index++;
-              }
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
 
-              if (item[1]) {
-                team2Temp.push(item[1]);
-              } else {
-                team2Temp.push(`ANONYMOUS #${index}`);
-                index++;
-              }
-            }
-          });
+      const team1Temp: string[] = [];
+      const team2Temp: string[] = [];
+      let index = 1;
+      data.values.slice(1).forEach((item) => {
+        if (item[0]) {
+          team1Temp.push(item[0]);
+        } else {
+          team1Temp.push(`ANONYMOUS #${index}`);
+          index++;
+        }
 
-          setTeam1(shuffleArray(team1Temp));
-          setTeam2(shuffleArray(team2Temp));
+        if (item[1]) {
+          team2Temp.push(item[1]);
+        } else {
+          team2Temp.push(`ANONYMOUS #${index}`);
+          index++;
         }
       });
+
+      setTeam1(shuffleArray(team1Temp));
+      setTeam2(shuffleArray(team2Temp));
+      setGameState('gameLoaded');
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
   };
 
@@ -152,7 +153,7 @@ const CardGame = () => {
     (inputTeam1: string[], inputTeam2: string[]) => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setWinner(inputTeam1.length === 0 ? 'Team 2 Wins!' : 'Team 1 Wins!');
-        setGameOver(true);
+        setGameState('gameOver');
         return;
       }
 
@@ -418,7 +419,7 @@ const CardGame = () => {
 
       {winner && (
         <div style={relativeContainer}>
-          <img style={leftHandPointer} src='images/left-hand.png' alt='cursor' />
+          <img style={{ ...leftHandPointer, top: '25px' }} src='images/left-hand.png' alt='cursor' />
           <button
             onClick={() => nextRound(team1, team2)}
             style={btnNextRound}
@@ -432,35 +433,29 @@ const CardGame = () => {
 
   function renderGameInput() {
     return <>
-      {!gameStarted && !gameOver && (
+      {(gameState == 'welcome' || gameState == 'gameLoading' || gameState == 'gameLoaded') && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
           <div>
             <h1>Thorlit 3Key</h1>
+            <div style={controlContainer}>
+              <label style={labelControl} htmlFor='sheetId'>Sheet Id</label>
+              <input style={textControl} id='sheetId' type='text' value={SHEET_ID} disabled={gameState != 'welcome'} />
+            </div>
+            <div style={controlContainer}>
+              <label style={labelControl} htmlFor='sheetRange'>Sheet Range</label>
+              <input style={textControl} id='sheetRange' type='text' value={SHEET_RANGE} disabled={gameState != 'welcome'} />
+            </div>
             <div>
-              <input
-                hidden
-                type='file'
-                name='memberListcsv'
-                id='memberListcsv'
-                ref={inputRef}
-                onChange={handleFileChange}
-              />
               {team1.length === 0 && team2.length === 0 && (
                 <div>
-                  <button
-                    onClick={triggerLoadTeamMember}
-                    style={btn}
-                  >
+                  <button onClick={() => loadDataFromGoogleSheet()} style={btn} disabled={gameState == 'gameLoading'}>
                     Load Game
                   </button>
                 </div>
               )}
               {
                 team1.length > 0 && team2.length > 0 &&
-                <button
-                  onClick={startGame}
-                  style={btnStart}
-                >
+                <button onClick={startGame} style={btnStart}>
                   Start Game
                 </button>
               }
@@ -475,7 +470,7 @@ const CardGame = () => {
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
       {renderGameInput()}
 
-      {gameStarted && !gameOver && (
+      {gameState == 'gamePlaying' && (
         <>
           <div style={{ display: 'flex' }}>
             <div style={scoreContainer} className={team1ScoreClass}>
@@ -600,15 +595,17 @@ const CardGame = () => {
         </>
       )}
 
-      {gameOver && (
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-          <div>
-            <h2 style={{ color: 'red' }}>Game Over</h2>
-            <h2 style={{ fontSize: '48px', fontWeight: 'bold' }}>{winner}</h2>
-            <img style={{ marginTop: '20px' }} src='/images/the-end.webp' alt='' width='600' />
+      {
+        gameState == 'gameOver' && (
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <div>
+              <h2 style={{ color: 'red' }}>Game Over</h2>
+              <h2 style={{ fontSize: '48px', fontWeight: 'bold' }}>{winner}</h2>
+              <img style={{ marginTop: '20px' }} src='/images/the-end.webp' alt='' width='600' />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div>
   );
 };
