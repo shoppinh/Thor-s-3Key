@@ -487,24 +487,6 @@ const CardGame = (props: Props) => {
 
       {gameState == 'gamePlaying' && (
         <>
-          <div style={{ display: 'flex' }}>
-            <div className={'scoreContainer ' + team1ScoreClass}>
-              <span style={{ paddingBottom: '10px' }}>{team1Score}</span>
-            </div>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ marginTop: '10px', marginBottom: '5px' }}>
-                Current Round: {roundNumber}
-              </h2>
-              <h2 style={{ marginTop: '10px', marginBottom: '5px' }}>
-                {' '}
-                Race to {totalRound}
-              </h2>
-            </div>
-            <div className={'scoreContainer ' + team2ScoreClass}>
-              <span style={{ paddingBottom: '10px' }}>{team2Score}</span>
-            </div>
-          </div>
-          <div>
             <div
               style={{
                 display: 'flex',
@@ -512,6 +494,9 @@ const CardGame = (props: Props) => {
               }}
             >
               <div style={{ width: '140px' }}>
+                <div className={'scoreContainer ' + team1ScoreClass}>
+                  <span style={{ paddingBottom: '10px' }}>{team1Score}</span>
+                </div>
                 <h2>Team 1</h2>
                 <ul className={'ulTeam'}>
                   {team1.map((member, index) => (
@@ -522,6 +507,15 @@ const CardGame = (props: Props) => {
                 </ul>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, maxHeight: '82px' }}>
+                  <h2 style={{ marginTop: 0, marginBottom: '5px' }}>
+                    Current Round: {roundNumber}
+                  </h2>
+                  <h2 style={{ marginTop: 0, marginBottom: '5px' }}>
+                    {' '}
+                    Race to {totalRound}
+                  </h2>
+                </div>
                 <div style={{ display: 'flex' }}>
                   <div
                     style={{
@@ -611,6 +605,9 @@ const CardGame = (props: Props) => {
                 </div>
               </div>
               <div style={{ width: '140px' }}>
+                <div className={'scoreContainer ' + team2ScoreClass}>
+                  <span style={{ paddingBottom: '10px' }}>{team2Score}</span>
+                </div>
                 <h2>Team 2</h2>
                 <ul className={'ulTeam'}>
                   {team2.map((member, index) => (
@@ -621,7 +618,6 @@ const CardGame = (props: Props) => {
                 </ul>
               </div>
             </div>
-          </div>
         </>
       )}
 
@@ -636,8 +632,8 @@ const CardGame = (props: Props) => {
           }}
         >
           <div>
-            <h2 style={{ color: 'red' }}>Game Over</h2>
-            <h2 style={{ fontSize: '48px', fontWeight: 'bold' }}>{winner}</h2>
+            <h2 style={{ color: 'red', margin: 0 }}>Game Over</h2>
+            <h2 style={{ fontSize: '48px', fontWeight: 'bold', margin: 0 }}>{winner}</h2>
             <img
               style={{ marginTop: '20px' }}
               src='/images/the-end.webp'
