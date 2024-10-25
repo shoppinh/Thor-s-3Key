@@ -1,4 +1,11 @@
-import { Links, Meta, Scripts, ScrollRestoration } from '@remix-run/react';
+import {
+  json,
+  Links,
+  Meta,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData
+} from '@remix-run/react';
 
 import type { LinksFunction } from '@remix-run/node';
 // existing imports
@@ -12,7 +19,14 @@ export const links: LinksFunction = () => [
 // existing imports
 import CardGame from './routes/minigame';
 
+export async function loader() {
+  return json({
+    API_KEY: process.env.API_KEY ?? ''
+  });
+}
+
 export default function App() {
+  const clientSecrets = useLoaderData<typeof loader>() ?? { API_KEY: '' };
   return (
     <html lang="en">
       <head>
@@ -23,7 +37,7 @@ export default function App() {
       </head>
       <body>
         <div id="detail">
-          <CardGame />
+          <CardGame clientSecrets={clientSecrets} />
         </div>
 
         <ScrollRestoration />
