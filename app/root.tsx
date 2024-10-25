@@ -21,7 +21,7 @@ import CardGame from './routes/minigame';
 
 export async function loader() {
   return json({
-    API_KEY: process.env.API_KEY
+    API_KEY: process.env.API_KEY ?? ''
   });
 }
 
