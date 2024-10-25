@@ -159,3 +159,141 @@ input:disabled {
         transform: translateX(30px);
     }
 }
+
+.sumNumber {
+    margin: 0 40px;
+    font-size: 60px;
+    padding-top: 213px;
+    width: 48px;
+}
+
+.cardContainer {
+    display: flex;
+    justify-content: space-between;
+}
+
+.playerContainer {
+    display: flex;
+    flex-direction: column;
+    width: 480px;
+}
+
+.memberItem {
+    border: 1px solid #aaa;
+    padding: 0 5px;
+    margin-bottom: 5px;
+    min-width: 120px;
+    width: 140px;
+    font-weight: 500;
+    max-width: 140px;
+}
+
+.btnNextRound {
+    padding: 20px 40px;
+    font-size: 20px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+    background: #222;
+    color: #fff;
+    min-width: 400px;
+}
+
+.btn {
+    padding: 20px 40px;
+    font-size: 20px;
+    margin-bottom: 30px;
+    margin-top: 20px;
+    background: #222;
+    color: #fff;
+    min-width: 300px;
+}
+
+.btnStart {
+    padding: 20px 40px;
+    font-size: 20px;
+    margin-bottom: 30px;
+    margin-top: 20px;
+    background: green;
+    color: #fff;
+    min-width: 300px;
+}
+
+.blinkInfinite {
+    background-color: red;
+    animation: blink-bg 1s infinite alternate;
+    display: block;
+    padding: 20px 40px;
+    color: #fff;
+    font-size: 32px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.scoreContainer {
+    width: 140px;
+    height: 140px;
+    background: green;
+    display: flex;
+    font-size: 96px;
+    color: #fff;
+    font-weight: bold;
+    justify-content: center;
+    align-items: center;
+}
+
+.ulTeam {
+    padding: 0;
+    list-style: none;
+}
+
+.m0 {
+    margin: 0
+}
+
+.playerStatus {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.relativeContainer {
+    position: relative;
+    width: 400px;
+    margin: 0 auto;
+}
+
+.drawCardsContainer {
+    position: relative;
+}
+
+.leftHandPointer {
+    position: absolute;
+    top: 50px;
+    right: -50px;
+    width: 100px;
+    animation: left-point-to-button 1.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.rightHandPointer {
+    position: absolute;
+    top: 50px;
+    left: -50px;
+    width: 100px;
+    animation: right-point-to-button 1.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.labelControl {
+    width: 100px;
+    display: inline-block;
+    text-align: left;
+}
+
+.textControl {
+    width: 300px;
+    border: 1px solid #aaa;
+}
+
+.controlContainer {
+    margin: 20px 0 0 0;
+}

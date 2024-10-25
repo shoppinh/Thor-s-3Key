@@ -54,114 +54,12 @@ const CARDS_COVER = [
   { value: 0, suit: '' }
 ];
 
-// css
-const sumNumber = {
-  margin: '0 40px',
-  fontSize: 60,
-  paddingTop: '213px',
-  width: '48px'
-};
-const cardContainer = { display: 'flex', justifyContent: 'space-between' };
-const playerContainer = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '480px'
-};
-const memberItem = {
-  border: '1px solid #aaa',
-  padding: '0 5px',
-  marginBottom: '5px',
-  minWidth: '120px',
-  width: '140px',
-  fontWeight: 500,
-  maxWidth: '140px'
-};
-const btnNextRound = {
-  padding: '20px 40px',
-  fontSize: '20px',
-  marginBottom: 10,
-  marginTop: '20px',
-  background: '#222',
-  color: '#fff',
-  minWidth: '400px'
-};
-const btn = {
-  padding: '20px 40px',
-  fontSize: '20px',
-  marginBottom: 30,
-  marginTop: '20px',
-  background: '#222',
-  color: '#fff',
-  minWidth: '300px'
-};
-const btnStart = {
-  padding: '20px 40px',
-  fontSize: '20px',
-  marginBottom: 30,
-  marginTop: '20px',
-  background: 'green',
-  color: '#fff',
-  minWidth: '300px'
-};
-const blinkInfinite = {
-  backgroundColor: 'red',
-  animation: 'blink-bg 1s infinite alternate',
-  display: 'block',
-  padding: '20px 40px',
-  color: '#fff',
-  fontSize: '32px',
-  maxWidth: '400px',
-  margin: '0 auto'
-};
-const scoreContainer = {
-  width: '140px',
-  height: '140px',
-  background: 'green',
-  display: 'flex',
-  fontSize: '96px',
-  color: '#fff',
-  fontWeight: 'bold',
-  justifyContent: 'center',
-  alignItems: 'center'
-};
-const ulTeam = { padding: 0, listStyle: 'none' };
-const m0 = { margin: 0 };
-const playerStatus = { marginTop: 0, marginBottom: '20px' };
-const relativeContainer = {
-  position: 'relative',
-  width: '400px',
-  margin: '0 auto'
-};
-const drawCardsContainer = { position: 'relative' };
-const leftHandPointer = {
-  position: 'absolute',
-  top: '50px',
-  right: '-50px',
-  width: '100px',
-  animation: 'left-point-to-button 1.5s infinite ease-in-out',
-  pointerEvents: 'none'
-};
-const rightHandPointer = {
-  position: 'absolute',
-  top: '50px',
-  left: '-50px',
-  width: '100px',
-  animation: 'right-point-to-button 1.5s infinite ease-in-out',
-  pointerEvents: 'none'
-};
-const labelControl = {
-  width: '100px',
-  display: 'inline-block',
-  textAlign: 'left'
-};
-const textControl = { width: '300px', border: '1px solid #aaa' };
-const controlContainer = { margin: '20px 0 0 0' };
-
 interface Props {
   clientSecrets: {
     API_KEY: string;
   };
 }
+
 const CardGame = (props: Props) => {
   const { clientSecrets } = props;
   const [deck, setDeck] = useState<Card[]>(shuffleDeck(DECKS)); // Initialize and shuffle the deck
@@ -457,18 +355,18 @@ const CardGame = (props: Props) => {
   const renderPlayer1 = () => {
     switch (duelIndex) {
       case 0:
-        return <h2 style={m0}>PLAYER</h2>;
+        return <h2 className={'m0'}>PLAYER</h2>;
       default:
-        return <>{currentPlayer1 && <h2 style={m0}>{currentPlayer1}</h2>}</>;
+        return <>{currentPlayer1 && <h2 className={'m0'}>{currentPlayer1}</h2>}</>;
     }
   };
 
   const renderPlayer2 = () => {
     switch (duelIndex) {
       case 0:
-        return <h2 style={m0}>PLAYER</h2>;
+        return <h2 className={'m0'}>PLAYER</h2>;
       default:
-        return <>{currentPlayer2 && <h2 style={m0}>{currentPlayer2}</h2>}</>;
+        return <>{currentPlayer2 && <h2 className={'m0'}>{currentPlayer2}</h2>}</>;
     }
   };
 
@@ -482,32 +380,33 @@ const CardGame = (props: Props) => {
 
         {isFirstTurn && (
           <>
-            <h2 style={playerStatus}>FIRST PLAYER IS</h2>
-            <h2 style={blinkInfinite}>{currentPlayer}</h2>
+            <h2 className={'playerStatus'}>FIRST PLAYER IS</h2>
+            <h2 className={'blinkInfinite'}>{currentPlayer}</h2>
           </>
         )}
 
         {!isFirstTurn && currentPlayer && (
           <>
             {duelIndex == 2 ? (
-              <h2 style={playerStatus}>NEXT PLAYER IS</h2>
+              <h2 className={'playerStatus'}>NEXT PLAYER IS</h2>
             ) : (
-              <h2 style={playerStatus}>CURRENT PLAYER IS</h2>
+              <h2 className={'playerStatus'}>CURRENT PLAYER IS</h2>
             )}
-            <h2 style={blinkInfinite}>{currentPlayer}</h2>
+            <h2 className={'blinkInfinite'}>{currentPlayer}</h2>
           </>
         )}
 
         {winner && (
-          <div style={relativeContainer}>
+          <div className={'relativeContainer'}>
             <img
-              style={{ ...leftHandPointer, top: '25px' }}
-              src="images/left-hand.png"
-              alt="cursor"
+              className={'leftHandPointer'}
+              style={{ top: '25px' }}
+              src='images/left-hand.png'
+              alt='cursor'
             />
             <button
               onClick={() => nextRound(team1, team2)}
-              style={btnNextRound}
+              className={'btnNextRound'}
             >
               {Math.min(team1.length, team2.length) == 0
                 ? 'Finish'
@@ -536,26 +435,26 @@ const CardGame = (props: Props) => {
           >
             <div>
               <h1>Thorlit 3Key</h1>
-              <div style={controlContainer}>
-                <label style={labelControl} htmlFor="sheetId">
+              <div className={'controlContainer'}>
+                <label className={'labelControl'} htmlFor='sheetId'>
                   Sheet Id
                 </label>
                 <input
-                  style={textControl}
-                  id="sheetId"
-                  type="text"
+                  className={'textControl'}
+                  id='sheetId'
+                  type='text'
                   value={SHEET_ID}
                   disabled={gameState != 'welcome'}
                 />
               </div>
-              <div style={controlContainer}>
-                <label style={labelControl} htmlFor="sheetRange">
+              <div className={'controlContainer'}>
+                <label className={'labelControl'} htmlFor='sheetRange'>
                   Sheet Range
                 </label>
                 <input
-                  style={textControl}
-                  id="sheetRange"
-                  type="text"
+                  className={'textControl'}
+                  id='sheetRange'
+                  type='text'
                   value={SHEET_RANGE}
                   disabled={gameState != 'welcome'}
                 />
@@ -564,16 +463,13 @@ const CardGame = (props: Props) => {
                 {team1.length === 0 && team2.length === 0 && (
                   <div>
                     <button
-                      onClick={() => loadDataFromGoogleSheet()}
-                      style={btn}
-                      disabled={gameState == 'gameLoading'}
-                    >
+                      onClick={() => loadDataFromGoogleSheet()} className={'btn'} disabled={gameState == 'gameLoading'}>
                       Load Game
                     </button>
                   </div>
                 )}
                 {team1.length > 0 && team2.length > 0 && (
-                  <button onClick={startGame} style={btnStart}>
+                  <button onClick={startGame} className={'btnStart'}>
                     Start Game
                   </button>
                 )}
@@ -592,11 +488,10 @@ const CardGame = (props: Props) => {
       {gameState == 'gamePlaying' && (
         <>
           <div style={{ display: 'flex' }}>
-            <div style={scoreContainer} className={team1ScoreClass}>
+            <div className={'scoreContainer ' + team1ScoreClass}>
               <span style={{ paddingBottom: '10px' }}>{team1Score}</span>
             </div>
             <div style={{ flex: 1 }}>
-              <h1 style={{ marginBottom: '5px' }}>Thorlit 3Key</h1>
               <h2 style={{ marginTop: '10px', marginBottom: '5px' }}>
                 Current Round: {roundNumber}
               </h2>
@@ -605,23 +500,22 @@ const CardGame = (props: Props) => {
                 Race to {totalRound}
               </h2>
             </div>
-            <div style={scoreContainer} className={team2ScoreClass}>
+            <div className={'scoreContainer ' + team2ScoreClass}>
               <span style={{ paddingBottom: '10px' }}>{team2Score}</span>
             </div>
           </div>
           <div>
             <div
               style={{
-                marginTop: '20px',
                 display: 'flex',
                 justifyContent: 'space-between'
               }}
             >
               <div style={{ width: '140px' }}>
                 <h2>Team 1</h2>
-                <ul style={ulTeam}>
+                <ul className={'ulTeam'}>
                   {team1.map((member, index) => (
-                    <li style={memberItem} key={index}>
+                    <li className={'memberItem'} key={index}>
                       {member}
                     </li>
                   ))}
@@ -641,31 +535,33 @@ const CardGame = (props: Props) => {
                         justifyContent: 'space-between'
                       }}
                     >
-                      <div style={playerContainer}>
+                      <div className={'playerContainer'}>
                         {renderPlayer1()}
-                        <div style={drawCardsContainer}>
+                        <div className={'drawCardsContainer'}>
                           {player1Cards.length == 0 && (
                             <img
-                              style={{ ...leftHandPointer, top: '25px' }}
-                              src="images/left-hand.png"
-                              alt="cursor"
+                              className={'leftHandPointer'}
+                              style={{ top: '25px' }}
+                              src='images/left-hand.png'
+                              alt='cursor'
                             />
                           )}
                           <button
                             onClick={() => playerDraw('left')}
-                            style={{ ...btn, width: '480px' }}
+                            className={'btn'}
+                            style={{ width: '480px' }}
                             disabled={player1Cards.length > 0}
                           >
                             Draw Cards
                           </button>
                         </div>
-                        <div style={cardContainer}>
+                        <div className={'cardContainer'}>
                           {renderTheCards(
                             player1Cards.length > 0 ? player1Cards : CARDS_COVER
                           )}
                         </div>
                       </div>
-                      <h2 style={sumNumber}>{player1Sum}</h2>
+                      <h2 className={'sumNumber'}>{player1Sum}</h2>
                     </div>
                   </div>
                   <div
@@ -680,26 +576,28 @@ const CardGame = (props: Props) => {
                         justifyContent: 'space-between'
                       }}
                     >
-                      <h2 style={sumNumber}>{player2Sum}</h2>
-                      <div style={playerContainer}>
+                      <h2 className={'sumNumber'}>{player2Sum}</h2>
+                      <div className={'playerContainer'}>
                         {renderPlayer2()}
-                        <div style={drawCardsContainer}>
+                        <div className={'drawCardsContainer'}>
                           {player2Cards.length == 0 && (
                             <img
-                              style={{ ...rightHandPointer, top: '25px' }}
-                              src="images/right-hand.png"
-                              alt="cursor"
+                              className={'rightHandPointer'}
+                              style={{ top: '25px' }}
+                              src='images/right-hand.png'
+                              alt='cursor'
                             />
                           )}
                           <button
                             onClick={() => playerDraw('right')}
-                            style={{ ...btn, width: '480px' }}
+                            className={'btn'}
+                            style={{ width: '480px' }}
                             disabled={player2Cards.length > 0}
                           >
                             Draw Cards
                           </button>
                         </div>
-                        <div style={cardContainer}>
+                        <div className={'cardContainer'}>
                           {renderTheCards(
                             player2Cards.length > 0 ? player2Cards : CARDS_COVER
                           )}
@@ -714,9 +612,9 @@ const CardGame = (props: Props) => {
               </div>
               <div style={{ width: '140px' }}>
                 <h2>Team 2</h2>
-                <ul style={ulTeam}>
+                <ul className={'ulTeam'}>
                   {team2.map((member, index) => (
-                    <li style={memberItem} key={index}>
+                    <li className={'memberItem'} key={index}>
                       {member}
                     </li>
                   ))}
@@ -742,9 +640,9 @@ const CardGame = (props: Props) => {
             <h2 style={{ fontSize: '48px', fontWeight: 'bold' }}>{winner}</h2>
             <img
               style={{ marginTop: '20px' }}
-              src="/images/the-end.webp"
-              alt=""
-              width="600"
+              src='/images/the-end.webp'
+              alt=''
+              width='600'
             />
           </div>
         </div>
