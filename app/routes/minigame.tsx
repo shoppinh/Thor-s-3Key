@@ -145,7 +145,7 @@ const CardGame = (props: Props) => {
 
       setIsFirstTurn(roundNumber == 0);
 
-      if (isFirstTurn) {
+      if (roundNumber === 0) {
         setCurrentPlayer(Math.random() >= 0.5 ? inputTeam1[0] : inputTeam2[0]); // random team to play first
       }
 
