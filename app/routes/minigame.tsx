@@ -397,18 +397,22 @@ const CardGame = (props: Props) => {
       }
 
       setWinner(winner);
-      setTeam1((prevTeam1) =>
-        prevTeam1 === losingTeam ? prevTeam1.slice(1) : prevTeam1
-      );
-      setTeam2((prevTeam2) =>
-        prevTeam2 === losingTeam ? prevTeam2.slice(1) : prevTeam2
-      );
 
-      // select next player from losing team
-      setCurrentPlayer(losingTeam[1]);
+      // Update team members
+      const updatedTeam1 = losingTeam === team1 ? team1.slice(1) : team1;
+      const updatedTeam2 = losingTeam === team2 ? team2.slice(1) : team2;
 
-      // Move to the next round after result
-      // setTimeout(() => nextRound(team1After, team2After), 4000);
+      setTeam1(updatedTeam1);
+      setTeam2(updatedTeam2);
+
+      // Check if game is over
+      if (updatedTeam1.length === 0 || updatedTeam2.length === 0) {
+        setWinner(updatedTeam1.length === 0 ? 'Team 2 Wins!' : 'Team 1 Wins!');
+        setGameState('gameOver');
+      } else {
+        // select next player from losing team
+        setCurrentPlayer(losingTeam[1]);
+      }
     },
     [currentPlayer1, currentPlayer2, getCardHighestSuitAndValue, team1, team2]
   );
@@ -516,7 +520,7 @@ const CardGame = (props: Props) => {
           </>
         )}
 
-        {winner && (
+        {winner && Math.min(team1.length, team2.length) > 0 && (
           <div className={'relativeContainer'}>
             <img
               className={'leftHandPointer'}
@@ -528,9 +532,7 @@ const CardGame = (props: Props) => {
               onClick={() => nextRound(team1, team2)}
               className={'btnNextRound'}
             >
-              {Math.min(team1.length, team2.length) == 0
-                ? 'Finish'
-                : 'Next Round'}
+              Next Round
             </button>
           </div>
         )}
