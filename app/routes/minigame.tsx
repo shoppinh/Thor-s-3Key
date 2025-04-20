@@ -82,6 +82,14 @@ const CardGame = (props: Props) => {
   const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> gameLoaded -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [totalRound, setTotalRound] = useState(0);
+  // New state variables for a card draft system
+  const [isDraftPhase, setIsDraftPhase] = useState(false);
+  const [draftCards, setDraftCards] = useState<Card[]>([]);
+  const [draftSide, setDraftSide] = useState<string>('');
+  const [selectedDraftCards, setSelectedDraftCards] = useState<Card[]>([]);
+  // Power play state variables
+  const [team1PowerUsed, setTeam1PowerUsed] = useState(false);
+  const [team2PowerUsed, setTeam2PowerUsed] = useState(false);
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
   const SHEET_RANGE = '3Key Game!A1:B30';
@@ -95,6 +103,9 @@ const CardGame = (props: Props) => {
 
     setGameState('gamePlaying');
     setTotalRound(Math.max(team1.length, team2.length));
+    // Reset power play usage
+    setTeam1PowerUsed(false);
+    setTeam2PowerUsed(false);
     // Start the first round
     nextRound(team1, team2);
   };
@@ -162,10 +173,10 @@ const CardGame = (props: Props) => {
     [roundNumber]
   );
 
-  // Function to draw 3 unique cards from the deck
-  const drawUniqueCards = () => {
-    const drawnCards = deck.slice(0, 3); // Draw the first 3 cards
-    setDeck(deck.slice(3)); // Remove the drawn cards from the deck
+  // Function to draw unique cards from the deck
+  const drawUniqueCards = (count: number = 3) => {
+    const drawnCards = deck.slice(0, count); // Draw the specified number of cards
+    setDeck(deck.slice(count)); // Remove the drawn cards from the deck
     return drawnCards;
   };
 
@@ -224,8 +235,9 @@ const CardGame = (props: Props) => {
     });
   }, []);
 
+  // Regular card draw function - draws 3 random cards
   const playerDraw = (side: string) => {
-    const pCards = drawUniqueCards();
+    const pCards = drawUniqueCards(3);
     const pSum = calculateSum(pCards);
 
     setDuelIndex((duelIndex) => duelIndex + 1);
@@ -233,6 +245,66 @@ const CardGame = (props: Props) => {
     const opponent = getDuelOpponent();
 
     if (side === 'left') {
+      setCurrentPlayer1(currentPlayer);
+      setCurrentPlayer2(opponent);
+      setCurrentPlayer(opponent);
+      setPlayer1Cards(pCards);
+      setPlayer1Sum(pSum);
+
+      if (player2Cards.length > 0) {
+        calculateResult(pSum, player2Sum, pCards, player2Cards);
+      }
+    } else {
+      setCurrentPlayer2(currentPlayer);
+      setCurrentPlayer1(opponent);
+      setCurrentPlayer(opponent);
+      setPlayer2Cards(pCards);
+      setPlayer2Sum(pSum);
+
+      if (player1Cards.length > 0) {
+        calculateResult(player1Sum, pSum, player1Cards, pCards);
+      }
+    }
+  };
+
+  // Power play draft function - allows selecting from 6 cards
+  const powerPlayDraft = (side: string) => {
+    // Start the draft phase
+    setIsDraftPhase(true);
+    setDraftSide(side);
+    setSelectedDraftCards([]); // Reset selected cards
+
+    // Draw 6 cards for selection
+    const availableCards = drawUniqueCards(6);
+    setDraftCards(availableCards);
+
+    // Mark the team's power as used
+    if (side === 'left') {
+      setTeam1PowerUsed(true);
+    } else {
+      setTeam2PowerUsed(true);
+    }
+  };
+
+  // Function to handle card selection during draft phase
+  const handleCardSelection = (selectedCards: Card[]) => {
+    if (selectedCards.length !== 3) {
+      return; // Must select exactly 3 cards
+    }
+
+    const pCards = selectedCards;
+    const pSum = calculateSum(pCards);
+
+    setDuelIndex((duelIndex) => duelIndex + 1);
+    setIsFirstTurn(false);
+    const opponent = getDuelOpponent();
+
+    // End the draft phase
+    setIsDraftPhase(false);
+    setDraftCards([]);
+    setSelectedDraftCards([]);
+
+    if (draftSide === 'left') {
       setCurrentPlayer1(currentPlayer);
       setCurrentPlayer2(opponent);
       setCurrentPlayer(opponent);
@@ -350,6 +422,54 @@ const CardGame = (props: Props) => {
         style={{ width: '150px' }}
       />
     ));
+  };
+
+  // Function to toggle card selection during draft phase
+  const toggleCardSelection = (card: Card) => {
+    if (selectedDraftCards.some(c => c.value === card.value && c.suit === card.suit)) {
+      // If card is already selected, remove it
+      setSelectedDraftCards(selectedDraftCards.filter(c => !(c.value === card.value && c.suit === card.suit)));
+    } else if (selectedDraftCards.length < 3) {
+      // If less than 3 cards are selected, add this card
+      setSelectedDraftCards([...selectedDraftCards, card]);
+    }
+  };
+
+  // Function to check if a card is selected
+  const isCardSelected = (card: Card) => {
+    return selectedDraftCards.some(c => c.value === card.value && c.suit === card.suit);
+  };
+
+  // Component to render cards for selection during draft phase
+  const renderDraftCards = () => {
+    return (
+      <div className="draft-phase-container">
+        <h2>Select 3 Cards</h2>
+        <div className="draft-cards">
+          {draftCards.map((card, index) => (
+            <div 
+              key={index} 
+              className={`draft-card ${isCardSelected(card) ? 'selected' : ''}`}
+              onClick={() => toggleCardSelection(card)}
+            >
+              <img
+                src={getCardImage(card.value, card.suit)}
+                alt={`${card.value}${card.suit}`}
+                style={{ width: '120px' }}
+              />
+            </div>
+          ))}
+        </div>
+        <button 
+          onClick={() => handleCardSelection(selectedDraftCards)}
+          disabled={selectedDraftCards.length !== 3}
+          className="btn"
+          style={{ marginTop: '20px' }}
+        >
+          Confirm Selection
+        </button>
+      </div>
+    );
   };
 
   const renderPlayer1 = () => {
@@ -485,8 +605,10 @@ const CardGame = (props: Props) => {
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
       {renderGameInput()}
 
+      {isDraftPhase && renderDraftCards()}
+
       {gameState == 'gamePlaying' && (
-        <>
+
             <div
               style={{
                 display: 'flex',
@@ -505,6 +627,13 @@ const CardGame = (props: Props) => {
                     </li>
                   ))}
                 </ul>
+                <button 
+                  onClick={() => powerPlayDraft('left')}
+                  className={'powerPlayBtn'}
+                  disabled={team1PowerUsed || player1Cards.length > 0 || currentPlayer !== team1[0]}
+                >
+                  {team1PowerUsed ? 'Power Used' : 'Power Play'}
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ flex: 1, maxHeight: '82px' }}>
@@ -616,9 +745,15 @@ const CardGame = (props: Props) => {
                     </li>
                   ))}
                 </ul>
+                <button 
+                  onClick={() => powerPlayDraft('right')}
+                  className={'powerPlayBtn'}
+                  disabled={team2PowerUsed || player2Cards.length > 0 || currentPlayer !== team2[0]}
+                >
+                  {team2PowerUsed ? 'Power Used' : 'Power Play'}
+                </button>
               </div>
             </div>
-        </>
       )}
 
       {gameState == 'gameOver' && (
@@ -648,4 +783,3 @@ const CardGame = (props: Props) => {
 };
 
 export default CardGame;
-
