@@ -87,16 +87,21 @@ const CardGame = (props: Props) => {
   const SHEET_RANGE = '3Key Game!A1:B30';
   const API_KEY = clientSecrets.API_KEY;
 
-  const startGame = () => {
-    if (team1.length === 0 || team2.length === 0) {
+  /**
+   * Starts the game with the provided team data
+   * @param team1Data - Array of team 1 player names
+   * @param team2Data - Array of team 2 player names
+   */
+  const startGameWithTeams = (team1Data: string[], team2Data: string[]) => {
+    if (team1Data.length === 0 || team2Data.length === 0) {
       alert('Both teams must have at least one player.');
       return;
     }
 
     setGameState('gamePlaying');
-    setTotalRound(Math.max(team1.length, team2.length));
+    setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
-    nextRound(team1, team2);
+    nextRound(team1Data, team2Data);
   };
 
   const loadDataFromGoogleSheet = async () => {
@@ -110,7 +115,7 @@ const CardGame = (props: Props) => {
       const team1Temp: string[] = [];
       const team2Temp: string[] = [];
       let index = 1;
-      data.values.slice(1).forEach((item) => {
+      data.values.slice(1).forEach((item: any[]) => {
         if (item[0]) {
           team1Temp.push(item[0]);
         } else {
@@ -126,9 +131,15 @@ const CardGame = (props: Props) => {
         }
       });
 
-      setTeam1(shuffleArray(team1Temp));
-      setTeam2(shuffleArray(team2Temp));
+      const shuffledTeam1 = shuffleArray(team1Temp);
+      const shuffledTeam2 = shuffleArray(team2Temp);
+      
+      setTeam1(shuffledTeam1);
+      setTeam2(shuffledTeam2);
       setGameState('gameLoaded');
+
+      // Pass the team data directly to startGame to avoid async state issues
+      startGameWithTeams(shuffledTeam1, shuffledTeam2);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -183,7 +194,7 @@ const CardGame = (props: Props) => {
       return 'king';
     }
     if (num === 0) {
-      return 'joker';
+      return 'back';
     }
     return num.toString();
   };
@@ -195,8 +206,8 @@ const CardGame = (props: Props) => {
       '♠': 'spades',
       '♣': 'clubs'
     };
-    if (mapNumToCardValues(value) === 'joker') {
-      return '/images/red_joker.png';
+    if (mapNumToCardValues(value) === 'back') {
+      return '/images/back_card.png';
     }
     return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`; // Image file path
   };
@@ -463,15 +474,10 @@ const CardGame = (props: Props) => {
                 {team1.length === 0 && team2.length === 0 && (
                   <div>
                     <button
-                      onClick={() => loadDataFromGoogleSheet()} className={'btn'} disabled={gameState == 'gameLoading'}>
-                      Load Game
+                      onClick={() => loadDataFromGoogleSheet()} className={'btnStart'} disabled={gameState == 'gameLoading'}>
+                      Start Game
                     </button>
                   </div>
-                )}
-                {team1.length > 0 && team2.length > 0 && (
-                  <button onClick={startGame} className={'btnStart'}>
-                    Start Game
-                  </button>
                 )}
               </div>
             </div>
@@ -507,15 +513,6 @@ const CardGame = (props: Props) => {
                 </ul>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ flex: 1, maxHeight: '82px' }}>
-                  <h2 style={{ marginTop: 0, marginBottom: '5px' }}>
-                    Current Round: {roundNumber}
-                  </h2>
-                  <h2 style={{ marginTop: 0, marginBottom: '5px' }}>
-                    {' '}
-                    Race to {totalRound}
-                  </h2>
-                </div>
                 <div style={{ display: 'flex' }}>
                   <div
                     style={{
