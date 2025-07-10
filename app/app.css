@@ -161,10 +161,19 @@ input:disabled {
 }
 
 .sumNumber {
-    margin: 0 40px;
-    font-size: 60px;
-    padding-top: 213px;
-    width: 48px;
+    display: inline-block;
+    height: 60px;
+    line-height: 52px;
+    margin: 15px 0 20px 0;
+    padding: 0 14px;
+    font-size: 60px;    
+    font-weight: bold;
+    color: #fff;    
+    border-radius: 12px;    
+}
+
+.text-black {
+    color: #000;
 }
 
 .cardContainer {
@@ -198,14 +207,14 @@ input:disabled {
     min-width: 400px;
 }
 
-.btn {
-    padding: 20px 40px;
+.btn {    
     font-size: 20px;
-    margin-bottom: 30px;
-    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-top: 15px;
     background: #222;
     color: #fff;
     min-width: 300px;
+    height: 60px;
 }
 
 .btnStart {
@@ -221,11 +230,12 @@ input:disabled {
 .blinkInfinite {
     background-color: red;
     animation: blink-bg 1s infinite alternate;
-    display: block;
-    padding: 20px 40px;
+    display: block;    
     color: #fff;
     font-size: 32px;
     max-width: 400px;
+    height: 40px;
+    line-height: 37px;
     margin: 0 auto;
 }
 
@@ -241,6 +251,23 @@ input:disabled {
     align-items: center;
 }
 
+.teamName {
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 12px;    
+}
+
+.team1 {
+    background: blue;
+}
+
+.team2 {
+    background: red;
+}
+
 .ulTeam {
     padding: 0;
     list-style: none;
@@ -248,6 +275,10 @@ input:disabled {
 
 .m0 {
     margin: 0
+}
+
+.mb-1 {
+    margin-bottom: 16px;
 }
 
 .playerStatus {
