@@ -1,15 +1,25 @@
 import { useCallback, useState } from 'react';
-import PlayerCardDrawer from '../PlayerCardDrawer';
-import RoundStatus from '../RoundStatus';
-
-interface Card {
-  value: number;
-  suit: string;
-}
+import PlayerCardDrawer from '../components/PlayerCardDrawer';
+import RoundStatus from '../components/RoundStatus';
+import Card from '../models/Card';
+import PlayerData from '~/models/PlayerData';
 
 // Card values (1-9) and suits
 const cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const suits = ['♦', '♥', '♠', '♣']; // Suit hierarchy: Diamond > Heart > Spade > Clu
+const suitRank: { [key: string]: number } = {
+  '♦': 4,
+  '♥': 3,
+  '♠': 2,
+  '♣': 1
+};
+
+const CARDS_COVER = [
+  { value: 0, suit: '' },
+  { value: 0, suit: '' },
+  { value: 0, suit: '' }
+];
+
 // Function to create a full deck of cards
 const createDeck = () => {
   const deck: Card[] = [];
@@ -43,19 +53,6 @@ const shuffleArray = (array: string[]) => {
   return array;
 };
 
-const suitRank: { [key: string]: number } = {
-  '♦': 4,
-  '♥': 3,
-  '♠': 2,
-  '♣': 1
-};
-
-const CARDS_COVER = [
-  { value: 0, suit: '' },
-  { value: 0, suit: '' },
-  { value: 0, suit: '' }
-];
-
 interface Props {
   clientSecrets: {
     API_KEY: string;
@@ -64,7 +61,6 @@ interface Props {
 
 const CardGame = (props: Props) => {
   const { clientSecrets } = props;
-  const [deck, setDeck] = useState<Card[]>(shuffleDeck(DECKS)); // Initialize and shuffle the deck
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
   const [team1Score, setTeam1Score] = useState(0);
@@ -77,26 +73,18 @@ const CardGame = (props: Props) => {
   const [player1Sum, setPlayer1Sum] = useState(0);
   const [player1Cards, setPlayer1Cards] = useState<Card[]>([]);
   const [isFinishDuel, setIsFinishDuel] = useState(false);
+  const [topLeftCards, setTopLeftCards] = useState<Card[]>([]);
+  const [bottomLeftCards, setBottomLeftCards] = useState<Card[]>([]);
+  const [topRightCards, setTopRightCards] = useState<Card[]>([]);
+  const [bottomRightCards, setBottomRightCards] = useState<Card[]>([]);
   const [topLeftRevealed, setTopLeftRevealed] = useState(false);
   const [bottomLeftRevealed, setBottomLeftRevealed] = useState(false);
   const [topRightRevealed, setTopRightRevealed] = useState(false);
   const [bottomRightRevealed, setBottomRightRevealed] = useState(false);
-  const [topLeftTeamName, setTopLeftTeamName] = useState('');
-  const [topLeftPlayerName, setTopLeftPlayerName] = useState('');
-  const [topLeftPlayerSum, setTopLeftPlayerSum] = useState(0);
-  const [topLeftPlayerCards, setTopLeftPlayerCards] = useState<Card[]>([]);
-  const [bottomLeftTeamName, setBottomLeftTeamName] = useState('');
-  const [bottomLeftPlayerName, setBottomLeftPlayerName] = useState('');
-  const [bottomLeftPlayerSum, setBottomLeftPlayerSum] = useState(0);
-  const [bottomLeftPlayerCards, setBottomLeftPlayerCards] = useState<Card[]>([]);
-  const [topRightTeamName, setTopRightTeamName] = useState('');
-  const [topRightPlayerName, setTopRightPlayerName] = useState('');
-  const [topRightPlayerSum, setTopRightPlayerSum] = useState(0);
-  const [topRightPlayerCards, setTopRightPlayerCards] = useState<Card[]>([]);
-  const [bottomRightTeamName, setBottomRightTeamName] = useState('');
-  const [bottomRightPlayerName, setBottomRightPlayerName] = useState('');
-  const [bottomRightPlayerSum, setBottomRightPlayerSum] = useState(0);
-  const [bottomRightPlayerCards, setBottomRightPlayerCards] = useState<Card[]>([]);
+  const [topLeftPlayerData, setTopLeftPlayerData] = useState<PlayerData>({ cards: [], name: '', sum: 0, team: '' });
+  const [topRightPlayerData, setTopRightPlayerData] = useState<PlayerData>({ cards: [], name: '', sum: 0, team: '' });
+  const [bottomLeftPlayerData, setBottomLeftPlayerData] = useState<PlayerData>({ cards: [], name: '', sum: 0, team: '' });
+  const [bottomRightPlayerData, setBottomRightPlayerData] = useState<PlayerData>({ cards: [], name: '', sum: 0, team: '' });
   const [winner, setWinner] = useState('');
   const [isFirstTurn, setIsFirstTurn] = useState(true); // first turn of the entire game
   const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> gameLoaded -> gamePlaying -> gameOver
@@ -181,40 +169,49 @@ const CardGame = (props: Props) => {
       }
 
       setDuelIndex(0);
-
+      const deck = shuffleDeck([...DECKS]);
+      setTopLeftCards(drawCards(deck));
+      setBottomLeftCards(drawCards(deck));
+      setTopRightCards(drawCards(deck));
+      setBottomRightCards(drawCards(deck));
       setTopLeftRevealed(false);
       setBottomLeftRevealed(false);
       setTopRightRevealed(false);
       setBottomRightRevealed(false);
-      setTopLeftPlayerName('');
-      setBottomLeftPlayerName('');
-      setTopRightPlayerName('');
-      setBottomRightPlayerName('');
-      setTopLeftTeamName('');
-      setBottomLeftTeamName('');
-      setTopRightTeamName('');
-      setBottomRightTeamName('');
-      setTopLeftPlayerCards([]);
-      setBottomLeftPlayerCards([]);
-      setTopRightPlayerCards([]);
-      setBottomRightPlayerCards([]);
-      setTopLeftPlayerSum(0);
-      setBottomLeftPlayerSum(0);
-      setTopRightPlayerSum(0);
-      setBottomRightPlayerSum(0);
+      setTopLeftPlayerData({
+        name: '',
+        team: '',
+        sum: -1,
+        cards: []
+      });
+      setBottomLeftPlayerData({
+        name: '',
+        team: '',
+        sum: -1,
+        cards: []
+      });
+      setTopRightPlayerData({
+        name: '',
+        team: '',
+        sum: -1,
+        cards: []
+      });
+      setBottomRightPlayerData({
+        name: '',
+        team: '',
+        sum: -1,
+        cards: []
+      });
       setWinner('');
       setIsFinishDuel(false);
-      setDeck(shuffleDeck(DECKS));
       setRoundNumber((prev) => prev + 1);
     },
     [roundNumber]
   );
 
-  // Function to draw 3 unique cards from the deck
-  const drawUniqueCards = () => {
-    const drawnCards = deck.slice(0, 3); // Draw the first 3 cards
-    setDeck(deck.slice(3)); // Remove the drawn cards from the deck
-    return drawnCards;
+  // Draw 3 unique cards from the deck
+  const drawCards = (deck: Card[]) => {
+    return deck.splice(0, 3);
   };
 
   const mapNumToCardValues = (num: number) => {
@@ -272,9 +269,9 @@ const CardGame = (props: Props) => {
     });
   }, []);
 
-  const playerDraw = (side: string) => {
-    const pCards = drawUniqueCards();
-    const pSum = calculateSum(pCards);
+  const playerSelect = (side: string) => {
+    let pCards: Card[];
+    let pSum: number;
 
     setDuelIndex((duelIndex) => duelIndex + 1);
     setIsFirstTurn(false);
@@ -283,28 +280,44 @@ const CardGame = (props: Props) => {
     const teamName = getTeamByCurrentPlayer(currentPlayerName);
 
     if (side === 'top-left') {
-      setTopLeftPlayerName(currentPlayerName);
-      setTopLeftTeamName(teamName);
-      setTopLeftPlayerCards(pCards);
-      setTopLeftPlayerSum(pSum);
+      pCards = topLeftCards;
+      pSum = calculateSum(pCards);
+      setTopLeftPlayerData({
+        name: currentPlayerName,
+        team: teamName,
+        sum: pSum,
+        cards: pCards
+      });
       setTopLeftRevealed(true);
     } else if (side === 'bottom-left') {
-      setBottomLeftPlayerName(currentPlayerName);
-      setBottomLeftTeamName(teamName);
-      setBottomLeftPlayerCards(pCards);
-      setBottomLeftPlayerSum(pSum);
+      pCards = bottomLeftCards;
+      pSum = calculateSum(pCards);
+      setBottomLeftPlayerData({
+        name: currentPlayerName,
+        team: teamName,
+        sum: pSum,
+        cards: pCards
+      });
       setBottomLeftRevealed(true);
     } else if (side === 'top-right') {
-      setTopRightPlayerName(currentPlayerName);
-      setTopRightTeamName(teamName);
-      setTopRightPlayerCards(pCards);
-      setTopRightPlayerSum(pSum);
+      pCards = topRightCards;
+      pSum = calculateSum(pCards);
+      setTopRightPlayerData({
+        name: currentPlayerName,
+        team: teamName,
+        sum: pSum,
+        cards: pCards
+      });
       setTopRightRevealed(true);
     } else {// bottom-right
-      setBottomRightPlayerName(currentPlayerName);
-      setBottomRightTeamName(teamName);
-      setBottomRightPlayerCards(pCards);
-      setBottomRightPlayerSum(pSum);
+      pCards = bottomRightCards;
+      pSum = calculateSum(pCards);
+      setBottomRightPlayerData({
+        name: currentPlayerName,
+        team: teamName,
+        sum: pSum,
+        cards: pCards
+      });
       setBottomRightRevealed(true);
     }
 
@@ -315,29 +328,17 @@ const CardGame = (props: Props) => {
     } else {// second draw in a duel
       calculateResult(player1Sum, pSum, player1Cards, pCards, player1Name, currentPlayerName);
       setIsFinishDuel(true);
-      let newDeck = deck.slice(3);
-      if (topLeftPlayerCards.length == 0 || !topLeftRevealed) {
-        const topLeftCards = newDeck.slice(0, 3);
-        newDeck = newDeck.slice(3);
-        setTopLeftPlayerCards(topLeftCards);
-        setTopLeftPlayerSum(calculateSum(topLeftCards));
+      if (topLeftPlayerData.cards.length == 0 || !topLeftRevealed) {
+        setTopLeftPlayerData(prev => ({ ...prev, cards: topLeftCards, sum: calculateSum(topLeftCards) }));
       }
-      if (bottomLeftPlayerCards.length == 0 || !bottomLeftRevealed) {
-        const bottomLeftCards = newDeck.slice(0, 3);
-        newDeck = newDeck.slice(3);
-        setBottomLeftPlayerCards(bottomLeftCards);
-        setBottomLeftPlayerSum(calculateSum(bottomLeftCards));
+      if (bottomLeftPlayerData.cards.length == 0 || !bottomLeftRevealed) {
+        setBottomLeftPlayerData(prev => ({ ...prev, cards: bottomLeftCards, sum: calculateSum(bottomLeftCards) }));
       }
-      if (topRightPlayerCards.length == 0 || !topRightRevealed) {
-        const topRightCards = newDeck.slice(0, 3);
-        newDeck = newDeck.slice(3);
-        setTopRightPlayerCards(topRightCards);
-        setTopRightPlayerSum(calculateSum(topRightCards));
+      if (topRightPlayerData.cards.length == 0 || !topRightRevealed) {
+        setTopRightPlayerData(prev => ({ ...prev, cards: topRightCards, sum: calculateSum(topRightCards) }));
       }
-      if (bottomRightPlayerCards.length == 0 || !bottomRightRevealed) {// bottom right
-        const bottomRightCards = newDeck.slice(0, 3);
-        setBottomRightPlayerCards(bottomRightCards);
-        setBottomRightPlayerSum(calculateSum(bottomRightCards));
+      if (bottomRightPlayerData.cards.length == 0 || !bottomRightRevealed) {// bottom right
+        setBottomRightPlayerData(prev => ({ ...prev, cards: bottomRightCards, sum: calculateSum(bottomRightCards) }));
       }
     }
   };
@@ -353,8 +354,7 @@ const CardGame = (props: Props) => {
   };
 
   // Function to calculate the result and handle elimination
-  const calculateResult = useCallback(
-    (p1Sum: number, p2Sum: number, p1Cards: Card[], p2Cards: Card[], p1Name: string, p2Name: string) => {
+  const calculateResult = useCallback((p1Sum: number, p2Sum: number, p1Cards: Card[], p2Cards: Card[], p1Name: string, p2Name: string) => {
       let winner: string;
       let losingTeam: string[];
       let isPlayer1Winner: boolean;
@@ -445,54 +445,54 @@ const CardGame = (props: Props) => {
         {(gameState == 'welcome' ||
           gameState == 'gameLoading' ||
           gameState == 'gameLoaded') && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%'
-              }}
-            >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%'
+            }}
+          >
+            <div>
+              <h1>Thorlit 3Key</h1>
+              <div className={'controlContainer'}>
+                <label className={'labelControl'} htmlFor='sheetId'>
+                  Sheet Id
+                </label>
+                <input
+                  className={'textControl'}
+                  id='sheetId'
+                  type='text'
+                  value={SHEET_ID}
+                  disabled={gameState != 'welcome'}
+                />
+              </div>
+              <div className={'controlContainer'}>
+                <label className={'labelControl'} htmlFor='sheetRange'>
+                  Sheet Range
+                </label>
+                <input
+                  className={'textControl'}
+                  id='sheetRange'
+                  type='text'
+                  value={SHEET_RANGE}
+                  disabled={gameState != 'welcome'}
+                />
+              </div>
               <div>
-                <h1>Thorlit 3Key</h1>
-                <div className={'controlContainer'}>
-                  <label className={'labelControl'} htmlFor='sheetId'>
-                    Sheet Id
-                  </label>
-                  <input
-                    className={'textControl'}
-                    id='sheetId'
-                    type='text'
-                    value={SHEET_ID}
-                    disabled={gameState != 'welcome'}
-                  />
-                </div>
-                <div className={'controlContainer'}>
-                  <label className={'labelControl'} htmlFor='sheetRange'>
-                    Sheet Range
-                  </label>
-                  <input
-                    className={'textControl'}
-                    id='sheetRange'
-                    type='text'
-                    value={SHEET_RANGE}
-                    disabled={gameState != 'welcome'}
-                  />
-                </div>
-                <div>
-                  {team1.length === 0 && team2.length === 0 && (
-                    <div>
-                      <button
-                        onClick={() => loadDataFromGoogleSheet()} className={'btnStart'} disabled={gameState == 'gameLoading'}>
-                        Start Game
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {team1.length === 0 && team2.length === 0 && (
+                  <div>
+                    <button
+                      onClick={() => loadDataFromGoogleSheet()} className={'btnStart'} disabled={gameState == 'gameLoading'}>
+                      Start Game
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
       </>
     );
   }
@@ -534,25 +534,19 @@ const CardGame = (props: Props) => {
                 >
                   <PlayerCardDrawer
                     className={'mb-1'}
-                    playerName={topLeftPlayerName || '?'}
-                    teamName={topLeftTeamName}
-                    cards={topLeftPlayerCards}
-                    sum={topLeftPlayerSum}
-                    onDraw={() => playerDraw('top-left')}
-                    side="left"
-                    disabled={isFinishDuel || topLeftPlayerCards.length > 0}
+                    playerData={topLeftPlayerData}
+                    onSelect={() => playerSelect('top-left')}
+                    side='left'
+                    disabled={isFinishDuel || topLeftPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
                     CARDS_COVER={CARDS_COVER}
                   />
                   <PlayerCardDrawer
                     className={''}
-                    playerName={bottomLeftPlayerName || '?'}
-                    teamName={bottomLeftTeamName}
-                    cards={bottomLeftPlayerCards}
-                    sum={bottomLeftPlayerSum}
-                    onDraw={() => playerDraw('bottom-left')}
-                    side="left"
-                    disabled={isFinishDuel || bottomLeftPlayerCards.length > 0}
+                    playerData={bottomLeftPlayerData}
+                    onSelect={() => playerSelect('bottom-left')}
+                    side='left'
+                    disabled={isFinishDuel || bottomLeftPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
                     CARDS_COVER={CARDS_COVER}
                   />
@@ -567,25 +561,19 @@ const CardGame = (props: Props) => {
                 >
                   <PlayerCardDrawer
                     className={'mb-1'}
-                    playerName={topRightPlayerName || '?'}
-                    teamName={topRightTeamName}
-                    cards={topRightPlayerCards}
-                    sum={topRightPlayerSum}
-                    onDraw={() => playerDraw('top-right')}
-                    side="right"
-                    disabled={isFinishDuel || topRightPlayerCards.length > 0}
+                    playerData={topRightPlayerData}
+                    onSelect={() => playerSelect('top-right')}
+                    side='right'
+                    disabled={isFinishDuel || topRightPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
                     CARDS_COVER={CARDS_COVER}
                   />
                   <PlayerCardDrawer
                     className={''}
-                    playerName={bottomRightPlayerName || '?'}
-                    teamName={bottomRightTeamName}
-                    cards={bottomRightPlayerCards}
-                    sum={bottomRightPlayerSum}
-                    onDraw={() => playerDraw('bottom-right')}
-                    side="right"
-                    disabled={isFinishDuel || bottomRightPlayerCards.length > 0}
+                    playerData={bottomRightPlayerData}
+                    onSelect={() => playerSelect('bottom-right')}
+                    side='right'
+                    disabled={isFinishDuel || bottomRightPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
                     CARDS_COVER={CARDS_COVER}
                   />
