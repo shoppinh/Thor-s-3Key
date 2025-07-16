@@ -36,3 +36,6 @@ Make sure to deploy the output of `remix build`
 
 - `build/server`
 - `build/client`
+
+### Commands
+`npx kill-port 5173`

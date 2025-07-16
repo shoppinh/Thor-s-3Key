@@ -17,7 +17,7 @@ export const links: LinksFunction = () => [
 ];
 
 // existing imports
-import CardGame from './routes/minigame';
+import CardGame from './routes/game';
 
 export async function loader() {
   return json({
