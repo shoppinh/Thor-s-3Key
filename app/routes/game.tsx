@@ -428,13 +428,24 @@ const CardGame = (props: Props) => {
     [getCardHighestSuitAndValue, team1, team2]
   );
 
-  const renderTheCards = (cards: Card[]) => {
+  /**
+   * Renders the cards with optional click functionality
+   * @param cards - Array of cards to render 
+   * @param onCardClick - Optional click handler for card images
+   * @param disabled - Whether card clicks are disabled
+   * @returns React elements for the cards
+   */
+  const renderTheCards = (cards: Card[], onCardClick?: () => void, disabled?: boolean) => {
     return cards.map((card, index) => (
       <img
         key={index}
         src={getCardImage(card.value, card.suit)}
         alt={`${card.value}${card.suit}`}
-        style={{ width: '150px' }}
+        style={{ 
+          width: '150px',
+          cursor: onCardClick && !disabled ? 'pointer' : 'default'
+        }}
+        onClick={onCardClick && !disabled ? onCardClick : undefined}
       />
     ));
   };

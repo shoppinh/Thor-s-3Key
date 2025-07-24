@@ -15,7 +15,7 @@ interface PlayerCardDrawerProps {
   onSelect: () => void;
   side: 'left' | 'right';
   disabled: boolean;
-  renderTheCards: (cards: Card[]) => React.ReactNode;
+  renderTheCards: (cards: Card[], onCardClick?: () => void, disabled?: boolean) => React.ReactNode;
   CARDS_COVER: Card[];
 }
 
@@ -62,7 +62,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
                 <button
                   onClick={onSelect}
                   className={'btn'}
-                  style={{ width: '480px' }}
+                  style={{
+                    width: '480px',
+                    cursor: disabled ? 'default' : 'pointer'
+                  }}
                   disabled={disabled}
                 >
                   Draw Cards
@@ -76,7 +79,11 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
             }
           </div>
           <div className={'cardContainer'}>
-            {renderTheCards(playerData.cards.length > 0 ? playerData.cards : CARDS_COVER)}
+            {renderTheCards(
+              playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+              playerData.cards.length === 0 ? onSelect : undefined,
+              disabled
+            )}
           </div>
         </div>
       </>
@@ -97,7 +104,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
                 <button
                   onClick={onSelect}
                   className={'btn'}
-                  style={{ width: '480px' }}
+                  style={{
+                    width: '480px',
+                    cursor: disabled ? 'default' : 'pointer'
+                  }}
                   disabled={disabled}
                 >
                   Draw Cards
@@ -111,7 +121,11 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
             }
           </div>
           <div className={'cardContainer'}>
-            {renderTheCards(playerData.cards.length > 0 ? playerData.cards : CARDS_COVER)}
+            {renderTheCards(
+              playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+              playerData.cards.length === 0 ? onSelect : undefined,
+              disabled
+            )}
           </div>
         </div>
       </>
