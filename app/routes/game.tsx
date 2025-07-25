@@ -14,7 +14,7 @@ import {
   getCardImage,
   calculateSum,
   determineWinner,
-  getTeamByPlayer,
+  getTeamByPlayer
 } from '~/utils/gameUtil';
 
 const DECKS = createDeck();
@@ -196,7 +196,7 @@ const CardGame = (props: Props) => {
     }
 
     if (duelData.duelIndex == 0) {// first draw in a duel
-      let updates: Partial<DuelData> = {
+      const updates: Partial<DuelData> = {
         duelIndex: newDuelIndex,
         currentPlayerName: opponent,
         player1Name: currentPlayer,
@@ -219,10 +219,10 @@ const CardGame = (props: Props) => {
       }
 
       setDuelData(prev => ({ ...prev, ...updates }));
-        } else {// second draw in a duel
+    } else {// second draw in a duel
       calculateResult(duelData.player1Sum, pSum, duelData.player1Cards, pCards, duelData.player1Name, currentPlayer);
-      
-      let updates: Partial<DuelData> = {
+
+      const updates: Partial<DuelData> = {
         duelIndex: newDuelIndex,
         // Don't set currentPlayerName here - let calculateResult handle it
         isFinishDuel: true
@@ -257,7 +257,7 @@ const CardGame = (props: Props) => {
             : newData.topRightPlayerData,
           bottomRightPlayerData: newData.bottomRightPlayerData.cards.length == 0 || !newData.bottomRightRevealed
             ? { ...newData.bottomRightPlayerData, cards: newData.bottomRightCards, sum: calculateSum(newData.bottomRightCards) }
-            : newData.bottomRightPlayerData,
+            : newData.bottomRightPlayerData
         };
       });
     }
@@ -277,8 +277,7 @@ const CardGame = (props: Props) => {
   const calculateResult = useCallback((p1Sum: number, p2Sum: number, p1Cards: Card[], p2Cards: Card[], p1Name: string, p2Name: string) => {
       const { winner, isPlayer1Winner } = determineWinner(p1Sum, p2Sum, p1Cards, p2Cards, p1Name, p2Name);
       const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
-      const losingPlayerTeam = getTeamByCurrentPlayer(losingPlayer);
-      let losingTeam: string[];
+      const losingTeam = getTeamByCurrentPlayer(losingPlayer);
 
       setTeam1Data(prev => ({ ...prev, scoreClass: '' }));
       setTeam2Data(prev => ({ ...prev, scoreClass: '' }));
@@ -315,13 +314,12 @@ const CardGame = (props: Props) => {
       // Get the current team arrays
       const currentTeam1Players = team1Data.players;
       const currentTeam2Players = team2Data.players;
-      losingTeam = losingPlayerTeam === 'team1' ? currentTeam1Players : currentTeam2Players;
 
       // Eliminate the specific losing player from their team
-      const updatedTeam1Players = losingPlayerTeam === 'team1'
+      const updatedTeam1Players = losingTeam === 'team1'
         ? currentTeam1Players.filter(player => player !== losingPlayer)
         : currentTeam1Players;
-      const updatedTeam2Players = losingPlayerTeam === 'team2'
+      const updatedTeam2Players = losingTeam === 'team2'
         ? currentTeam2Players.filter(player => player !== losingPlayer)
         : currentTeam2Players;
 
@@ -330,18 +328,13 @@ const CardGame = (props: Props) => {
 
       // Determine next player after elimination
       let nextPlayer: string;
-      const updatedLosingTeam = losingPlayerTeam === 'team1' ? updatedTeam1Players : updatedTeam2Players;
+      const losingTeamPlayers = losingTeam === 'team1' ? updatedTeam1Players : updatedTeam2Players;
 
-      if (updatedLosingTeam.length > 0) {
+      if (losingTeamPlayers.length > 0) {
         // Losing team still has players after elimination
-        nextPlayer = updatedLosingTeam[0];
-      } else {
-        // Losing team is completely eliminated, next player comes from winning team
-        const winningTeam = losingPlayerTeam === 'team1' ? updatedTeam2Players : updatedTeam1Players;
-        nextPlayer = winningTeam[0];
+        nextPlayer = losingTeamPlayers[0];
+        setDuelData(prev => ({ ...prev, currentPlayerName: nextPlayer }));
       }
-
-      setDuelData(prev => ({ ...prev, currentPlayerName: nextPlayer }));
 
       // Move to the next round after result
       // setTimeout(() => nextRound(team1After, team2After), 4000);

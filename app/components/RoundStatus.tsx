@@ -75,7 +75,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         <button
           onClick={() => nextRound(team1, team2)}
           className={'btnNextRound'}
-          style={{ cursor: 'pointer' }}
         >
           {Math.min(team1.length, team2.length) == 0
             ? 'Finish'
