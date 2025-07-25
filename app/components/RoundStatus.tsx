@@ -4,7 +4,7 @@ import React from 'react';
  * Props for RoundStatus component
  */
 interface RoundStatusProps {
-  winner: string;
+  duelResult: string;
   isFirstTurn: boolean;
   currentPlayerName: string;
   duelIndex: number;
@@ -15,7 +15,7 @@ interface RoundStatusProps {
 
 /**
  * Renders the round status information at the bottom of the screen
- * @param winner - The winner of the current round
+ * @param duelResult - The result of the current duel (e.g. "Player A Wins!")
  * @param isFirstTurn - Whether this is the first turn of the game
  * @param currentPlayerName - The name of the current player
  * @param duelIndex - The current duel index
@@ -24,7 +24,7 @@ interface RoundStatusProps {
  * @param nextRound - Callback function to proceed to next round
  */
 const RoundStatus: React.FC<RoundStatusProps> = ({
-  winner,
+  duelResult,
   isFirstTurn,
   currentPlayerName,
   duelIndex,
@@ -53,7 +53,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </>
     )}
 
-    {!isFirstTurn && currentPlayerName && (
+    {!isFirstTurn && currentPlayerName && Math.min(team1.length, team2.length) > 0 && (
       <>
         {duelIndex == 2 ? (
           <h2 className={'playerStatus'}>NEXT PLAYER IS</h2>
@@ -64,7 +64,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </>
     )}
 
-    {winner && (
+    {duelResult && (
       <div className={'relativeContainer'}>
         <img
           className={'leftHandPointer'}
