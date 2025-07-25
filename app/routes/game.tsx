@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react';
 import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import RoundStatus from '../components/RoundStatus';
 import ChanceStar from '../components/ChanceStar';
+import ConfirmPopup from '../components/ConfirmPopup';
 import Card from '../models/Card';
 import TeamData from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
+import ConfirmPopupData from '~/models/ConfirmPopupData';
 import {
   CARDS_COVER,
   createDeck,
@@ -68,6 +70,12 @@ const CardGame = (props: Props) => {
   const [teamWinner, setTeamWinner] = useState('');
   const [duelResult, setDuelResult] = useState(''); // Individual duel winner (e.g. "Player A Wins!")
   const [isFirstTurn, setIsFirstTurn] = useState(true); // first turn of the entire game
+  const [confirmPopup, setConfirmPopup] = useState<ConfirmPopupData>({
+    isVisible: false,
+    teamName: null,
+    chanceType: null,
+    chanceItemName: ''
+  });
   const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> gameLoaded -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [totalRound, setTotalRound] = useState(0);
@@ -271,6 +279,71 @@ const CardGame = (props: Props) => {
     return getTeamByCurrentPlayer(duelData.currentPlayerName) === 'team1'
       ? team2Data.players[0]
       : team1Data.players[0];
+  };
+
+  /**
+   * Handles chance item clicks - shows confirmation popup
+   * @param teamName - Which team clicked the chance
+   * @param chanceType - Type of chance (second or reveal)
+   */
+  const handleChanceClick = (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => {
+    const chanceItemName = chanceType === 'second' ? 'Second Chance' : 'Reveal Two';
+    
+    setConfirmPopup({
+      isVisible: true,
+      teamName,
+      chanceType,
+      chanceItemName
+    });
+  };
+
+  /**
+   * Handles confirmation popup confirm action
+   */
+  const handleConfirmChance = () => {
+    const { teamName, chanceType } = confirmPopup;
+    
+    if (teamName && chanceType) {
+      if (chanceType === 'second') {
+        // Handle Second Chance logic
+        if (teamName === 'team1') {
+          setTeam1Data(prev => ({ ...prev, useChanceSecond: true }));
+        } else {
+          setTeam2Data(prev => ({ ...prev, useChanceSecond: true }));
+        }
+        // TODO: Implement second chance functionality
+        console.log(`${teamName} used Second Chance`);
+      } else if (chanceType === 'reveal') {
+        // Handle Reveal Two logic
+        if (teamName === 'team1') {
+          setTeam1Data(prev => ({ ...prev, useChanceReveal: true }));
+        } else {
+          setTeam2Data(prev => ({ ...prev, useChanceReveal: true }));
+        }
+        // TODO: Implement reveal two functionality
+        console.log(`${teamName} used Reveal Two`);
+      }
+    }
+    
+    // Hide popup
+    setConfirmPopup({
+      isVisible: false,
+      teamName: null,
+      chanceType: null,
+      chanceItemName: ''
+    });
+  };
+
+  /**
+   * Handles confirmation popup cancel action
+   */
+  const handleCancelChance = () => {
+    setConfirmPopup({
+      isVisible: false,
+      teamName: null,
+      chanceType: null,
+      chanceItemName: ''
+    });
   };
 
   // Function to calculate the result and handle elimination
@@ -551,7 +624,10 @@ const CardGame = (props: Props) => {
           duelIndex={duelData.duelIndex}
           team1={team1Data.players}
           team2={team2Data.players}
+          team1Data={team1Data}
+          team2Data={team2Data}
           nextRound={nextRound}
+          onChanceClick={handleChanceClick}
         />
       )}
 
@@ -577,6 +653,14 @@ const CardGame = (props: Props) => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Popup */}
+      <ConfirmPopup
+        isVisible={confirmPopup.isVisible}
+        chanceItemName={confirmPopup.chanceItemName}
+        onConfirm={handleConfirmChance}
+        onCancel={handleCancelChance}
+      />
     </div>
   );
 };
