@@ -65,7 +65,14 @@ const CardGame = (props: Props) => {
     topLeftPlayerData: { cards: [], name: '', sum: 0, team: '' },
     topRightPlayerData: { cards: [], name: '', sum: 0, team: '' },
     bottomLeftPlayerData: { cards: [], name: '', sum: 0, team: '' },
-    bottomRightPlayerData: { cards: [], name: '', sum: 0, team: '' }
+    bottomRightPlayerData: { cards: [], name: '', sum: 0, team: '' },
+    revealedCards: {
+      topLeft: [],
+      bottomLeft: [],
+      topRight: [],
+      bottomRight: []
+    },
+    revealTwoUsedBy: null
   });
   const [teamWinner, setTeamWinner] = useState('');
   const [duelResult, setDuelResult] = useState(''); // Individual duel winner (e.g. "Player A Wins!")
@@ -170,7 +177,14 @@ const CardGame = (props: Props) => {
         bottomLeftPlayerData: { name: '', team: '', sum: -1, cards: [] },
         topRightPlayerData: { name: '', team: '', sum: -1, cards: [] },
         bottomRightPlayerData: { name: '', team: '', sum: -1, cards: [] },
-        isFinishDuel: false
+        isFinishDuel: false,
+        revealedCards: {
+          topLeft: [],
+          bottomLeft: [],
+          topRight: [],
+          bottomRight: []
+        },
+        revealTwoUsedBy: null
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
@@ -288,7 +302,22 @@ const CardGame = (props: Props) => {
    */
   const handleChanceClick = (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => {
     const chanceItemName = chanceType === 'second' ? 'Second Chance' : 'Reveal Two';
-    
+
+    // Validation rules for reveal two item
+    if (chanceType === 'reveal') {
+      // Rule 1: If any team activated reveal two in this duel, no one can activate it anymore
+      if (duelData.revealTwoUsedBy) {
+        alert(`${duelData.revealTwoUsedBy === 'team1' ? 'Team 1' : 'Team 2'} has already used Reveal Two in this duel. You cannot use it anymore.`);
+        return;
+      }
+
+      // Rule 2: If a duel is finished, reveal two can't be activated
+      if (duelData.isFinishDuel) {
+        alert('Cannot use Reveal Two after a duel is finished.');
+        return;
+      }
+    }
+
     setConfirmPopup({
       isVisible: true,
       teamName,
@@ -298,33 +327,71 @@ const CardGame = (props: Props) => {
   };
 
   /**
+   * Implements the Reveal Two functionality
+   * When a team activates this item, the first two cards of all 4 groups (top-left, bottom-left, top-right, bottom-right)
+   * will be shown face-up while keeping the last card face-down
+   * This provides strategic information about the card distribution across all positions
+   * Note: This does not set the revealed flags - those remain controlled by the original logic
+   */
+  const implementRevealTwo = () => {
+    setDuelData(prev => {
+      const newData = { ...prev };
+
+      // Create mixed card arrays: first 2 cards face-up, last card face-down
+      const createMixedCards = (cards: Card[]) => {
+        return [
+          cards[0], // First card face-up
+          cards[1], // Second card face-up
+          { value: 0, suit: '' } // Third card face-down (back card)
+        ];
+      };
+
+      // Set revealed cards in duelData instead of modifying player data
+      return {
+        ...newData,
+        revealedCards: {
+          topLeft: createMixedCards(newData.topLeftCards),
+          bottomLeft: createMixedCards(newData.bottomLeftCards),
+          topRight: createMixedCards(newData.topRightCards),
+          bottomRight: createMixedCards(newData.bottomRightCards)
+        }
+      };
+    });
+  };
+
+  /**
    * Handles confirmation popup confirm action
    */
   const handleConfirmChance = () => {
     const { teamName, chanceType } = confirmPopup;
-    
+
     if (teamName && chanceType) {
       if (chanceType === 'second') {
         // Handle Second Chance logic
         if (teamName === 'team1') {
-          setTeam1Data(prev => ({ ...prev, useChanceSecond: true }));
+          setTeam1Data(prev => ({ ...prev, useChanceSecond: true, totalChance: prev.totalChance - 1 }));
         } else {
-          setTeam2Data(prev => ({ ...prev, useChanceSecond: true }));
+          setTeam2Data(prev => ({ ...prev, useChanceSecond: true, totalChance: prev.totalChance - 1 }));
         }
         // TODO: Implement second chance functionality
         console.log(`${teamName} used Second Chance`);
       } else if (chanceType === 'reveal') {
         // Handle Reveal Two logic
         if (teamName === 'team1') {
-          setTeam1Data(prev => ({ ...prev, useChanceReveal: true }));
+          setTeam1Data(prev => ({ ...prev, useChanceReveal: true, totalChance: prev.totalChance - 1 }));
         } else {
-          setTeam2Data(prev => ({ ...prev, useChanceReveal: true }));
+          setTeam2Data(prev => ({ ...prev, useChanceReveal: true, totalChance: prev.totalChance - 1 }));
         }
-        // TODO: Implement reveal two functionality
-        console.log(`${teamName} used Reveal Two`);
+
+        // Mark that reveal two has been used in this duel
+        setDuelData(prev => ({ ...prev, revealTwoUsedBy: teamName }));
+
+        // Implement reveal two functionality
+        implementRevealTwo();
+        console.log(`${teamName} used Reveal Two - First two cards face-up, last card face-down`);
       }
     }
-    
+
     // Hide popup
     setConfirmPopup({
       isVisible: false,
@@ -547,7 +614,7 @@ const CardGame = (props: Props) => {
                     side='left'
                     disabled={duelData.isFinishDuel || duelData.topLeftPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
-                    CARDS_COVER={CARDS_COVER}
+                    CARDS_COVER={duelData.revealedCards.topLeft.length > 0 ? duelData.revealedCards.topLeft : CARDS_COVER}
                   />
                   <PlayerCardDrawer
                     className={''}
@@ -556,7 +623,7 @@ const CardGame = (props: Props) => {
                     side='left'
                     disabled={duelData.isFinishDuel || duelData.bottomLeftPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
-                    CARDS_COVER={CARDS_COVER}
+                    CARDS_COVER={duelData.revealedCards.bottomLeft.length > 0 ? duelData.revealedCards.bottomLeft : CARDS_COVER}
                   />
                 </div>
                 <div
@@ -574,7 +641,7 @@ const CardGame = (props: Props) => {
                     side='right'
                     disabled={duelData.isFinishDuel || duelData.topRightPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
-                    CARDS_COVER={CARDS_COVER}
+                    CARDS_COVER={duelData.revealedCards.topRight.length > 0 ? duelData.revealedCards.topRight : CARDS_COVER}
                   />
                   <PlayerCardDrawer
                     className={''}
@@ -583,7 +650,7 @@ const CardGame = (props: Props) => {
                     side='right'
                     disabled={duelData.isFinishDuel || duelData.bottomRightPlayerData.cards.length > 0}
                     renderTheCards={renderTheCards}
-                    CARDS_COVER={CARDS_COVER}
+                    CARDS_COVER={duelData.revealedCards.bottomRight.length > 0 ? duelData.revealedCards.bottomRight : CARDS_COVER}
                   />
                 </div>
               </div>
@@ -626,6 +693,8 @@ const CardGame = (props: Props) => {
           team2={team2Data.players}
           team1Data={team1Data}
           team2Data={team2Data}
+          isFinishDuel={duelData.isFinishDuel}
+          duelData={duelData}
           nextRound={nextRound}
           onChanceClick={handleChanceClick}
         />

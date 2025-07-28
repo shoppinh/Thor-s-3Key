@@ -20,4 +20,11 @@ export default interface DuelData {
   topRightPlayerData: PlayerData;
   bottomLeftPlayerData: PlayerData;
   bottomRightPlayerData: PlayerData;
+  revealedCards: {
+    topLeft: Card[];
+    bottomLeft: Card[];
+    topRight: Card[];
+    bottomRight: Card[];
+  };
+  revealTwoUsedBy?: 'team1' | 'team2' | null;
 } 

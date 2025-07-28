@@ -4,6 +4,8 @@ import TeamData from '~/models/TeamData';
 /**
  * Props for RoundStatus component
  */
+import DuelData from '~/models/DuelData';
+
 interface RoundStatusProps {
   duelResult: string;
   isFirstTurn: boolean;
@@ -13,6 +15,8 @@ interface RoundStatusProps {
   team2: string[];
   team1Data: TeamData;
   team2Data: TeamData;
+  isFinishDuel: boolean;
+  duelData: DuelData;
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => void;
 }
@@ -39,6 +43,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   team2: team2Players,
   team1Data,
   team2Data,
+  isFinishDuel,
+  duelData,
   nextRound,
   onChanceClick,
 }) => {
@@ -72,62 +78,66 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         justifyContent: 'center'
       }}>
         {/* Second Chance */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          cursor: teamData.useChanceSecond ? 'default' : 'pointer',
-          opacity: teamData.useChanceSecond ? 0.5 : 1
-        }}>
-          <img
-            src="/images/chance_second.png"
-            alt="Second Chance"
-            style={{
-              width: '120px',
-              height: '120px',
-              marginBottom: '4px',
-              filter: teamData.useChanceSecond ? 'grayscale(100%)' : 'none'
-            }}
-            onClick={() => !teamData.useChanceSecond && onChanceClick(teamKey, 'second')}
-          />
-          <span style={{
-            fontSize: '15px',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            color: teamData.useChanceSecond ? '#999' : '#333'
+        {!teamData.useChanceSecond && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            cursor: 'pointer',
+            opacity: 1
           }}>
-            Second Chance
-          </span>
-        </div>
+            <img
+              src="/images/chance_second.png"
+              alt="Second Chance"
+              style={{
+                width: '120px',
+                height: '120px',
+                marginBottom: '4px',
+                filter: 'none'
+              }}
+              onClick={() => onChanceClick(teamKey, 'second')}
+            />
+            <span style={{
+              fontSize: '15px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              color: '#333'
+            }}>
+              Second Chance
+            </span>
+          </div>
+        )}
 
         {/* Reveal Two */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          cursor: teamData.useChanceReveal ? 'default' : 'pointer',
-          opacity: teamData.useChanceReveal ? 0.5 : 1
-        }}>
-          <img
-            src="/images/chance_reveal.png"
-            alt="Reveal Two"
-            style={{
-              width: '120px',
-              height: '120px',
-              marginBottom: '4px',
-              filter: teamData.useChanceReveal ? 'grayscale(100%)' : 'none'
-            }}
-            onClick={() => !teamData.useChanceReveal && onChanceClick(teamKey, 'reveal')}
-          />
-          <span style={{
-            fontSize: '15px',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            color: teamData.useChanceReveal ? '#999' : '#333'
+        {!teamData.useChanceReveal && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            cursor: (duelData.revealTwoUsedBy || isFinishDuel) ? 'default' : 'pointer',
+            opacity: (duelData.revealTwoUsedBy || isFinishDuel) ? 0.5 : 1
           }}>
-            Reveal Two
-          </span>
-        </div>
+            <img
+              src="/images/chance_reveal.png"
+              alt="Reveal Two"
+              style={{
+                width: '120px',
+                height: '120px',
+                marginBottom: '4px',
+                filter: (duelData.revealTwoUsedBy || isFinishDuel) ? 'grayscale(100%)' : 'none'
+              }}
+              onClick={() => !duelData.revealTwoUsedBy && !isFinishDuel && onChanceClick(teamKey, 'reveal')}
+            />
+            <span style={{
+              fontSize: '15px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              color: (duelData.revealTwoUsedBy || isFinishDuel) ? '#999' : '#333'
+            }}>
+              Reveal Two
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
