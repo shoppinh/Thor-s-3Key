@@ -56,8 +56,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     // Helper function to get team information for both players
     const getPlayerTeams = () => {
       const firstPlayerTeam = getTeamByPlayer(duelData.player1Name, team1Data.players);
-      const secondPlayerTeam = duelData.player2SideSelected ?
-        getTeamByPlayer(duelData.currentPlayerName, team1Data.players) : null;
+      const secondPlayerTeam = duelData.player2Name ? 
+        getTeamByPlayer(duelData.player2Name, team1Data.players) : null;
 
       return { firstPlayerTeam, secondPlayerTeam };
     };
@@ -66,11 +66,20 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
 
-      // Check if the given team has made their selection
-      const teamHasSelected = (team === firstPlayerTeam && duelData.player1SideSelected) ||
-        (team === secondPlayerTeam && duelData.player2SideSelected);
+      // If only first player has made their selection
+      if (duelData.player1SideSelected && !duelData.player2SideSelected) {
+        // Enable Second Chance for the first player's team
+        return team === firstPlayerTeam;
+      }
 
-      return teamHasSelected;
+      // If both players have made their selections
+      if (duelData.player1SideSelected && duelData.player2SideSelected) {
+        // Enable Second Chance for the second player's team only
+        return team === secondPlayerTeam;
+      }
+
+      // If no one has made a selection yet, disable Second Chance
+      return false;
     };
 
     // Helper function to check if Reveal Two should be enabled for a specific team
