@@ -1,5 +1,6 @@
 import React from 'react';
 import TeamData from '~/models/TeamData';
+import { getTeamByPlayer } from '~/utils/gameUtil';
 
 /**
  * Props for RoundStatus component
@@ -35,112 +36,145 @@ interface RoundStatusProps {
  * @param onChanceClick - Callback when a chance item is clicked
  */
 const RoundStatus: React.FC<RoundStatusProps> = ({
-  duelResult,
-  isFirstTurn,
-  currentPlayerName,
-  duelIndex,
-  team1: team1Players,
-  team2: team2Players,
-  team1Data,
-  team2Data,
-  isFinishDuel,
-  duelData,
-  nextRound,
-  onChanceClick,
-}) => {
+                                                   duelResult,
+                                                   isFirstTurn,
+                                                   currentPlayerName,
+                                                   duelIndex,
+                                                   team1: team1Players,
+                                                   team2: team2Players,
+                                                   team1Data,
+                                                   team2Data,
+                                                   isFinishDuel,
+                                                   duelData,
+                                                   nextRound,
+                                                   onChanceClick
+                                                 }) => {
   const renderTeamChances = (
     teamData: TeamData,
     teamKey: 'team1' | 'team2'
-  ) => (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      width: '300px'
-    }}>
-      {/* Team Name */}
-      <h4
-        className={'teamName ' + teamKey}
-        style={{
-          fontSize: '18px',
-          margin: '0 0 10px 0',
-          padding: '5px 10px'
-        }}>
-        {teamData.name}
-      </h4>
+  ) => {
+    // Helper function to get team information for both players
+    const getPlayerTeams = () => {
+      const firstPlayerTeam = getTeamByPlayer(duelData.player1Name, team1Data.players);
+      const secondPlayerTeam = duelData.player2SideSelected ?
+        getTeamByPlayer(duelData.currentPlayerName, team1Data.players) : null;
 
-      {/* Chance Items */}
+      return { firstPlayerTeam, secondPlayerTeam };
+    };
+
+    // Helper function to check if Second Chance should be enabled for a team
+    const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
+      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+
+      // Check if the given team has made their selection
+      const teamHasSelected = (team === firstPlayerTeam && duelData.player1SideSelected) ||
+        (team === secondPlayerTeam && duelData.player2SideSelected);
+
+      return teamHasSelected;
+    };
+
+    // Helper function to check if Reveal Two should be enabled for a specific team
+    const isRevealTwoEnabled = (team: 'team1' | 'team2') => {
+      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+
+      // Check if the current team has made their selection
+      const currentTeamHasSelected = (team === firstPlayerTeam && duelData.player1SideSelected) ||
+        (team === secondPlayerTeam && duelData.player2SideSelected);
+
+      return !duelData.revealTwoUsedBy && !isFinishDuel && !currentTeamHasSelected;
+    };
+
+    return (
       <div style={{
         display: 'flex',
-        flexDirection: 'row',
-        gap: '15px',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center'
+        width: '300px'
       }}>
-        {/* Second Chance */}
-        {!teamData.useChanceSecond && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            cursor: 'pointer',
-            opacity: 1
+        {/* Team Name */}
+        <h4
+          className={'teamName ' + teamKey}
+          style={{
+            fontSize: '18px',
+            margin: '0 0 10px 0',
+            padding: '5px 10px'
           }}>
-            <img
-              src="/images/chance_second.png"
-              alt="Second Chance"
-              style={{
-                width: '120px',
-                height: '120px',
-                marginBottom: '4px',
-                filter: 'none'
-              }}
-              onClick={() => onChanceClick(teamKey, 'second')}
-            />
-            <span style={{
-              fontSize: '15px',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              color: '#333'
+          {teamData.name}
+        </h4>
+
+        {/* Chance Items */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: '15px',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Second Chance */}
+          {!teamData.useChanceSecond && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default',
+              opacity: isSecondChanceEnabled(teamKey) ? 1 : 0.5
             }}>
+              <img
+                src='/images/chance_second.png'
+                alt='Second Chance'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: isSecondChanceEnabled(teamKey) ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => isSecondChanceEnabled(teamKey) && onChanceClick(teamKey, 'second')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: isSecondChanceEnabled(teamKey) ? '#333' : '#999'
+              }}>
               Second Chance
             </span>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Reveal Two */}
-        {!teamData.useChanceReveal && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            cursor: (duelData.revealTwoUsedBy || isFinishDuel) ? 'default' : 'pointer',
-            opacity: (duelData.revealTwoUsedBy || isFinishDuel) ? 0.5 : 1
-          }}>
-            <img
-              src="/images/chance_reveal.png"
-              alt="Reveal Two"
-              style={{
-                width: '120px',
-                height: '120px',
-                marginBottom: '4px',
-                filter: (duelData.revealTwoUsedBy || isFinishDuel) ? 'grayscale(100%)' : 'none'
-              }}
-              onClick={() => !duelData.revealTwoUsedBy && !isFinishDuel && onChanceClick(teamKey, 'reveal')}
-            />
-            <span style={{
-              fontSize: '15px',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              color: (duelData.revealTwoUsedBy || isFinishDuel) ? '#999' : '#333'
+          {/* Reveal Two */}
+          {!teamData.useChanceReveal && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default',
+              opacity: isRevealTwoEnabled(teamKey) ? 1 : 0.5
             }}>
+              <img
+                src='/images/chance_reveal.png'
+                alt='Reveal Two'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: isRevealTwoEnabled(teamKey) ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => isRevealTwoEnabled(teamKey) && onChanceClick(teamKey, 'reveal')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: isRevealTwoEnabled(teamKey) ? '#333' : '#999'
+              }}>
               Reveal Two
             </span>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div
@@ -218,4 +252,4 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   );
 };
 
-export default RoundStatus; 
+export default RoundStatus;

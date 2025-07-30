@@ -27,4 +27,6 @@ export default interface DuelData {
     bottomRight: Card[];
   };
   revealTwoUsedBy?: 'team1' | 'team2' | null;
+  player1SideSelected?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | '';
+  player2SideSelected?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | '';
 } 
