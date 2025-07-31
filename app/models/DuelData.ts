@@ -3,11 +3,7 @@ import PlayerData from '~/models/PlayerData';
 
 export default interface DuelData {
   duelIndex: number;
-  currentPlayerName: string;
-  player1Name: string;// player1 is the first player in the current duel
-  player1Sum: number;
-  player1Cards: Card[];
-  player2Name: string;// player2 is the second player in the current duel
+  currentPlayerName: string;  
   isFinishDuel: boolean;
   topLeftCards: Card[];
   bottomLeftCards: Card[];
@@ -28,7 +24,11 @@ export default interface DuelData {
     bottomRight: Card[];
   };
   revealTwoUsedBy?: 'team1' | 'team2' | null;// store team has used reveal two in the current duel
+  winningTeam?: 'team1' | 'team2' | null;// store team has won the current duel
   player1SideSelected?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | '';// first player's selection
   player2SideSelected?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | '';// second player's selection
-  winningTeam?: 'team1' | 'team2' | null;// store team has won the current duel
+  player1Name: string;// player1 is the first player in the current duel
+  player1Team: 'team1' | 'team2' | null;// store team of the first player
+  player2Name: string;// player2 is the second player in the current duel
+  player2Team: 'team1' | 'team2' | null;// store team of the second player
 } 

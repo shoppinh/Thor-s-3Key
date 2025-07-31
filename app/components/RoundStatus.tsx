@@ -54,10 +54,10 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     teamKey: 'team1' | 'team2'
   ) => {
     // Helper function to get team information for both players
+    // Now uses the stored team fields from duelData for better reliability
     const getPlayerTeams = () => {
-      const firstPlayerTeam = getTeamByPlayer(duelData.player1Name, team1Data.players);
-      const secondPlayerTeam = duelData.player2Name ? 
-        getTeamByPlayer(duelData.player2Name, team1Data.players) : null;
+      const firstPlayerTeam = duelData.player1Team;
+      const secondPlayerTeam = duelData.player2Team;
 
       return { firstPlayerTeam, secondPlayerTeam };
     };
@@ -86,11 +86,28 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isRevealTwoEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
 
-      // Check if the current team has made their selection
-      const currentTeamHasSelected = (team === firstPlayerTeam && duelData.player1SideSelected) ||
-        (team === secondPlayerTeam && duelData.player2SideSelected);
+      // Basic conditions: Reveal Two hasn't been used and duel isn't finished
+      if (duelData.revealTwoUsedBy || isFinishDuel) {
+        return false;
+      }
 
-      return !duelData.revealTwoUsedBy && !isFinishDuel && !currentTeamHasSelected;
+      // Check if the current team has made their selection and it's not reset by Second Chance
+      const isFirstPlayerTeamSelected = (team === firstPlayerTeam && duelData.player1SideSelected);
+      const isSecondPlayerTeamSelected = (team === secondPlayerTeam && duelData.player2SideSelected);
+      
+      // If first player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
+      if (isFirstPlayerTeamSelected && duelData.player1Name === "?") {
+        return true;
+      }
+      
+      // If second player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
+      if (isSecondPlayerTeamSelected && duelData.player2Name === "?") {
+        return true;
+      }
+
+      // Normal logic: disable if team has made their selection (and not using Second Chance)
+      const currentTeamHasSelected = isFirstPlayerTeamSelected || isSecondPlayerTeamSelected;
+      return !currentTeamHasSelected;
     };
 
     return (
@@ -101,15 +118,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         width: '300px'
       }}>
         {/* Team Name */}
-        <h4
-          className={'teamName ' + teamKey}
-          style={{
-            fontSize: '18px',
-            margin: '0 0 10px 0',
-            padding: '5px 10px'
-          }}>
-          {teamData.name}
-        </h4>
+        {teamData.totalChance > 0 && (
+          <h4
+            className={'teamName ' + teamKey}
+            style={{
+              fontSize: '18px',
+              margin: '0 0 10px 0',
+              padding: '5px 10px'
+            }}>
+            {teamData.name}
+          </h4>
+        )}
 
         {/* Chance Items */}
         <div style={{
