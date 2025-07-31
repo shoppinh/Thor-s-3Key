@@ -44,8 +44,9 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
   }) => {
 
   // Helper function to determine if player can make a selection
-  // True when: no cards drawn OR Second Chance was used (name is "?" and team is "")
-  const canMakeSelection = playerData.cards.length === 0 || (playerData.name === "?" && playerData.team === "");
+  // True when: no cards drawn (normal case)
+  // After Second Chance, show calculated number instead of Draw Cards
+  const canMakeSelection = playerData.cards.length === 0;
 
   return (
     <div
@@ -82,7 +83,13 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
                 </>
               }
               {!canMakeSelection &&
-                <span className={playerData.team === '' ? 'sumNumber text-black' : 'sumNumber ' + playerData.team}>
+                <span 
+                  className={playerData.team === '' ? 'sumNumber text-black' : 'sumNumber ' + playerData.team}
+                  onClick={playerData.name === "?" && playerData.team === "" && !disabled ? onSelect : undefined}
+                  style={{
+                    cursor: playerData.name === "?" && playerData.team === "" && !disabled ? 'pointer' : 'default'
+                  }}
+                >
                   {playerData.sum}
                 </span>
               }
@@ -124,22 +131,28 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = (
                 </>
               }
               {!canMakeSelection &&
-                <span className={playerData.team === '' ? 'sumNumber text-black' : 'sumNumber ' + playerData.team}>
-                  {playerData.sum}
-                </span>
-              }
-            </div>
-            <div className={'cardContainer'}>
-              {renderTheCards(
-                playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canMakeSelection ? onSelect : undefined,
-                disabled
-              )}
-            </div>
+              <span 
+                className={playerData.team === '' ? 'sumNumber text-black' : 'sumNumber ' + playerData.team}
+                onClick={playerData.name === "?" && playerData.team === "" && !disabled ? onSelect : undefined}
+                style={{
+                  cursor: playerData.name === "?" && playerData.team === "" && !disabled ? 'pointer' : 'default'
+                }}
+              >
+                {playerData.sum}
+              </span>
+            }
           </div>
-        </>
-      )}
-    </div>
+          <div className={'cardContainer'}>
+            {renderTheCards(
+              playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+              canMakeSelection ? onSelect : undefined,
+              disabled
+            )}
+          </div>
+        </div>
+      </>
+    )}
+  </div>
   );
 };
 

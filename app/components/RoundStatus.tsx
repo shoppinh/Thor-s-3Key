@@ -75,7 +75,11 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       // If both players have made their selections
       if (duelData.player1SideSelected && duelData.player2SideSelected) {
         // Enable Second Chance for the second player's team only
-        return team === secondPlayerTeam;
+        // But disable if the second team is the winning team (they don't need Second Chance)
+        if (team === secondPlayerTeam) {
+          return duelData.winningTeam !== secondPlayerTeam;
+        }
+        return false;
       }
 
       // If no one has made a selection yet, disable Second Chance

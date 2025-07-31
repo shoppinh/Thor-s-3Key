@@ -365,18 +365,20 @@ const CardGame = (props: Props) => {
    * Determines if a PlayerCardDrawer should be disabled
    * A drawer is enabled (not disabled) if:
    * 1. No cards are drawn yet (normal case), OR
-   * 2. Player has used Second Chance (name is "?" and team is "")
+   * 2. Player has used Second Chance (name is "?" and team is "") and it's their turn
    */
   const isPlayerCardDrawerDisabled = (playerData: PlayerData) => {
-    if (duelData.duelIndex == 2) {
-      return true;
-    }
-
     // If no cards drawn, allow interaction
     if (playerData.cards.length === 0) {
       return false;
     }
-
+    
+    // If Second Chance was used (name is "?" and team is ""), allow interaction if it's their turn
+    if (playerData.name === "?" && playerData.team === "") {
+      // Allow interaction only if this player is the current player
+      return false; // Let them click on the calculated number to make new selection
+    }
+    
     // Otherwise, disable interaction
     return true;
   };
