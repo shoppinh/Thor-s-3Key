@@ -205,6 +205,7 @@ input:disabled {
     background: #222;
     color: #fff;
     min-width: 400px;
+    cursor: pointer;
 }
 
 .btn {    
@@ -215,6 +216,7 @@ input:disabled {
     color: #fff;
     min-width: 300px;
     height: 60px;
+    cursor: pointer;
 }
 
 .btnStart {
@@ -225,6 +227,7 @@ input:disabled {
     background: green;
     color: #fff;
     min-width: 300px;
+    cursor: pointer;
 }
 
 .blinkInfinite {
