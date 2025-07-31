@@ -62,13 +62,30 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       return { firstPlayerTeam, secondPlayerTeam };
     };
 
+    // Helper function to determine which team's turn it is currently
+    const getCurrentTurnTeam = (): 'team1' | 'team2' | null => {
+      if (!duelData.currentPlayerName) return null;
+      
+      // Check if current player is in team1
+      if (team1Data.players.includes(duelData.currentPlayerName)) {
+        return 'team1';
+      }
+      // Check if current player is in team2
+      if (team2Data.players.includes(duelData.currentPlayerName)) {
+        return 'team2';
+      }
+      
+      return null;
+    };
+
     // Helper function to check if Second Chance should be enabled for a team
     const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+      const currentTurnTeam = getCurrentTurnTeam();
 
       // If only first player has made their selection
       if (duelData.player1SideSelected && !duelData.player2SideSelected) {
-        // Enable Second Chance for the first player's team
+        // Enable Second Chance for the first player's team (they can redo their selection)
         return team === firstPlayerTeam;
       }
 
@@ -82,6 +99,11 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         return false;
       }
 
+      // If no one has made a selection yet, only enable for current turn team
+      if (currentTurnTeam !== team) {
+        return false;
+      }
+
       // If no one has made a selection yet, disable Second Chance
       return false;
     };
@@ -89,6 +111,12 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     // Helper function to check if Reveal Two should be enabled for a specific team
     const isRevealTwoEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+      const currentTurnTeam = getCurrentTurnTeam();
+
+      // Only enable chance items for the team whose turn it is
+      if (currentTurnTeam !== team) {
+        return false;
+      }
 
       // Basic conditions: Reveal Two hasn't been used and duel isn't finished
       if (duelData.revealTwoUsedBy || isFinishDuel) {
@@ -254,7 +282,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </>
         )}
 
-        {duelResult && (
+        {duelResult && duelData.isFinishDuel && (
           <div className={'relativeContainer'}>
             <img
               className={'leftHandPointer'}
