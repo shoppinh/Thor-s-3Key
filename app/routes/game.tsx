@@ -34,18 +34,30 @@ const CardGame = (props: Props) => {
     name: 'Team 1',
     score: 0,
     scoreClass: '',
-    totalChance: 2,
+    totalChance: 4, // Increased to accommodate more power-ups
     useChanceSecond: false,
     useChanceReveal: false,
+    useSwapDestiny: false,
+    usePeekMaster: false,
+    useShieldGuardian: false,
+    useChaosReshuffle: false,
+    useMirrorStrike: false,
+    useDoubleEdge: false,
     players: []
   });
   const [team2Data, setTeam2Data] = useState<TeamData>({
     name: 'Team 2',
     score: 0,
     scoreClass: '',
-    totalChance: 2,
+    totalChance: 4, // Increased to accommodate more power-ups
     useChanceSecond: false,
     useChanceReveal: false,
+    useSwapDestiny: false,
+    usePeekMaster: false,
+    useShieldGuardian: false,
+    useChaosReshuffle: false,
+    useMirrorStrike: false,
+    useDoubleEdge: false,
     players: []
   });
   const [duelData, setDuelData] = useState<DuelData>({
@@ -77,7 +89,13 @@ const CardGame = (props: Props) => {
     revealTwoUsedBy: null,
     player1SideSelected: '',
     player2SideSelected: '',
-    winningTeam: null
+    winningTeam: null,
+    swapDestinyUsedBy: null,
+    peekMasterUsedBy: null,
+    peekMasterPosition: null,
+    mirrorStrikeUsedBy: null,
+    doubleEdgeUsedBy: null,
+    chaosReshuffleUsed: false
   });
   const [teamWinner, setTeamWinner] = useState('');
   const [duelResult, setDuelResult] = useState(''); // Individual duel winner (e.g. "Player A Wins!")
@@ -86,7 +104,8 @@ const CardGame = (props: Props) => {
     isVisible: false,
     teamName: null,
     chanceType: null,
-    chanceItemName: ''
+    chanceItemName: '',
+    chanceCost: 1
   });
   const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> gameLoaded -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
@@ -124,7 +143,7 @@ const CardGame = (props: Props) => {
       const team1Temp: string[] = [];
       const team2Temp: string[] = [];
       let index = 1;
-      data.values.slice(1).forEach((item: any[]) => {
+      data.values.slice(1).forEach((item: string[]) => {
         if (item[0]) {
           team1Temp.push(item[0]);
         } else {
@@ -411,16 +430,37 @@ const CardGame = (props: Props) => {
   /**
    * Handles chance item clicks - shows confirmation popup
    * @param teamName - Which team clicked the chance
-   * @param chanceType - Type of chance (second or reveal)
+   * @param chanceType - Type of chance
    */
-  const handleChanceClick = (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => {
-    const chanceItemName = chanceType === 'second' ? 'Second Chance' : 'Reveal Two';
+  const handleChanceClick = (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal' | 'swap' | 'peek' | 'shield' | 'chaos' | 'mirror' | 'double') => {
+    const chanceNames = {
+      second: 'Second Chance',
+      reveal: 'Reveal Two',
+      swap: 'Swap Destiny',
+      peek: 'Peek Master',
+      shield: 'Shield Guardian',
+      chaos: 'Chaos Reshuffle',
+      mirror: 'Mirror Strike',
+      double: 'Double Edge'
+    };
+
+    const chanceCosts = {
+      second: 1,
+      reveal: 1,
+      swap: 1,
+      peek: 1,
+      shield: 1,
+      chaos: 2, // More expensive
+      mirror: 1,
+      double: 1
+    };
 
     setConfirmPopup({
       isVisible: true,
       teamName,
       chanceType,
-      chanceItemName
+      chanceItemName: chanceNames[chanceType],
+      chanceCost: chanceCosts[chanceType]
     });
   };
 
@@ -651,35 +691,181 @@ const CardGame = (props: Props) => {
   };
 
   /**
+   * Implements the Swap Destiny functionality
+   * Swaps the cards between two positions after both players have selected
+   */
+  const implementSwapDestiny = (pos1: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight', pos2: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight') => {
+    setDuelData(prev => {
+      const newData = { ...prev };
+      
+      // Get the cards from both positions
+      const tempCards = newData[`${pos1}Cards`];
+      const pos2Cards = newData[`${pos2}Cards`];
+      
+      // Swap the cards
+      newData[`${pos1}Cards`] = pos2Cards;
+      newData[`${pos2}Cards`] = tempCards;
+
+      // Recalculate sums for affected positions if players have selected them
+      const pos1PlayerData = newData[`${pos1}PlayerData`];
+      const pos2PlayerData = newData[`${pos2}PlayerData`];
+
+      if (pos1PlayerData.cards.length > 0) {
+        pos1PlayerData.sum = calculateSum(newData[`${pos1}Cards`]);
+        pos1PlayerData.cards = newData[`${pos1}Cards`];
+      }
+      if (pos2PlayerData.cards.length > 0) {
+        pos2PlayerData.sum = calculateSum(newData[`${pos2}Cards`]);
+        pos2PlayerData.cards = newData[`${pos2}Cards`];
+      }
+
+      return newData;
+    });
+  };
+
+  /**
+   * Implements the Peek Master functionality
+   * Reveals all cards of one position permanently for strategic advantage
+   */
+  const implementPeekMaster = (position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
+    setDuelData(prev => {
+      const positionKey = position.replace('-', '') as 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
+      const cards = prev[`${positionKey}Cards` as keyof DuelData] as Card[];
+      
+      return {
+        ...prev,
+        peekMasterUsedBy: prev.currentPlayerName ? getTeamByPlayer(prev.currentPlayerName, team1Data.players) : null,
+        peekMasterPosition: position,
+        revealedCards: {
+          ...prev.revealedCards,
+          [positionKey]: cards // Show all 3 cards
+        }
+      };
+    });
+  };
+
+  /**
+   * Implements the Shield Guardian functionality
+   * Protects one team member from elimination
+   */
+  const implementShieldGuardian = (teamKey: 'team1' | 'team2', playerName: string) => {
+    if (teamKey === 'team1') {
+      setTeam1Data(prev => ({ ...prev, shieldedPlayer: playerName }));
+    } else {
+      setTeam2Data(prev => ({ ...prev, shieldedPlayer: playerName }));
+    }
+  };
+
+  /**
+   * Implements the Chaos Reshuffle functionality
+   * Completely reshuffles and redeals all 4 positions
+   */
+  const implementChaosReshuffle = () => {
+    const deck = shuffleDeck([...DECKS]);
+    
+    setDuelData(prev => ({
+      ...prev,
+      topLeftCards: drawCards(deck),
+      bottomLeftCards: drawCards(deck),
+      topRightCards: drawCards(deck),
+      bottomRightCards: drawCards(deck),
+      chaosReshuffleUsed: true,
+      // Reset any previous peeks or reveals
+      revealedCards: {
+        topLeft: [],
+        bottomLeft: [],
+        topRight: [],
+        bottomRight: []
+      }
+    }));
+  };
+
+  /**
+   * Implements the Mirror Strike functionality
+   * Forces opponent to select the same position
+   */
+  const implementMirrorStrike = (position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
+    setDuelData(prev => ({
+      ...prev,
+      mirrorStrikeUsedBy: prev.currentPlayerName ? getTeamByPlayer(prev.currentPlayerName, team1Data.players) : null
+    }));
+    
+    // Auto-select the same position for opponent
+    setTimeout(() => {
+      playerSelect(position);
+    }, 1000);
+  };
+
+  /**
+   * Implements the Double Edge functionality
+   * Applies 2x multiplier to round outcome (both points and elimination)
+   */
+  const implementDoubleEdge = (teamKey: 'team1' | 'team2') => {
+    setDuelData(prev => ({
+      ...prev,
+      doubleEdgeUsedBy: teamKey
+    }));
+  };
+
+  /**
    * Handles confirmation popup confirm action
    */
   const handleConfirmChance = () => {
-    const { teamName, chanceType } = confirmPopup;
+    const { teamName, chanceType, chanceCost } = confirmPopup;
+    const cost = chanceCost || 1;
 
     if (teamName && chanceType) {
-      if (chanceType === 'second') {
-        // Handle Second Chance logic
-        if (teamName === 'team1') {
-          setTeam1Data(prev => ({ ...prev, useChanceSecond: true, totalChance: prev.totalChance - 1 }));
-        } else {
-          setTeam2Data(prev => ({ ...prev, useChanceSecond: true, totalChance: prev.totalChance - 1 }));
-        }
+      // Update team data based on power-up type
+      const updateTeamData = (prev: TeamData) => ({
+        ...prev,
+        totalChance: prev.totalChance - cost,
+        ...(chanceType === 'second' && { useChanceSecond: true }),
+        ...(chanceType === 'reveal' && { useChanceReveal: true }),
+        ...(chanceType === 'swap' && { useSwapDestiny: true }),
+        ...(chanceType === 'peek' && { usePeekMaster: true }),
+        ...(chanceType === 'shield' && { useShieldGuardian: true }),
+        ...(chanceType === 'chaos' && { useChaosReshuffle: true }),
+        ...(chanceType === 'mirror' && { useMirrorStrike: true }),
+        ...(chanceType === 'double' && { useDoubleEdge: true })
+      });
 
-        // Implement second chance functionality
-        implementSecondChance();
-      } else if (chanceType === 'reveal') {
-        // Handle Reveal Two logic
-        if (teamName === 'team1') {
-          setTeam1Data(prev => ({ ...prev, useChanceReveal: true, totalChance: prev.totalChance - 1 }));
-        } else {
-          setTeam2Data(prev => ({ ...prev, useChanceReveal: true, totalChance: prev.totalChance - 1 }));
-        }
+      if (teamName === 'team1') {
+        setTeam1Data(updateTeamData);
+      } else {
+        setTeam2Data(updateTeamData);
+      }
 
-        // Mark that reveal two has been used in this duel
-        setDuelData(prev => ({ ...prev, revealTwoUsedBy: teamName }));
-
-        // Implement reveal two functionality
-        implementRevealTwo();
+      // Execute power-up functionality
+      switch (chanceType) {
+        case 'second':
+          implementSecondChance();
+          break;
+        case 'reveal':
+          setDuelData(prev => ({ ...prev, revealTwoUsedBy: teamName }));
+          implementRevealTwo();
+          break;
+        case 'swap':
+          // For swap, we need UI to select positions - will implement later
+          alert('Select two positions to swap');
+          break;
+        case 'peek':
+          // For peek, we need UI to select position - will implement later
+          alert('Select a position to peek at');
+          break;
+        case 'shield':
+          // For shield, we need UI to select player - will implement later
+          alert('Select a player to shield');
+          break;
+        case 'chaos':
+          implementChaosReshuffle();
+          break;
+        case 'mirror':
+          // Mirror strike is handled in player selection
+          alert('Mirror Strike activated - next selection will be mirrored');
+          break;
+        case 'double':
+          implementDoubleEdge(teamName);
+          break;
       }
     }
 
@@ -688,7 +874,8 @@ const CardGame = (props: Props) => {
       isVisible: false,
       teamName: null,
       chanceType: null,
-      chanceItemName: ''
+      chanceItemName: '',
+      chanceCost: 1
     });
   };
 
@@ -700,7 +887,8 @@ const CardGame = (props: Props) => {
       isVisible: false,
       teamName: null,
       chanceType: null,
-      chanceItemName: ''
+      chanceItemName: '',
+      chanceCost: 1
     });
   };
 
@@ -899,7 +1087,7 @@ const CardGame = (props: Props) => {
               </ul>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
                 <div
                   style={{
                     display: 'flex',
@@ -1034,6 +1222,7 @@ const CardGame = (props: Props) => {
       <ConfirmPopup
         isVisible={confirmPopup.isVisible}
         chanceItemName={confirmPopup.chanceItemName}
+        chanceCost={confirmPopup.chanceCost}
         onConfirm={handleConfirmChance}
         onCancel={handleCancelChance}
       />

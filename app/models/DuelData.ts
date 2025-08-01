@@ -31,4 +31,11 @@ export default interface DuelData {
   player1Team: 'team1' | 'team2' | null;// store team of the first player
   player2Name: string;// player2 is the second player in the current duel
   player2Team: 'team1' | 'team2' | null;// store team of the second player
+  // New power-up tracking
+  swapDestinyUsedBy?: 'team1' | 'team2' | null;
+  peekMasterUsedBy?: 'team1' | 'team2' | null;
+  peekMasterPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
+  mirrorStrikeUsedBy?: 'team1' | 'team2' | null;
+  doubleEdgeUsedBy?: 'team1' | 'team2' | null;
+  chaosReshuffleUsed?: boolean;
 } 

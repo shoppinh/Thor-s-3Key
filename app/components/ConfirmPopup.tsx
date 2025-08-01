@@ -6,6 +6,7 @@ import React from 'react';
 interface ConfirmPopupProps {
   isVisible: boolean;
   chanceItemName: string;
+  chanceCost?: number;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -20,6 +21,7 @@ interface ConfirmPopupProps {
 const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   isVisible,
   chanceItemName,
+  chanceCost = 1,
   onConfirm,
   onCancel
 }) => {
@@ -53,6 +55,14 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
         }}>
           Do you want to use {chanceItemName}?
         </h3>
+        
+        <p style={{
+          margin: '0 0 20px 0',
+          fontSize: '14px',
+          color: '#666'
+        }}>
+          Cost: {chanceCost} chance{chanceCost > 1 ? 's' : ''}
+        </p>
         
         <div style={{
           display: 'flex',

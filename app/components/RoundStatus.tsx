@@ -1,6 +1,5 @@
 import React from 'react';
 import TeamData from '~/models/TeamData';
-import { getTeamByPlayer } from '~/utils/gameUtil';
 
 /**
  * Props for RoundStatus component
@@ -19,7 +18,7 @@ interface RoundStatusProps {
   isFinishDuel: boolean;
   duelData: DuelData;
   nextRound: (team1: string[], team2: string[]) => void;
-  onChanceClick: (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => void;
+  onChanceClick: (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal' | 'swap' | 'peek' | 'shield' | 'chaos' | 'mirror' | 'double') => void;
 }
 
 /**
@@ -147,7 +146,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        width: '300px'
+        // width: '300px'
       }}>
         {/* Team Name */}
         {teamData.totalChance > 0 && (
@@ -231,6 +230,192 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             </span>
             </div>
           )}
+
+          {/* Swap Destiny */}
+          {!teamData.useSwapDestiny && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance > 0 ? 'pointer' : 'default',
+              opacity: teamData.totalChance > 0 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Swap Destiny'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance > 0 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance > 0 && onChanceClick(teamKey, 'swap')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance > 0 ? '#333' : '#999'
+              }}>
+              Swap Destiny
+            </span>
+            </div>
+          )}
+
+          {/* Peek Master */}
+          {!teamData.usePeekMaster && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance > 0 ? 'pointer' : 'default',
+              opacity: teamData.totalChance > 0 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Peek Master'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance > 0 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance > 0 && onChanceClick(teamKey, 'peek')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance > 0 ? '#333' : '#999'
+              }}>
+              Peek Master
+            </span>
+            </div>
+          )}
+
+          {/* Shield Guardian */}
+          {!teamData.useShieldGuardian && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance > 0 ? 'pointer' : 'default',
+              opacity: teamData.totalChance > 0 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Shield Guardian'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance > 0 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance > 0 && onChanceClick(teamKey, 'shield')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance > 0 ? '#333' : '#999'
+              }}>
+              Shield Guardian
+            </span>
+            </div>
+          )}
+
+          {/* Chaos Reshuffle - Costs 2 */}
+          {!teamData.useChaosReshuffle && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance >= 2 ? 'pointer' : 'default',
+              opacity: teamData.totalChance >= 2 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Chaos Reshuffle'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance >= 2 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance >= 2 && onChanceClick(teamKey, 'chaos')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance >= 2 ? '#333' : '#999'
+              }}>
+              Chaos Reshuffle (2)
+            </span>
+            </div>
+          )}
+
+          {/* Mirror Strike */}
+          {!teamData.useMirrorStrike && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance > 0 ? 'pointer' : 'default',
+              opacity: teamData.totalChance > 0 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Mirror Strike'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance > 0 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance > 0 && onChanceClick(teamKey, 'mirror')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance > 0 ? '#333' : '#999'
+              }}>
+              Mirror Strike
+            </span>
+            </div>
+          )}
+
+          {/* Double Edge */}
+          {!teamData.useDoubleEdge && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: teamData.totalChance > 0 ? 'pointer' : 'default',
+              opacity: teamData.totalChance > 0 ? 1 : 0.5
+            }}>
+              <img
+                src='/images/star.png'
+                alt='Double Edge'
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  filter: teamData.totalChance > 0 ? 'none' : 'grayscale(100%)'
+                }}
+                onClick={() => teamData.totalChance > 0 && onChanceClick(teamKey, 'double')}
+              />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: teamData.totalChance > 0 ? '#333' : '#999'
+              }}>
+              Double Edge
+            </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -254,13 +439,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }}
     >
       {/* Left Part - Team 1 Chances */}
-      <div style={{ flex: '0 0 150px' }}>
+      <div style={{ width: '25%' }}>
         {renderTeamChances(team1Data, 'team1')}
       </div>
 
       {/* Middle Part - Current Content */}
       <div style={{
-        flex: '1',
+        width: '50%',
         textAlign: 'center',
         padding: '0 20px'
       }}>
@@ -305,7 +490,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Right Part - Team 2 Chances */}
-      <div style={{ flex: '0 0 150px' }}>
+      <div style={{ width: '25%' }}>
         {renderTeamChances(team2Data, 'team2')}
       </div>
     </div>
