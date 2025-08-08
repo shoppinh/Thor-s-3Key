@@ -399,7 +399,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   style={{
                     width: '120px',
                     height: '120px',
-                    filter: isRevealTwoEnabled(teamKey)
+                    filter: isShieldEnabled(teamKey)
                       ? 'none'
                       : 'grayscale(100%)'
                   }}
@@ -455,7 +455,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   style={{
                     width: '120px',
                     height: '120px',
-                    filter: isRevealTwoEnabled(teamKey)
+                    filter: isLockEnabled(teamKey)
                       ? 'none'
                       : 'grayscale(100%)'
                   }}

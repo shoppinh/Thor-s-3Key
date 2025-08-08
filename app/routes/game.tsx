@@ -116,6 +116,9 @@ const CardGame = (props: Props) => {
   const SHEET_RANGE = '3Key Game!A1:B30';
   const API_KEY = clientSecrets.API_KEY;
 
+  const [sheetId, setSheetId] = useState(SHEET_ID);
+  const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
+
   /**
    * Starts the game with the provided team data
    * @param team1Data - Array of team 1 player names
@@ -1051,8 +1054,8 @@ const CardGame = (props: Props) => {
                   className={'textControl'}
                   id="sheetId"
                   type="text"
-                  value={SHEET_ID}
-                  readOnly
+                  value={sheetId}
+                  onChange={(e) => setSheetId(e.target.value)}
                   disabled={gameState != 'welcome'}
                 />
               </div>
@@ -1064,7 +1067,8 @@ const CardGame = (props: Props) => {
                   className={'textControl'}
                   id="sheetRange"
                   type="text"
-                  value={SHEET_RANGE}
+                  value={sheetRange}
+                  onChange={(e) => setSheetRange(e.target.value)}
                   disabled={gameState != 'welcome'}
                 />
               </div>
