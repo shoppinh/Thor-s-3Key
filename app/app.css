@@ -1,396 +1,429 @@
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.setup-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+.setup-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0;
+}
+.num-input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.note {
+  color: #666;
+  font-size: 12px;
+}
 html {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 *,
 *:before,
 *:after {
-    box-sizing: inherit;
+  box-sizing: inherit;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
 
 html,
 body {
-    height: 100%;
-    margin: 0;
-    line-height: 1.5;
-    color: #121212;
+  height: 100%;
+  margin: 0;
+  line-height: 1.5;
+  color: #121212;
 }
 
 textarea,
 input,
 button {
-    font-size: 1rem;
-    font-family: inherit;
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.2), 0 1px 2px hsla(0, 0%, 0%, 0.2);
-    background-color: white;
-    line-height: 1.5;
-    margin: 0;
+  font-size: 1rem;
+  font-family: inherit;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  box-shadow:
+    0 0px 1px hsla(0, 0%, 0%, 0.2),
+    0 1px 2px hsla(0, 0%, 0%, 0.2);
+  background-color: white;
+  line-height: 1.5;
+  margin: 0;
 }
 
 button {
-    color: #3992ff;
-    font-weight: 500;
+  color: #3992ff;
+  font-weight: 500;
 }
 
 textarea:hover,
 input:hover,
 button:hover {
-    box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.6), 0 1px 2px hsla(0, 0%, 0%, 0.2);
+  box-shadow:
+    0 0px 1px hsla(0, 0%, 0%, 0.6),
+    0 1px 2px hsla(0, 0%, 0%, 0.2);
 }
 
 button:active {
-    box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.4);
-    transform: translateY(1px);
+  box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.4);
+  transform: translateY(1px);
 }
 
-form[action$="destroy"] button {
-    color: #f44250;
+form[action$='destroy'] button {
+  color: #f44250;
 }
 
 .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 body {
-    display: flex;
-    height: 100%;
-    width: 100%;
+  display: flex;
+  height: 100%;
+  width: 100%;
 }
 
 #detail {
-    flex: 1;
-    padding: 10px 4rem;
-    width: 100%;
+  flex: 1;
+  padding: 10px 4rem;
+  width: 100%;
 }
 
 #detail.loading {
-    opacity: 0.25;
-    transition: opacity 200ms;
-    transition-delay: 200ms;
+  opacity: 0.25;
+  transition: opacity 200ms;
+  transition-delay: 200ms;
 }
 
 button:disabled {
-    cursor: not-allowed;
-    opacity: 0.2;
+  cursor: not-allowed;
+  opacity: 0.2;
 }
 
 input:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 @keyframes blink-bg {
-    0% {
-        background-color: red;
-    }
-    100% {
-        background-color: orange;
-    }
+  0% {
+    background-color: red;
+  }
+  100% {
+    background-color: orange;
+  }
 }
 
 @keyframes blink-score {
-    0% {
-        background-color: green;
-    }
-    100% {
-        background-color: orange;
-    }
+  0% {
+    background-color: green;
+  }
+  100% {
+    background-color: orange;
+  }
 }
 
 .blink-score {
-    animation: blink-score 0.2s alternate 10;
+  animation: blink-score 0.2s alternate 10;
 }
 
 /* The hand pointer image */
 .hand-pointer {
-    position: absolute;
-    top: -50px; /* Position above the button */
-    right: -60px; /* Adjust for desired position */
-    width: 50px; /* Adjust size as needed */
-    transform: rotate(20deg); /* Rotate the hand image if needed */
-    animation: point-to-button 1.5s infinite ease-in-out; /* Apply animation */
+  position: absolute;
+  top: -50px; /* Position above the button */
+  right: -60px; /* Adjust for desired position */
+  width: 50px; /* Adjust size as needed */
+  transform: rotate(20deg); /* Rotate the hand image if needed */
+  animation: point-to-button 1.5s infinite ease-in-out; /* Apply animation */
 }
 
 /* Keyframes for pointing animation */
 @keyframes left-point-to-button {
-    0% {
-        transform: translateX(-30px);
-    }
-    50% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-30px);
-    }
+  0% {
+    transform: translateX(-30px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-30px);
+  }
 }
 
 @keyframes right-point-to-button {
-    0% {
-        transform: translateX(30px);
-    }
-    50% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(30px);
-    }
+  0% {
+    transform: translateX(30px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(30px);
+  }
 }
 
 .sumNumber {
-    display: inline-block;
-    height: 60px;
-    line-height: 52px;
-    margin: 15px 0 20px 0;
-    padding: 0 14px;
-    font-size: 60px;    
-    font-weight: bold;
-    color: #fff;    
-    border-radius: 12px;    
+  display: inline-block;
+  height: 60px;
+  line-height: 52px;
+  margin: 15px 0 20px 0;
+  padding: 0 14px;
+  font-size: 60px;
+  font-weight: bold;
+  color: #fff;
+  border-radius: 12px;
 }
 
 .text-black {
-    color: #000;
+  color: #000;
 }
 
 .cardContainer {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .playerContainer {
-    display: flex;
-    flex-direction: column;
-    width: 480px;
+  display: flex;
+  flex-direction: column;
+  width: 480px;
 }
 
 .memberItem {
-    border: 1px solid #aaa;
-    padding: 0 5px;
-    margin-bottom: 5px;
-    min-width: 120px;
-    width: 140px;
-    font-weight: 500;
-    max-width: 140px;
+  border: 1px solid #aaa;
+  padding: 0 5px;
+  margin-bottom: 5px;
+  min-width: 120px;
+  width: 140px;
+  font-weight: 500;
+  max-width: 140px;
 }
 
 .btnNextRound {
-    padding: 20px 40px;
-    font-size: 20px;
-    margin-bottom: 10px;
-    margin-top: 20px;
-    background: #222;
-    color: #fff;
-    min-width: 400px;
-    cursor: pointer;
+  padding: 20px 40px;
+  font-size: 20px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  background: #222;
+  color: #fff;
+  min-width: 400px;
+  cursor: pointer;
 }
 
-.btn {    
-    font-size: 20px;
-    margin-bottom: 20px;
-    margin-top: 15px;
-    background: #222;
-    color: #fff;
-    min-width: 300px;
-    height: 60px;
-    cursor: pointer;
+.btn {
+  font-size: 20px;
+  margin-bottom: 20px;
+  margin-top: 15px;
+  background: #222;
+  color: #fff;
+  min-width: 300px;
+  height: 60px;
+  cursor: pointer;
 }
 
 .btnStart {
-    padding: 20px 40px;
-    font-size: 20px;
-    margin-bottom: 30px;
-    margin-top: 30px;
-    background: green;
-    color: #fff;
-    min-width: 300px;
-    cursor: pointer;
+  padding: 20px 40px;
+  font-size: 20px;
+  margin-bottom: 30px;
+  margin-top: 30px;
+  background: green;
+  color: #fff;
+  min-width: 300px;
+  cursor: pointer;
 }
 
 .blinkInfinite {
-    background-color: red;
-    animation: blink-bg 1s infinite alternate;
-    display: block;    
-    color: #fff;
-    font-size: 32px;
-    max-width: 400px;
-    height: 40px;
-    line-height: 37px;
-    margin: 0 auto;
+  background-color: red;
+  animation: blink-bg 1s infinite alternate;
+  display: block;
+  color: #fff;
+  font-size: 32px;
+  max-width: 400px;
+  height: 40px;
+  line-height: 37px;
+  margin: 0 auto;
 }
 
 .scoreContainer {
-    width: 140px;
-    height: 140px;
-    background: green;
-    display: flex;
-    font-size: 96px;
-    color: #fff;
-    font-weight: bold;
-    justify-content: center;
-    align-items: center;
+  width: 140px;
+  height: 140px;
+  background: green;
+  display: flex;
+  font-size: 96px;
+  color: #fff;
+  font-weight: bold;
+  justify-content: center;
+  align-items: center;
 }
 
 .teamName {
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 12px;    
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 12px;
 }
 
 .team1 {
-    background: blue;
+  background: blue;
 }
 
 .team2 {
-    background: red;
+  background: red;
 }
 
 .ulTeam {
-    padding: 0;
-    list-style: none;
+  padding: 0;
+  list-style: none;
 }
 
 .m0 {
-    margin: 0
+  margin: 0;
 }
 
 .mb-1 {
-    margin-bottom: 16px;
+  margin-bottom: 16px;
 }
 
 .playerStatus {
-    margin-top: 0;
-    margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
 .relativeContainer {
-    position: relative;
-    width: 400px;
-    margin: 0 auto;
+  position: relative;
+  width: 400px;
+  margin: 0 auto;
 }
 
 .drawCardsContainer {
-    position: relative;
+  position: relative;
 }
 
 .leftHandPointer {
-    position: absolute;
-    top: 50px;
-    right: -50px;
-    width: 100px;
-    animation: left-point-to-button 1.5s infinite ease-in-out;
-    pointer-events: none;
+  position: absolute;
+  top: 50px;
+  right: -50px;
+  width: 100px;
+  animation: left-point-to-button 1.5s infinite ease-in-out;
+  pointer-events: none;
 }
 
 .rightHandPointer {
-    position: absolute;
-    top: 50px;
-    left: -50px;
-    width: 100px;
-    animation: right-point-to-button 1.5s infinite ease-in-out;
-    pointer-events: none;
+  position: absolute;
+  top: 50px;
+  left: -50px;
+  width: 100px;
+  animation: right-point-to-button 1.5s infinite ease-in-out;
+  pointer-events: none;
 }
 
 .labelControl {
-    width: 100px;
-    display: inline-block;
-    text-align: left;
+  width: 100px;
+  display: inline-block;
+  text-align: left;
 }
 
 .textControl {
-    width: 300px;
-    border: 1px solid #aaa;
+  width: 300px;
+  border: 1px solid #aaa;
 }
 
 .controlContainer {
-    margin: 20px 0 0 0;
+  margin: 20px 0 0 0;
 }
 
 /* Styles for the card draft system */
 .draft-phase-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: white;
 }
 
 .draft-cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-    max-width: 800px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  max-width: 800px;
 }
 
 .draft-card {
-    cursor: pointer;
-    transition: transform 0.2s;
-    border: 3px solid transparent;
-    border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 3px solid transparent;
+  border-radius: 10px;
 }
 
 .draft-card:hover {
-    transform: translateY(-10px);
+  transform: translateY(-10px);
 }
 
 .draft-card.selected {
-    border-color: gold;
-    transform: translateY(-10px);
+  border-color: gold;
+  transform: translateY(-10px);
 }
 
 /* Power Play Button Styles */
 .powerPlayBtn {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #ff9900;
-    color: white;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #ff9900;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
 }
 
 .powerPlayBtn:hover:not(:disabled) {
-    background-color: #ff6600;
+  background-color: #ff6600;
 }
 
 .powerPlayBtn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
