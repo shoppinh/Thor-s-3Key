@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { useOutletContext } from '@remix-run/react';
+import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext, useSearchParams } from '@remix-run/react';
 import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import RoundStatus from '../components/RoundStatus';
 import ChanceStar from '../components/ChanceStar';
@@ -19,6 +19,7 @@ import {
   calculateSum,
   determineWinner
 } from '~/utils/gameUtil';
+import useSupabaseClient from '~/utils/supabase.client';
 
 const DECKS = createDeck();
 
@@ -38,6 +39,8 @@ type PowerUpsAllocation = {
 
 const CardGame = () => {
   const clientSecrets = useOutletContext<RootContext>();
+  const [params] = useSearchParams();
+  const supabase = useSupabaseClient();
   const [team1Data, setTeam1Data] = useState<TeamData>({
     name: 'Team 1',
     score: 0,
@@ -119,6 +122,49 @@ const CardGame = () => {
 
   const [sheetId, setSheetId] = useState(SHEET_ID);
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
+
+  async function loadDataFromRoom(code: string) {
+    setGameState('gameLoading');
+    try {
+      const roomRes = await supabase.from('rooms').select('id,status').eq('code', code).single();
+      if (roomRes.error || !roomRes.data) {
+        console.error('Room not found', roomRes.error);
+        setGameState('welcome');
+        return;
+      }
+      const roomId = roomRes.data.id as string;
+      const memRes = await supabase
+        .from('room_members')
+        .select('nickname, team')
+        .eq('room_id', roomId);
+      if (memRes.error) {
+        console.error('Members fetch error', memRes.error);
+        setGameState('welcome');
+        return;
+      }
+      const a: string[] = [];
+      const b: string[] = [];
+      (memRes.data || []).forEach((m: { nickname: string; team: 'A' | 'B' | null }) => {
+        if (m.team === 'A') a.push(m.nickname);
+        else if (m.team === 'B') b.push(m.nickname);
+      });
+      const shuffledTeam1 = shuffleArray(a.length ? a : ['TeamA#1']);
+      const shuffledTeam2 = shuffleArray(b.length ? b : ['TeamB#1']);
+      setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1 }));
+      setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2 }));
+      setGameState('setup');
+    } catch (e) {
+      console.error('loadDataFromRoom failed', e);
+      setGameState('welcome');
+    }
+  }
+
+  useEffect(() => {
+    const roomCode = params.get('room');
+    if (roomCode && gameState === 'welcome') {
+      void loadDataFromRoom(roomCode.toUpperCase());
+    }
+  }, [params, gameState]);
 
   /**
    * Starts the game with the provided team data
