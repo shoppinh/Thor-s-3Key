@@ -1,0 +1,17 @@
+{
+  "name": "Thor's 3Key",
+  "short_name": "3Key",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1221",
+  "theme_color": "#0b1221",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 64x64 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
+
+
