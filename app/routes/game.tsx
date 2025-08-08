@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useOutletContext } from '@remix-run/react';
 import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import RoundStatus from '../components/RoundStatus';
 import ChanceStar from '../components/ChanceStar';
@@ -21,11 +22,12 @@ import {
 
 const DECKS = createDeck();
 
-interface Props {
-  clientSecrets: {
-    API_KEY: string;
-  };
-}
+type RootContext = {
+  API_KEY: string;
+  SITE_URL?: string;
+  ANALYTICS_DOMAIN?: string;
+  TWITTER_HANDLE?: string;
+};
 
 type PowerUpsAllocation = {
   second: number;
@@ -34,8 +36,8 @@ type PowerUpsAllocation = {
   lock: number;
 };
 
-const CardGame = (props: Props) => {
-  const { clientSecrets } = props;
+const CardGame = () => {
+  const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>({
     name: 'Team 1',
     score: 0,
@@ -96,7 +98,6 @@ const CardGame = (props: Props) => {
   });
   const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> setup -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
-  // const [totalRound, setTotalRound] = useState(0);
 
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
@@ -114,7 +115,7 @@ const CardGame = (props: Props) => {
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
   const SHEET_RANGE = '3Key Game!A1:B30';
-  const API_KEY = clientSecrets.API_KEY;
+  const API_KEY = clientSecrets?.API_KEY ?? '';
 
   const [sheetId, setSheetId] = useState(SHEET_ID);
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
