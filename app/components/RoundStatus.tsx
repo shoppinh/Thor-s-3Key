@@ -1,6 +1,6 @@
 import React from 'react';
 import TeamData from '~/models/TeamData';
-import { getTeamByPlayer } from '~/utils/gameUtil';
+// import { getTeamByPlayer } from '~/utils/gameUtil';
 
 /**
  * Props for RoundStatus component
@@ -19,7 +19,10 @@ interface RoundStatusProps {
   isFinishDuel: boolean;
   duelData: DuelData;
   nextRound: (team1: string[], team2: string[]) => void;
-  onChanceClick: (teamName: 'team1' | 'team2', chanceType: 'second' | 'reveal') => void;
+  onChanceClick: (
+    teamName: 'team1' | 'team2',
+    chanceType: 'second' | 'reveal' | 'shield' | 'lock'
+  ) => void;
 }
 
 /**
@@ -36,19 +39,59 @@ interface RoundStatusProps {
  * @param onChanceClick - Callback when a chance item is clicked
  */
 const RoundStatus: React.FC<RoundStatusProps> = ({
-                                                   duelResult,
-                                                   isFirstTurn,
-                                                   currentPlayerName,
-                                                   duelIndex,
-                                                   team1: team1Players,
-                                                   team2: team2Players,
-                                                   team1Data,
-                                                   team2Data,
-                                                   isFinishDuel,
-                                                   duelData,
-                                                   nextRound,
-                                                   onChanceClick
-                                                 }) => {
+  duelResult,
+  isFirstTurn,
+  currentPlayerName,
+  duelIndex,
+  team1: team1Players,
+  team2: team2Players,
+  team1Data,
+  team2Data,
+  isFinishDuel,
+  duelData,
+  nextRound,
+  onChanceClick
+}) => {
+  // Auto-advance to game over: if no players left at end of duel, move after 5 seconds
+  React.useEffect(() => {
+    const noPlayersLeft =
+      Math.min(team1Players.length, team2Players.length) === 0;
+    // If Second Chance is still available for the second player's team, do NOT auto-advance yet
+    const bothSelected =
+      !!duelData.player1SideSelected && !!duelData.player2SideSelected;
+    const secondPlayerTeam = duelData.player2Team;
+    const isLockedAgainstSecondTeam =
+      duelData.lockUsedBy && duelData.lockUsedBy !== secondPlayerTeam;
+    const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
+    const secondTeamHasSecondChance = secondTeamData.powerUps?.second > 0;
+    const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
+    const canSecondChanceNow =
+      bothSelected &&
+      !!secondPlayerTeam &&
+      !isLockedAgainstSecondTeam &&
+      secondTeamHasSecondChance &&
+      !secondTeamIsWinner;
+
+    if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
+      const timerId = setTimeout(() => {
+        nextRound(team1Players, team2Players);
+      }, 5000);
+      return () => clearTimeout(timerId);
+    }
+  }, [
+    duelResult,
+    isFinishDuel,
+    team1Players,
+    team2Players,
+    nextRound,
+    duelData.player1SideSelected,
+    duelData.player2SideSelected,
+    duelData.player2Team,
+    duelData.lockUsedBy,
+    duelData.winningTeam,
+    team1Data,
+    team2Data
+  ]);
   const renderTeamChances = (
     teamData: TeamData,
     teamKey: 'team1' | 'team2'
@@ -65,7 +108,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     // Helper function to determine which team's turn it is currently
     const getCurrentTurnTeam = (): 'team1' | 'team2' | null => {
       if (!duelData.currentPlayerName) return null;
-      
+
       // Check if current player is in team1
       if (team1Data.players.includes(duelData.currentPlayerName)) {
         return 'team1';
@@ -74,7 +117,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       if (team2Data.players.includes(duelData.currentPlayerName)) {
         return 'team2';
       }
-      
+
       return null;
     };
 
@@ -82,6 +125,11 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
+
+      // If opponent locked you, you cannot use power-ups
+      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) {
+        return false;
+      }
 
       // If only first player has made their selection
       if (duelData.player1SideSelected && !duelData.player2SideSelected) {
@@ -113,6 +161,11 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
 
+      // If opponent locked you, you cannot use power-ups
+      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) {
+        return false;
+      }
+
       // Only enable chance items for the team whose turn it is
       if (currentTurnTeam !== team) {
         return false;
@@ -124,31 +177,54 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }
 
       // Check if the current team has made their selection and it's not reset by Second Chance
-      const isFirstPlayerTeamSelected = (team === firstPlayerTeam && duelData.player1SideSelected);
-      const isSecondPlayerTeamSelected = (team === secondPlayerTeam && duelData.player2SideSelected);
-      
+      const isFirstPlayerTeamSelected =
+        team === firstPlayerTeam && duelData.player1SideSelected;
+      const isSecondPlayerTeamSelected =
+        team === secondPlayerTeam && duelData.player2SideSelected;
+
       // If first player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
-      if (isFirstPlayerTeamSelected && duelData.player1Name === "?") {
+      if (isFirstPlayerTeamSelected && duelData.player1Name === '?') {
         return true;
       }
-      
+
       // If second player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
-      if (isSecondPlayerTeamSelected && duelData.player2Name === "?") {
+      if (isSecondPlayerTeamSelected && duelData.player2Name === '?') {
         return true;
       }
 
       // Normal logic: disable if team has made their selection (and not using Second Chance)
-      const currentTeamHasSelected = isFirstPlayerTeamSelected || isSecondPlayerTeamSelected;
+      const currentTeamHasSelected =
+        isFirstPlayerTeamSelected || isSecondPlayerTeamSelected;
       return !currentTeamHasSelected;
     };
 
+    // Helper: Shield (no elimination this duel)
+    const isShieldEnabled = (team: 'team1' | 'team2') => {
+      const currentTurnTeam = getCurrentTurnTeam();
+      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) return false;
+      if (currentTurnTeam !== team) return false;
+      if (isFinishDuel) return false;
+      return true;
+    };
+
+    // Helper: Lockdown (opponent cannot use power-ups this duel)
+    const isLockEnabled = (team: 'team1' | 'team2') => {
+      const currentTurnTeam = getCurrentTurnTeam();
+      if (currentTurnTeam !== team) return false;
+      if (isFinishDuel) return false;
+      // Cannot lock if someone already locked
+      if (duelData.lockUsedBy) return false;
+      return true;
+    };
+
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '300px'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
         {/* Team Name */}
         {teamData.totalChance > 0 && (
           <h4
@@ -157,78 +233,244 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               fontSize: '18px',
               margin: '0 0 10px 0',
               padding: '5px 10px'
-            }}>
+            }}
+          >
             {teamData.name}
           </h4>
         )}
 
         {/* Chance Items */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '15px',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '15px',
+            justifyContent: 'center'
+          }}
+        >
           {/* Second Chance */}
-          {!teamData.useChanceSecond && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default',
-              opacity: isSecondChanceEnabled(teamKey) ? 1 : 0.5
-            }}>
-              <img
-                src='/images/chance_second.png'
-                alt='Second Chance'
+          {teamData.powerUps.second > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isSecondChanceEnabled(teamKey) ? 1 : 0.5
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Use Second Chance"
+                onClick={() =>
+                  isSecondChanceEnabled(teamKey) &&
+                  onChanceClick(teamKey, 'second')
+                }
                 style={{
                   width: '120px',
                   height: '120px',
                   marginBottom: '4px',
-                  filter: isSecondChanceEnabled(teamKey) ? 'none' : 'grayscale(100%)'
+                  borderRadius: '12px',
+                  border: '3px solid #4CAF50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default'
                 }}
-                onClick={() => isSecondChanceEnabled(teamKey) && onChanceClick(teamKey, 'second')}
-              />
-              <span style={{
-                fontSize: '15px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                color: isSecondChanceEnabled(teamKey) ? '#333' : '#999'
-              }}>
-              Second Chance
-            </span>
+                disabled={!isSecondChanceEnabled(teamKey)}
+              >
+                <img
+                  src="/images/chance_second.png"
+                  alt="Second Chance"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    filter: isSecondChanceEnabled(teamKey)
+                      ? 'none'
+                      : 'grayscale(100%)'
+                  }}
+                />
+              </button>
+              <span
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: isSecondChanceEnabled(teamKey) ? '#333' : '#999'
+                }}
+              >
+                Second Chance ({teamData.powerUps.second})
+              </span>
             </div>
           )}
 
           {/* Reveal Two */}
-          {!teamData.useChanceReveal && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default',
-              opacity: isRevealTwoEnabled(teamKey) ? 1 : 0.5
-            }}>
-              <img
-                src='/images/chance_reveal.png'
-                alt='Reveal Two'
+          {teamData.powerUps.reveal > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isRevealTwoEnabled(teamKey) ? 1 : 0.5
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Use Reveal Two"
+                onClick={() =>
+                  isRevealTwoEnabled(teamKey) &&
+                  onChanceClick(teamKey, 'reveal')
+                }
                 style={{
                   width: '120px',
                   height: '120px',
                   marginBottom: '4px',
-                  filter: isRevealTwoEnabled(teamKey) ? 'none' : 'grayscale(100%)'
+                  borderRadius: '12px',
+                  border: '3px solid #4CAF50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default'
                 }}
-                onClick={() => isRevealTwoEnabled(teamKey) && onChanceClick(teamKey, 'reveal')}
-              />
-              <span style={{
-                fontSize: '15px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                color: isRevealTwoEnabled(teamKey) ? '#333' : '#999'
-              }}>
-              Reveal Two
-            </span>
+                disabled={!isRevealTwoEnabled(teamKey)}
+              >
+                <img
+                  src="/images/chance_reveal.png"
+                  alt="Reveal Two"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    filter: isRevealTwoEnabled(teamKey)
+                      ? 'none'
+                      : 'grayscale(100%)'
+                  }}
+                />
+              </button>
+              <span
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: isRevealTwoEnabled(teamKey) ? '#333' : '#999'
+                }}
+              >
+                Reveal Two ({teamData.powerUps.reveal})
+              </span>
+            </div>
+          )}
+
+          {/* Shield */}
+          {teamData.powerUps.shield > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: isShieldEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isShieldEnabled(teamKey) ? 1 : 0.5
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Use Shield"
+                onClick={() =>
+                  isShieldEnabled(teamKey) && onChanceClick(teamKey, 'shield')
+                }
+                disabled={!isShieldEnabled(teamKey)}
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  borderRadius: '12px',
+                  border: '3px solid #4CAF50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  cursor: isShieldEnabled(teamKey) ? 'pointer' : 'default'
+                }}
+              >
+                <img
+                  src="/images/chance_shield.png"
+                  alt="Shield"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    filter: isShieldEnabled(teamKey)
+                      ? 'none'
+                      : 'grayscale(100%)'
+                  }}
+                />
+              </button>
+              <span
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: isShieldEnabled(teamKey) ? '#333' : '#999'
+                }}
+              >
+                No Elimination ({teamData.powerUps.shield})
+              </span>
+            </div>
+          )}
+
+          {/* Lockdown */}
+          {teamData.powerUps.lock > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: isLockEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isLockEnabled(teamKey) ? 1 : 0.5
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Use Lockdown"
+                onClick={() =>
+                  isLockEnabled(teamKey) && onChanceClick(teamKey, 'lock')
+                }
+                disabled={!isLockEnabled(teamKey)}
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  marginBottom: '4px',
+                  borderRadius: '12px',
+                  border: '3px solid #f57c00',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #fff3e0, #ffffff)',
+                  cursor: isLockEnabled(teamKey) ? 'pointer' : 'default'
+                }}
+              >
+                <img
+                  src="/images/chance_block.png"
+                  alt="Lockdown"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    filter: isLockEnabled(teamKey)
+                      ? 'none'
+                      : 'grayscale(100%)'
+                  }}
+                />
+              </button>
+              <span
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: isLockEnabled(teamKey) ? '#333' : '#999'
+                }}
+              >
+                Lockdown ({teamData.powerUps.lock})
+              </span>
             </div>
           )}
         </div>
@@ -259,11 +501,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Middle Part - Current Content */}
-      <div style={{
-        flex: '1',
-        textAlign: 'center',
-        padding: '0 20px'
-      }}>
+      <div
+        style={{
+          flex: '1',
+          textAlign: 'center',
+          padding: '0 20px'
+        }}
+      >
         {isFirstTurn && (
           <>
             <h2 className={'playerStatus'}>FIRST PLAYER IS</h2>
@@ -271,34 +515,38 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </>
         )}
 
-        {!isFirstTurn && currentPlayerName && Math.min(team1Players.length, team2Players.length) > 0 && (
-          <>
-            {duelIndex == 2 ? (
-              <h2 className={'playerStatus'}>NEXT PLAYER IS</h2>
-            ) : (
-              <h2 className={'playerStatus'}>CURRENT PLAYER IS</h2>
-            )}
-            <h2 className={'blinkInfinite'}>{currentPlayerName}</h2>
-          </>
-        )}
+        {!isFirstTurn &&
+          currentPlayerName &&
+          Math.min(team1Players.length, team2Players.length) > 0 && (
+            <>
+              {duelIndex == 2 ? (
+                <h2 className={'playerStatus'}>NEXT PLAYER IS</h2>
+              ) : (
+                <h2 className={'playerStatus'}>CURRENT PLAYER IS</h2>
+              )}
+              <h2 className={'blinkInfinite'}>{currentPlayerName}</h2>
+            </>
+          )}
 
         {duelResult && duelData.isFinishDuel && (
           <div className={'relativeContainer'}>
-            <img
-              className={'leftHandPointer'}
-              style={{ top: '25px' }}
-              src='images/left-hand.png'
-              alt='cursor'
-            />
-            <button
-              onClick={() => nextRound(team1Players, team2Players)}
-              className={'btnNextRound'}
-              style={{ cursor: 'pointer' }}
-            >
-              {Math.min(team1Players.length, team2Players.length) == 0
-                ? 'Finish'
-                : 'Next Round'}
-            </button>
+            {Math.min(team1Players.length, team2Players.length) > 0 && (
+              <>
+                <img
+                  className={'leftHandPointer'}
+                  style={{ top: '25px' }}
+                  src="images/left-hand.png"
+                  alt="cursor"
+                />
+                <button
+                  onClick={() => nextRound(team1Players, team2Players)}
+                  className={'btnNextRound'}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Next Round
+                </button>
+              </>
+            )}
             {/* <h2 style={{ marginTop: '20px' }}>{duelResult}</h2> */}
           </div>
         )}

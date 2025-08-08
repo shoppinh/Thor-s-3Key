@@ -26,39 +26,47 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 2000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '30px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-        textAlign: 'center',
-        minWidth: '300px'
-      }}>
-        <h3 style={{
-          margin: '0 0 20px 0',
-          fontSize: '18px',
-          color: '#333'
-        }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '10px',
+          padding: '30px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          textAlign: 'center',
+          minWidth: '300px'
+        }}
+      >
+        <h3
+          style={{
+            margin: '0 0 20px 0',
+            fontSize: '18px',
+            color: '#333'
+          }}
+        >
           Do you want to use {chanceItemName}?
         </h3>
-        
-        <div style={{
-          display: 'flex',
-          gap: '15px',
-          justifyContent: 'center'
-        }}>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '15px',
+            justifyContent: 'center'
+          }}
+        >
           <button
             onClick={onConfirm}
             style={{
@@ -81,7 +89,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
           >
             Yes
           </button>
-          
+
           <button
             onClick={onCancel}
             style={{
@@ -110,4 +118,4 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   );
 };
 
-export default ConfirmPopup; 
+export default ConfirmPopup;

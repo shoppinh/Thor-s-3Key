@@ -145,7 +145,7 @@ export const getCardHighestSuitAndValue = (cards: Card[]): Card => {
 /**
  * Determines the winner between two players and returns game result
  * @param p1Sum - Player 1's card sum
- * @param p2Sum - Player 2's card sum  
+ * @param p2Sum - Player 2's card sum
  * @param p1Cards - Player 1's cards
  * @param p2Cards - Player 2's cards
  * @param p1Name - Player 1's name
@@ -153,11 +153,11 @@ export const getCardHighestSuitAndValue = (cards: Card[]): Card => {
  * @returns Object containing winner message and whether player 1 won
  */
 export const determineWinner = (
-  p1Sum: number, 
-  p2Sum: number, 
-  p1Cards: Card[], 
-  p2Cards: Card[], 
-  p1Name: string, 
+  p1Sum: number,
+  p2Sum: number,
+  p1Cards: Card[],
+  p2Cards: Card[],
+  p1Name: string,
   p2Name: string
 ): { winner: string; isPlayer1Winner: boolean } => {
   let winner: string;
@@ -192,6 +192,9 @@ export const determineWinner = (
  * @param team1Players - Array of team 1 player names
  * @returns 'team1' or 'team2'
  */
-export const getTeamByPlayer = (player: string, team1Players: string[]): 'team1' | 'team2' => {
+export const getTeamByPlayer = (
+  player: string,
+  team1Players: string[]
+): 'team1' | 'team2' => {
   return team1Players.includes(player) ? 'team1' : 'team2';
-}; 
+};

@@ -15,10 +15,10 @@ interface ChanceStarProps {
  * @param className - Additional CSS classes
  * @param style - Additional inline styles
  */
-const ChanceStar: React.FC<ChanceStarProps> = ({ 
-  number = "2", 
-  className = "",
-  style = {} 
+const ChanceStar: React.FC<ChanceStarProps> = ({
+  number = '2',
+  className = '',
+  style = {}
 }) => {
   return (
     <div
@@ -46,4 +46,4 @@ const ChanceStar: React.FC<ChanceStarProps> = ({
   );
 };
 
-export default ChanceStar; 
+export default ChanceStar;
