@@ -61,7 +61,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       !!duelData.player1SideSelected && !!duelData.player2SideSelected;
     const secondPlayerTeam = duelData.player2Team;
     const isLockedAgainstSecondTeam =
-      duelData.lockUsedBy && duelData.lockUsedBy !== secondPlayerTeam;
+      duelData.lockAllUsedBy && duelData.lockAllUsedBy !== secondPlayerTeam;
     const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
     const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
     const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
@@ -87,7 +87,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     duelData.player1SideSelected,
     duelData.player2SideSelected,
     duelData.player2Team,
-    duelData.lockUsedBy,
+    duelData.lockAllUsedBy,
     duelData.winningTeam,
     team1Data,
     team2Data
@@ -127,7 +127,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const currentTurnTeam = getCurrentTurnTeam();
 
       // If opponent locked you, you cannot use power-ups
-      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) {
+      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) {
         return false;
       }
 
@@ -162,7 +162,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const currentTurnTeam = getCurrentTurnTeam();
 
       // If opponent locked you, you cannot use power-ups
-      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) {
+      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) {
         return false;
       }
 
@@ -198,22 +198,24 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       return !currentTeamHasSelected;
     };
 
-    // Helper: Shield (no elimination this duel)
-    const isShieldEnabled = (team: 'team1' | 'team2') => {
+    // Helper: Life Shield (no elimination this duel)
+    const isLifeShieldEnabled = (team: 'team1' | 'team2') => {
       const currentTurnTeam = getCurrentTurnTeam();
-      if (duelData.lockUsedBy && duelData.lockUsedBy !== team) return false;
+      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) return false;
       if (currentTurnTeam !== team) return false;
       if (isFinishDuel) return false;
       return true;
     };
 
-    // Helper: Lockdown (opponent cannot use power-ups this duel)
-    const isLockEnabled = (team: 'team1' | 'team2') => {
+    // Helper: Lock All (opponent cannot use power-ups this duel)
+    const isLockAllEnabled = (team: 'team1' | 'team2') => {
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== team) return false;
       if (isFinishDuel) return false;
       // Cannot lock if someone already locked
-      if (duelData.lockUsedBy) return false;
+      if (duelData.lockAllUsedBy) return false;
+      // Disallow using Lock All on the second player's turn (only first player may lock)
+      if (duelData.duelIndex === 1) return false;
       return true;
     };
 
@@ -370,24 +372,24 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             </div>
           )}
 
-          {/* Shield */}
+          {/* Life Shield */}
           {teamData.powerUps.lifeShield > 0 && (
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                cursor: isShieldEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isShieldEnabled(teamKey) ? 1 : 0.5
+                cursor: isLifeShieldEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isLifeShieldEnabled(teamKey) ? 1 : 0.5
               }}
             >
               <button
                 type="button"
-                aria-label="Use Shield"
+                aria-label="Use Life Shield"
                 onClick={() =>
-                  isShieldEnabled(teamKey) && onChanceClick(teamKey, 'lifeShield')
+                  isLifeShieldEnabled(teamKey) && onChanceClick(teamKey, 'lifeShield')
                 }
-                disabled={!isShieldEnabled(teamKey)}
+                disabled={!isLifeShieldEnabled(teamKey)}
                 style={{
                   width: '120px',
                   height: '120px',
@@ -399,16 +401,16 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
                   position: 'relative',
-                  cursor: isShieldEnabled(teamKey) ? 'pointer' : 'default'
+                  cursor: isLifeShieldEnabled(teamKey) ? 'pointer' : 'default'
                 }}
               >
                 <img
                   src="/images/chance_shield.png"
-                  alt="Shield"
+                  alt="Life Shield"
                   style={{
                     width: '120px',
                     height: '120px',
-                    filter: isShieldEnabled(teamKey)
+                    filter: isLifeShieldEnabled(teamKey)
                       ? 'none'
                       : 'grayscale(100%)'
                   }}
@@ -422,7 +424,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   fontSize: '15px',
                   fontWeight: 'bold',
                   textAlign: 'center',
-                  color: isShieldEnabled(teamKey) ? '#333' : '#999'
+                  color: isLifeShieldEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
                 Life Shield
@@ -430,24 +432,24 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             </div>
           )}
 
-          {/* Lockdown */}
+          {/* Lock All */}
           {teamData.powerUps.lockAll > 0 && (
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                cursor: isLockEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isLockEnabled(teamKey) ? 1 : 0.5
+                cursor: isLockAllEnabled(teamKey) ? 'pointer' : 'default',
+                opacity: isLockAllEnabled(teamKey) ? 1 : 0.5
               }}
             >
               <button
                 type="button"
                 aria-label="Use Lock All"
                 onClick={() =>
-                  isLockEnabled(teamKey) && onChanceClick(teamKey, 'lockAll')
+                  isLockAllEnabled(teamKey) && onChanceClick(teamKey, 'lockAll')
                 }
-                disabled={!isLockEnabled(teamKey)}
+                disabled={!isLockAllEnabled(teamKey)}
                 style={{
                   width: '120px',
                   height: '120px',
@@ -459,7 +461,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #fff3e0, #ffffff)',
                   position: 'relative',
-                  cursor: isLockEnabled(teamKey) ? 'pointer' : 'default'
+                  cursor: isLockAllEnabled(teamKey) ? 'pointer' : 'default'
                 }}
               >
                 <img
@@ -468,7 +470,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   style={{
                     width: '120px',
                     height: '120px',
-                    filter: isLockEnabled(teamKey)
+                    filter: isLockAllEnabled(teamKey)
                       ? 'none'
                       : 'grayscale(100%)'
                   }}
@@ -482,7 +484,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   fontSize: '15px',
                   fontWeight: 'bold',
                   textAlign: 'center',
-                  color: isLockEnabled(teamKey) ? '#333' : '#999'
+                  color: isLockAllEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
                 Lock All
