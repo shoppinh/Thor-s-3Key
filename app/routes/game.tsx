@@ -18,7 +18,8 @@ import {
   drawCards,
   getCardImage,
   calculateSum,
-  determineWinner
+    determineWinner,
+    preloadImages
 } from '~/utils/gameUtil';
 
 const DECKS = createDeck();
@@ -146,6 +147,32 @@ const CardGame = () => {
    */
   const startGame = async () => {
     setGameState('gameLoading');
+    // Preload all card images to avoid flicker during gameplay
+    try {
+      // Only preload A(1) through 9
+      const allValues = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+      const suitNames: { [key: string]: string } = {
+        '♦': 'diamonds',
+        '♥': 'hearts',
+        '♠': 'spades',
+        '♣': 'clubs'
+      };
+      const extraImages = [
+        '/images/back_card.png'
+      ];
+      const urls: string[] = [];
+      allValues.forEach((v) => {
+        Object.keys(suitNames).forEach((s) => {
+          const suit = suitNames[s];
+          const numToName = (num: number): string => (num === 1 ? 'ace' : num.toString());
+          urls.push(`/images/${numToName(v)}_of_${suit}.png`);
+        });
+      });
+      urls.push(...extraImages);
+      await preloadImages(urls);
+    } catch {}
+
+    // Load team player names from Google Sheets
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
 
     try {
@@ -1058,21 +1085,33 @@ const CardGame = () => {
       return true;
     }
 
-    const team1AllocatedTotal =
-      team1Alloc.secondChance +
-      team1Alloc.revealTwo +
-      team1Alloc.lifeShield +
-      team1Alloc.lockAll;
-    const team2AllocatedTotal =
-      team2Alloc.secondChance +
-      team2Alloc.revealTwo +
-      team2Alloc.lifeShield +
-      team2Alloc.lockAll;
+    /**
+     * Validates a team's allocation:
+     * - Sum must equal the team's `totalPowerUps`
+     * - No more than 2 of the same type for each power-up
+     */
+    const isAllocationValid = (
+      alloc: PowerUpsAllocation,
+      total: number
+    ): boolean => {
+      const sum =
+        alloc.secondChance + alloc.revealTwo + alloc.lifeShield + alloc.lockAll;
+      const perTypeValid =
+        alloc.secondChance <= 2 &&
+        alloc.revealTwo <= 2 &&
+        alloc.lifeShield <= 2 &&
+        alloc.lockAll <= 2;
+      return sum === total && perTypeValid;
+    };
 
-    const isTeam1AllocationValid =
-      team1AllocatedTotal === team1Data.totalPowerUps;
-    const isTeam2AllocationValid =
-      team2AllocatedTotal === team2Data.totalPowerUps;
+    const isTeam1AllocationValid = isAllocationValid(
+      team1Alloc,
+      team1Data.totalPowerUps
+    );
+    const isTeam2AllocationValid = isAllocationValid(
+      team2Alloc,
+      team2Data.totalPowerUps
+    );
 
     return !(isTeam1AllocationValid && isTeam2AllocationValid);
   };
@@ -1184,6 +1223,7 @@ const CardGame = () => {
                           {renderLabelWithIcon('Second Chance', 'chance_second.png', 'both-second')}
                           <input
                             className="num-input"
+                            style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
                             type="number"
                             min={0}
                             max={2}
@@ -1202,6 +1242,7 @@ const CardGame = () => {
                           {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 'both-reveal')}
                           <input
                             className="num-input"
+                            style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
                             type="number"
                             min={0}
                             max={2}
@@ -1220,6 +1261,7 @@ const CardGame = () => {
                           {renderLabelWithIcon('Life Shield', 'chance_shield.png', 'both-shield')}
                           <input
                             className="num-input"
+                            style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
                             type="number"
                             min={0}
                             max={2}
@@ -1238,6 +1280,7 @@ const CardGame = () => {
                           {renderLabelWithIcon('Lock All', 'chance_block.png', 'both-lock')}
                           <input
                             className="num-input"
+                            style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
                             type="number"
                             min={0}
                             max={2}
@@ -1284,6 +1327,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Second Chance', 'chance_second.png', 't1-second')}
                             <input
                               className="num-input"
+                              style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1307,6 +1351,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't1-reveal')}
                             <input
                               className="num-input"
+                              style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1330,6 +1375,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't1-shield')}
                             <input
                               className="num-input"
+                              style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1353,6 +1399,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Lock All', 'chance_block.png', 't1-lock')}
                             <input
                               className="num-input"
+                              style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1403,6 +1450,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Second Chance', 'chance_second.png', 't2-second')}
                             <input
                               className="num-input"
+                              style={team2Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1426,6 +1474,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't2-reveal')}
                             <input
                               className="num-input"
+                              style={team2Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1449,6 +1498,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't2-shield')}
                             <input
                               className="num-input"
+                              style={team2Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1472,6 +1522,7 @@ const CardGame = () => {
                             {renderLabelWithIcon('Lock All', 'chance_block.png', 't2-lock')}
                             <input
                               className="num-input"
+                              style={team2Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
                               type="number"
                               min={0}
                               max={2}
@@ -1517,7 +1568,7 @@ const CardGame = () => {
                     )}
                   </div>
                   <p className="note" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
-                    Each team must have 4 power-ups.
+                    Each team must have a total of 4 power-ups, with no more than 2 of the same type.
                   </p>
                   <div style={{ textAlign: 'center' }}>
                     <a

@@ -111,6 +111,30 @@ export const getCardImage = (value: number, suit: string): string => {
 };
 
 /**
+ * Preloads a list of image URLs into the browser cache.
+ * Returns a Promise that resolves when all images have attempted to load.
+ */
+export const preloadImages = (urls: string[]): Promise<void> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || urls.length === 0) {
+      resolve();
+      return;
+    }
+    let remaining = urls.length;
+    const done = () => {
+      remaining -= 1;
+      if (remaining <= 0) resolve();
+    };
+    urls.forEach((src) => {
+      const img = new Image();
+      img.onload = done;
+      img.onerror = done;
+      img.src = src;
+    });
+  });
+};
+
+/**
  * Calculates the sum of card values with special rule for values > 10
  * @param cards - Array of cards to calculate sum for
  * @returns Calculated sum (modulo 10 if > 10, or 10 if sum % 10 === 0)
