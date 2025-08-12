@@ -2,12 +2,12 @@ export default interface TeamData {
   name: string;
   score: number;
   scoreClass: string;
-  totalChance: number;
+  totalPowerUps: number;
   powerUps: {
-    second: number;
-    reveal: number;
-    shield: number;
-    lock: number;
+    secondChance: number;
+    revealTwo: number;
+    lifeShield: number;
+    lockAll: number;
   };
   players: string[];
 }

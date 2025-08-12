@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import ShareButtons from '~/components/ShareButtons';
 import type { MetaFunction } from '@remix-run/node';
 
 export const meta: MetaFunction = () => {
@@ -22,25 +23,21 @@ export default function IndexRoute() {
 
   return (
     <main style={styles.wrapper}>
-      <section style={styles.hero}>
-        <div style={styles.badge}>New</div>
+      <section style={styles.hero}>        
         <h1 style={styles.h1}>Thor's 3Key</h1>
         <p style={styles.tagline}>
           Team-based card chaos with power-ups. Stream-friendly. Stupidly fun.
         </p>
         <div style={styles.ctaRow}>
           <a href={ctaHref} style={styles.ctaPrimary}>
-            Play now
-          </a>
-          <a href="#how" style={styles.ctaSecondary}>
-            How it works
-          </a>
+            Play Now
+          </a>          
         </div>
-        <div style={styles.mediaFrame}>
+        <div>
           <img
             src="/images/the-end.webp"
             alt="Gameplay screenshot"
-            style={{ width: '100%', borderRadius: 12 }}
+            style={{ width: '50%', borderRadius: 12, marginTop: 18 }}
             loading="lazy"
           />
         </div>
@@ -93,6 +90,7 @@ export default function IndexRoute() {
           <a href="mailto:mactrungkien2000@gmail.com">mactrungkien2000@gmail.com</a>.
         </p>
       </section>
+      <ShareButtons siteUrl={typeof window !== 'undefined' ? window.location.origin : ''} />
     </main>
   );
 }
@@ -101,7 +99,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     maxWidth: 980,
     margin: '0 auto',
-    padding: '32px 16px 64px'
+    padding: '10px 16px 64px'
   },
   hero: {
     display: 'flex',
@@ -125,7 +123,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tagline: {
     color: '#94a3b8',
-    maxWidth: 720
+    maxWidth: 720,
+    margin: 0
   },
   ctaRow: {
     display: 'flex',
@@ -138,7 +137,8 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'none',
     padding: '12px 16px',
     borderRadius: 10,
-    fontWeight: 700
+    fontWeight: 700,
+    minWidth: 150
   },
   ctaSecondary: {
     background: 'transparent',
@@ -147,7 +147,8 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'none',
     padding: '10px 14px',
     borderRadius: 10,
-    fontWeight: 700
+    fontWeight: 700,
+    minWidth: 150
   },
   mediaFrame: {
     width: '100%',

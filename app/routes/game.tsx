@@ -30,10 +30,10 @@ type RootContext = {
 };
 
 type PowerUpsAllocation = {
-  second: number;
-  reveal: number;
-  shield: number;
-  lock: number;
+  secondChance: number;
+  revealTwo: number;
+  lifeShield: number;
+  lockAll: number;
 };
 
 const CardGame = () => {
@@ -42,16 +42,16 @@ const CardGame = () => {
     name: 'Team 1',
     score: 0,
     scoreClass: '',
-    totalChance: 4,
-    powerUps: { second: 1, reveal: 1, shield: 1, lock: 1 },
+    totalPowerUps: 4,
+    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1 },
     players: []
   });
   const [team2Data, setTeam2Data] = useState<TeamData>({
     name: 'Team 2',
     score: 0,
     scoreClass: '',
-    totalChance: 4,
-    powerUps: { second: 1, reveal: 1, shield: 1, lock: 1 },
+    totalPowerUps: 4,
+    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1 },
     players: []
   });
   const [duelData, setDuelData] = useState<DuelData>({
@@ -96,21 +96,21 @@ const CardGame = () => {
     chanceType: null,
     chanceItemName: ''
   });
-  const [gameState, setGameState] = useState('welcome'); // welcome -> gameLoading -> setup -> gamePlaying -> gameOver
+  const [gameState, setGameState] = useState('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
 
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
-    second: team1Data.powerUps.second,
-    reveal: team1Data.powerUps.reveal,
-    shield: team1Data.powerUps.shield,
-    lock: team1Data.powerUps.lock
+    secondChance: team1Data.powerUps.secondChance,
+    revealTwo: team1Data.powerUps.revealTwo,
+    lifeShield: team1Data.powerUps.lifeShield,
+    lockAll: team1Data.powerUps.lockAll
   });
   const [team2Alloc, setTeam2Alloc] = useState<PowerUpsAllocation>({
-    second: team2Data.powerUps.second,
-    reveal: team2Data.powerUps.reveal,
-    shield: team2Data.powerUps.shield,
-    lock: team2Data.powerUps.lock
+    secondChance: team2Data.powerUps.secondChance,
+    revealTwo: team2Data.powerUps.revealTwo,
+    lifeShield: team2Data.powerUps.lifeShield,
+    lockAll: team2Data.powerUps.lockAll
   });
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
@@ -137,7 +137,11 @@ const CardGame = () => {
     nextRound(team1Data, team2Data);
   };
 
-  const loadDataFromGoogleSheet = async () => {
+  /**
+   * Loads team player names from Google Sheets and populates `team1Data` and `team2Data`.
+   * Keeps the app in the 'setup' state where setup and welcome UIs are combined.
+   */
+  const startGame = async () => {
     setGameState('gameLoading');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
 
@@ -167,10 +171,10 @@ const CardGame = () => {
       const shuffledTeam1 = shuffleArray(team1Temp);
       const shuffledTeam2 = shuffleArray(team2Temp);
 
-      setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1 }));
-      setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2 }));
-      // Move to setup so teams can allocate power-ups
-      setGameState('setup');
+      setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
+      setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team2Alloc } }));
+
+      startGameWithTeams(shuffledTeam1, shuffledTeam2);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -418,7 +422,7 @@ const CardGame = () => {
         // 1. They already used it, OR
         // 2. They are the winning team (they don't need Second Chance)
         const secondTeamAlreadyUsedSecondChance =
-          secondTeamData.powerUps.second <= 0;
+          secondTeamData.powerUps.secondChance <= 0;
         const secondTeamIsWinning =
           (secondPlayerTeam === newData.player1Team && isPlayer1Winner) ||
           (secondPlayerTeam === newData.player2Team && !isPlayer1Winner);
@@ -439,42 +443,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topLeftPlayerData,
-                  cards: newData.topLeftCards,
-                  sum: calculateSum(newData.topLeftCards)
-                }
+                ...newData.topLeftPlayerData,
+                cards: newData.topLeftCards,
+                sum: calculateSum(newData.topLeftCards)
+              }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomLeftPlayerData,
-                  cards: newData.bottomLeftCards,
-                  sum: calculateSum(newData.bottomLeftCards)
-                }
+                ...newData.bottomLeftPlayerData,
+                cards: newData.bottomLeftCards,
+                sum: calculateSum(newData.bottomLeftCards)
+              }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topRightPlayerData,
-                  cards: newData.topRightCards,
-                  sum: calculateSum(newData.topRightCards)
-                }
+                ...newData.topRightPlayerData,
+                cards: newData.topRightCards,
+                sum: calculateSum(newData.topRightCards)
+              }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomRightPlayerData,
-                  cards: newData.bottomRightCards,
-                  sum: calculateSum(newData.bottomRightCards)
-                }
+                ...newData.bottomRightPlayerData,
+                cards: newData.bottomRightCards,
+                sum: calculateSum(newData.bottomRightCards)
+              }
               : newData.bottomRightPlayerData
         };
 
@@ -796,14 +800,14 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, second: prev.powerUps.second - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, second: prev.powerUps.second - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         }
 
@@ -814,14 +818,14 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, reveal: prev.powerUps.reveal - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, reveal: prev.powerUps.reveal - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         }
 
@@ -835,14 +839,14 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, shield: prev.powerUps.shield - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, shield: prev.powerUps.shield - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         }
         setDuelData((prev) => ({ ...prev, shieldUsedBy: teamName }));
@@ -851,14 +855,14 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lock: prev.powerUps.lock - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, lockAll: prev.powerUps.lockAll - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lock: prev.powerUps.lock - 1 },
-            totalChance: prev.totalChance - 1
+            powerUps: { ...prev.powerUps, lockAll: prev.powerUps.lockAll - 1 },
+            totalPowerUps: prev.totalPowerUps - 1
           }));
         }
         setDuelData((prev) => ({ ...prev, lockUsedBy: teamName }));
@@ -1021,345 +1025,362 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onCardClick();
-                }
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onCardClick();
               }
+            }
             : undefined
         }
       />
     ));
   };
 
+  /**
+   * Renders a label with a small preview icon positioned to the left of the text.
+   * Used in the combined 'setup' screen for power-up labels.
+   *
+   * @param labelText - The text content of the label
+   * @param imageFileName - The image file name in `/public/images`, e.g. `chance_second.png`
+   * @param htmlFor - The input id this label is associated with
+   */
+  const renderLabelWithIcon = (
+    labelText: string,
+    imageFileName: string,
+    htmlFor: string
+  ) => {
+    return (
+      <label htmlFor={htmlFor} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <img
+          src={`/images/${imageFileName}`}
+          alt=""
+          width={22}
+          height={22}
+          style={{ display: 'inline-block' }}
+        />
+        <span>{labelText}</span>
+      </label>
+    );
+  };
+
+  /**
+   * Renders the combined Welcome (right) and Setup (left) UI in a two-column layout
+   * with a gray vertical divider in the middle. Visible during 'setup' and 'gameLoading'.
+   */
   function renderGameInput() {
     return (
       <>
-        {(gameState == 'welcome' || gameState == 'gameLoading') && (
+        {(gameState === 'setup' || gameState === 'gameLoading') && (
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%'
             }}
           >
-            <div>
-              <h1>Thorlit 3Key</h1>
-              <div className={'controlContainer'}>
-                <label className={'labelControl'} htmlFor="sheetId">
-                  Sheet Id
-                </label>
-                <input
-                  className={'textControl'}
-                  id="sheetId"
-                  type="text"
-                  value={sheetId}
-                  onChange={(e) => setSheetId(e.target.value)}
-                  disabled={gameState != 'welcome'}
-                />
-              </div>
-              <div className={'controlContainer'}>
-                <label className={'labelControl'} htmlFor="sheetRange">
-                  Sheet Range
-                </label>
-                <input
-                  className={'textControl'}
-                  id="sheetRange"
-                  type="text"
-                  value={sheetRange}
-                  onChange={(e) => setSheetRange(e.target.value)}
-                  disabled={gameState != 'welcome'}
-                />
-              </div>
-              <div>
-                {team1Data.players.length === 0 &&
-                  team2Data.players.length === 0 && (
-                    <div>
-                      <button
-                        onClick={() => loadDataFromGoogleSheet()}
-                        className={'btnStart'}
-                        disabled={gameState == 'gameLoading'}
-                      >
-                        Start Game
-                      </button>
-                    </div>
-                  )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {gameState == 'setup' && (
-          <div
-            style={{
-              maxWidth: 920,
-              margin: '0 auto',
-              padding: 20
-            }}
-          >
-            <h2 style={{ textAlign: 'center', marginTop: 0 }}>
-              Power-ups Allocation
-            </h2>
-            <p className="note" style={{ textAlign: 'center' }}>
-              Allocate total chances across power-ups. Sum for each team must
-              equal {team1Data.totalChance}.
-            </p>
-            <div className="setup-grid">
-              <div className="setup-card">
-                <h3 className={'teamName team1'} style={{ marginTop: 0 }}>
-                  {team1Data.name}
-                </h3>
-                <div className="setup-row">
-                  <label htmlFor="t1-second">Second Chance</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team1Data.totalChance}
-                    id="t1-second"
-                    value={team1Alloc.second}
-                    onChange={(e) =>
-                      setTeam1Alloc({
-                        ...team1Alloc,
-                        second: Math.max(
-                          0,
-                          Math.min(
-                            team1Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t1-reveal">Reveal Two</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team1Data.totalChance}
-                    id="t1-reveal"
-                    value={team1Alloc.reveal}
-                    onChange={(e) =>
-                      setTeam1Alloc({
-                        ...team1Alloc,
-                        reveal: Math.max(
-                          0,
-                          Math.min(
-                            team1Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t1-shield">Shield</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team1Data.totalChance}
-                    id="t1-shield"
-                    value={team1Alloc.shield}
-                    onChange={(e) =>
-                      setTeam1Alloc({
-                        ...team1Alloc,
-                        shield: Math.max(
-                          0,
-                          Math.min(
-                            team1Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t1-lock">Lockdown</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team1Data.totalChance}
-                    id="t1-lock"
-                    value={team1Alloc.lock}
-                    onChange={(e) =>
-                      setTeam1Alloc({
-                        ...team1Alloc,
-                        lock: Math.max(
-                          0,
-                          Math.min(
-                            team1Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <strong>Total</strong>
-                  <strong>
-                    {team1Alloc.second +
-                      team1Alloc.reveal +
-                      team1Alloc.shield +
-                      team1Alloc.lock}{' '}
-                    / {team1Data.totalChance}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="setup-card">
-                <h3 className={'teamName team2'} style={{ marginTop: 0 }}>
-                  {team2Data.name}
-                </h3>
-                <div className="setup-row">
-                  <label htmlFor="t2-second">Second Chance</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team2Data.totalChance}
-                    id="t2-second"
-                    value={team2Alloc.second}
-                    onChange={(e) =>
-                      setTeam2Alloc({
-                        ...team2Alloc,
-                        second: Math.max(
-                          0,
-                          Math.min(
-                            team2Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t2-reveal">Reveal Two</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team2Data.totalChance}
-                    id="t2-reveal"
-                    value={team2Alloc.reveal}
-                    onChange={(e) =>
-                      setTeam2Alloc({
-                        ...team2Alloc,
-                        reveal: Math.max(
-                          0,
-                          Math.min(
-                            team2Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t2-shield">Shield</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team2Data.totalChance}
-                    id="t2-shield"
-                    value={team2Alloc.shield}
-                    onChange={(e) =>
-                      setTeam2Alloc({
-                        ...team2Alloc,
-                        shield: Math.max(
-                          0,
-                          Math.min(
-                            team2Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <label htmlFor="t2-lock">Lockdown</label>
-                  <input
-                    className="num-input"
-                    type="number"
-                    min={0}
-                    max={team2Data.totalChance}
-                    id="t2-lock"
-                    value={team2Alloc.lock}
-                    onChange={(e) =>
-                      setTeam2Alloc({
-                        ...team2Alloc,
-                        lock: Math.max(
-                          0,
-                          Math.min(
-                            team2Data.totalChance,
-                            Number(e.target.value)
-                          )
-                        )
-                      })
-                    }
-                  />
-                </div>
-                <div className="setup-row">
-                  <strong>Total</strong>
-                  <strong>
-                    {team2Alloc.second +
-                      team2Alloc.reveal +
-                      team2Alloc.shield +
-                      team2Alloc.lock}{' '}
-                    / {team2Data.totalChance}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'center',
-                gap: 12,
-                marginTop: 16
+                width: '100%',
+                maxWidth: 1300,
+                alignItems: 'stretch',
+                gap: 50,
+                padding: 20
               }}
             >
-              <button
-                className={'btnStart'}
-                disabled={
-                  team1Alloc.second +
-                    team1Alloc.reveal +
-                    team1Alloc.shield +
-                    team1Alloc.lock !==
-                    team1Data.totalChance ||
-                  team2Alloc.second +
-                    team2Alloc.reveal +
-                    team2Alloc.shield +
-                    team2Alloc.lock !==
-                    team2Data.totalChance
-                }
-                onClick={() => {
-                  setTeam1Data((prev) => ({
-                    ...prev,
-                    powerUps: { ...team1Alloc }
-                  }));
-                  setTeam2Data((prev) => ({
-                    ...prev,
-                    powerUps: { ...team2Alloc }
-                  }));
-                  startGameWithTeams(team1Data.players, team2Data.players);
-                }}
-              >
-                Start Match
-              </button>
+              {/* Left: Setup UI */}
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    maxWidth: 920,
+                    margin: '0 0 0 auto'
+                  }}
+                >
+                  <h2 style={{ textAlign: 'center', marginTop: 0, marginBottom: 0 }}>
+                    Power-ups Setup
+                  </h2>
+                  <p className="note" style={{ textAlign: 'center', marginTop: 0 }}>
+                    Set team power-ups. Each team must have 4 power-ups.
+                  </p>
+                  <div className="setup-grid">
+                    <div className="setup-card">
+                      <h3 className={'teamName team1'} style={{ marginTop: 0 }}>
+                        {team1Data.name}
+                      </h3>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Second Chance', 'chance_second.png', 't1-second')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team1Data.totalPowerUps}
+                          id="t1-second"
+                          value={team1Alloc.secondChance}
+                          onChange={(e) =>
+                            setTeam1Alloc({
+                              ...team1Alloc,
+                              secondChance: Math.max(
+                                0,
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't1-reveal')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team1Data.totalPowerUps}
+                          id="t1-reveal"
+                          value={team1Alloc.revealTwo}
+                          onChange={(e) =>
+                            setTeam1Alloc({
+                              ...team1Alloc,
+                              revealTwo: Math.max(
+                                0,
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Shield', 'chance_shield.png', 't1-shield')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team1Data.totalPowerUps}
+                          id="t1-shield"
+                          value={team1Alloc.lifeShield}
+                          onChange={(e) =>
+                            setTeam1Alloc({
+                              ...team1Alloc,
+                              lifeShield: Math.max(
+                                0,
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Lockdown', 'chance_block.png', 't1-lock')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team1Data.totalPowerUps}
+                          id="t1-lock"
+                          value={team1Alloc.lockAll}
+                          onChange={(e) =>
+                            setTeam1Alloc({
+                              ...team1Alloc,
+                              lockAll: Math.max(
+                                0,
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        <strong>Total</strong>
+                        <strong>
+                          {team1Alloc.secondChance +
+                            team1Alloc.revealTwo +
+                            team1Alloc.lifeShield +
+                            team1Alloc.lockAll}{' '}
+                          / {team1Data.totalPowerUps}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="setup-card">
+                      <h3 className={'teamName team2'} style={{ marginTop: 0 }}>
+                        {team2Data.name}
+                      </h3>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Second Chance', 'chance_second.png', 't2-second')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team2Data.totalPowerUps}
+                          id="t2-second"
+                          value={team2Alloc.secondChance}
+                          onChange={(e) =>
+                            setTeam2Alloc({
+                              ...team2Alloc,
+                              secondChance: Math.max(
+                                0,
+                                Math.min(
+                                  team2Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't2-reveal')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team2Data.totalPowerUps}
+                          id="t2-reveal"
+                          value={team2Alloc.revealTwo}
+                          onChange={(e) =>
+                            setTeam2Alloc({
+                              ...team2Alloc,
+                              revealTwo: Math.max(
+                                0,
+                                Math.min(
+                                  team2Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Shield', 'chance_shield.png', 't2-shield')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team2Data.totalPowerUps}
+                          id="t2-shield"
+                          value={team2Alloc.lifeShield}
+                          onChange={(e) =>
+                            setTeam2Alloc({
+                              ...team2Alloc,
+                              lifeShield: Math.max(
+                                0,
+                                Math.min(
+                                  team2Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        {renderLabelWithIcon('Lockdown', 'chance_block.png', 't2-lock')}
+                        <input
+                          className="num-input"
+                          type="number"
+                          min={0}
+                          max={team2Data.totalPowerUps}
+                          id="t2-lock"
+                          value={team2Alloc.lockAll}
+                          onChange={(e) =>
+                            setTeam2Alloc({
+                              ...team2Alloc,
+                              lockAll: Math.max(
+                                0,
+                                Math.min(
+                                  team2Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
+                              )
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="setup-row">
+                        <strong>Total</strong>
+                        <strong>
+                          {team2Alloc.secondChance +
+                            team2Alloc.revealTwo +
+                            team2Alloc.lifeShield +
+                            team2Alloc.lockAll}{' '}
+                          / {team2Data.totalPowerUps}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{ width: 1, background: '#ccc' }} />
+
+              {/* Right: Welcome UI */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                <div>
+                  <h1>Thorlit 3Key</h1>
+                  <div className={'controlContainer'}>
+                    <label className={'labelControl'} htmlFor="sheetId">
+                      Sheet Id
+                    </label>
+                    <input
+                      className={'textControl'}
+                      id="sheetId"
+                      type="text"
+                      value={sheetId}
+                      onChange={(e) => setSheetId(e.target.value)}
+                      disabled={gameState != 'setup'}
+                    />
+                  </div>
+                  <div className={'controlContainer'}>
+                    <label className={'labelControl'} htmlFor="sheetRange">
+                      Sheet Range
+                    </label>
+                    <input
+                      className={'textControl'}
+                      id="sheetRange"
+                      type="text"
+                      value={sheetRange}
+                      onChange={(e) => setSheetRange(e.target.value)}
+                      disabled={gameState != 'setup'}
+                    />
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => startGame()}
+                      className={'btnStart'}
+                      disabled={
+                        gameState == 'gameLoading' ||
+                        ((team1Data.players.length > 0 &&
+                          team2Data.players.length > 0) &&
+                          ((team1Alloc.secondChance +
+                            team1Alloc.revealTwo +
+                            team1Alloc.lifeShield +
+                            team1Alloc.lockAll !==
+                            team1Data.totalPowerUps) ||
+                            (team2Alloc.secondChance +
+                              team2Alloc.revealTwo +
+                              team2Alloc.lifeShield +
+                              team2Alloc.lockAll !==
+                              team2Data.totalPowerUps)))
+                      }
+                    >
+                      Start Game
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1385,9 +1406,9 @@ const CardGame = () => {
               </div>
               <h2 className="teamName team1" style={{ position: 'relative' }}>
                 Team 1
-                {team1Data.totalChance > 0 && (
+                {team1Data.totalPowerUps > 0 && (
                   <ChanceStar
-                    number={team1Data.totalChance}
+                    number={team1Data.totalPowerUps}
                     style={{
                       top: '50%',
                       left: 'calc(100% + 10px)',
@@ -1495,9 +1516,9 @@ const CardGame = () => {
                 <span style={{ paddingBottom: '10px' }}>{team2Data.score}</span>
               </div>
               <h2 className="teamName team2" style={{ position: 'relative' }}>
-                {team2Data.totalChance > 0 && (
+                {team2Data.totalPowerUps > 0 && (
                   <ChanceStar
-                    number={team2Data.totalChance}
+                    number={team2Data.totalPowerUps}
                     style={{
                       top: '50%',
                       right: 'calc(100% + 10px)',

@@ -11,10 +11,22 @@
 }
 .setup-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 80px; /* label takes remaining space, second column matches .num-input width */
   gap: 8px;
   align-items: center;
   margin: 6px 0;
+  justify-items: start; /* left-align both columns */
+}
+
+.setup-row label {
+  text-align: left;
+}
+
+/* Center the total value (e.g., 4 / 4) within the input column */
+.setup-row strong:nth-child(2) {
+  justify-self: center;
+  width: 100%;
+  text-align: center;
 }
 .num-input {
   width: 80px;
@@ -426,4 +438,19 @@ input:disabled {
 .powerPlayBtn:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+/* Badge shown on top-right of power-up icons showing remaining count */
+.powerupBadge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: green;
+  color: #fff;
+  border-radius: 50%;  
+  width: 30px;
+  height: 30px;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 28px;
 }
