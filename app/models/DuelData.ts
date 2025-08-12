@@ -22,8 +22,7 @@ export default interface DuelData {
     bottomLeft: Card[];
     topRight: Card[];
     bottomRight: Card[];
-  };
-  revealTwoUsedBy?: 'team1' | 'team2' | null; // store team has used reveal two in the current duel
+  };  
   winningTeam?: 'team1' | 'team2' | null; // store team has won the current duel
   player1SideSelected?:
     | 'top-left'
@@ -40,8 +39,8 @@ export default interface DuelData {
   player1Name: string; // player1 is the first player in the current duel
   player1Team: 'team1' | 'team2' | null; // store team of the first player
   player2Name: string; // player2 is the second player in the current duel
-  player2Team: 'team1' | 'team2' | null; // store team of the second player
-  // New power-up state (per duel)
-  shieldUsedBy?: 'team1' | 'team2' | null; // if set, that team cannot be eliminated this duel
-  lockUsedBy?: 'team1' | 'team2' | null; // if set, the other team cannot use power-ups this duel
+  player2Team: 'team1' | 'team2' | null; // store team of the second player  
+  revealTwoUsedBy?: 'team1' | 'team2' | null; // store team has used reveal two in the current duel
+  lifeShieldUsedBy?: 'team1' | 'team2' | null; // if set, that team cannot be eliminated this duel
+  lockAllUsedBy?: 'team1' | 'team2' | null; // if set, the other team cannot use power-ups this duel
 }

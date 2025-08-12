@@ -82,8 +82,8 @@ const CardGame = () => {
       bottomRight: []
     },
     revealTwoUsedBy: null,
-    shieldUsedBy: null,
-    lockUsedBy: null,
+    lifeShieldUsedBy: null,
+    lockAllUsedBy: null,
     player1SideSelected: '',
     player2SideSelected: '',
     winningTeam: null
@@ -231,8 +231,8 @@ const CardGame = () => {
           bottomRight: []
         },
         revealTwoUsedBy: null,
-        shieldUsedBy: null,
-        lockUsedBy: null,
+        lifeShieldUsedBy: null,
+        lockAllUsedBy: null,
         player1SideSelected: '',
         player2SideSelected: '',
         winningTeam: null
@@ -431,8 +431,8 @@ const CardGame = () => {
           (secondPlayerTeam === newData.player2Team && !isPlayer1Winner);
 
         const isSecondTeamLocked =
-          newData.lockUsedBy !== null &&
-          newData.lockUsedBy !== secondPlayerTeam;
+          newData.lockAllUsedBy !== null &&
+          newData.lockAllUsedBy !== secondPlayerTeam;
         const secondTeamHasSecondChance =
           !secondTeamAlreadyUsedSecondChance &&
           !secondTeamIsWinning &&
@@ -868,7 +868,7 @@ const CardGame = () => {
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
-        setDuelData((prev) => ({ ...prev, lockUsedBy: teamName }));
+        setDuelData((prev) => ({ ...prev, lockAllUsedBy: teamName }));
       }
     }
 
@@ -921,7 +921,7 @@ const CardGame = () => {
       const losingTeam = isPlayer1Winner ? secondPlayerTeam : firstPlayerTeam;
 
       // If Shield is active for the losing team, do not eliminate that player this duel
-      const shieldedTeam = duelData.shieldUsedBy;
+      const shieldedTeam = duelData.lifeShieldUsedBy;
       const shouldPreventElimination =
         shieldedTeam && losingTeam === shieldedTeam;
 
@@ -997,7 +997,7 @@ const CardGame = () => {
       team2Data.players,
       duelData.player1Team,
       duelData.player2Team,
-      duelData.shieldUsedBy
+      duelData.lifeShieldUsedBy
     ]
   );
 
