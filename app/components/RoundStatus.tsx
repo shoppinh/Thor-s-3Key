@@ -21,7 +21,7 @@ interface RoundStatusProps {
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
     teamName: 'team1' | 'team2',
-    chanceType: 'second' | 'reveal' | 'shield' | 'lock'
+    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll'
   ) => void;
 }
 
@@ -264,7 +264,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                 aria-label="Use Second Chance"
                 onClick={() =>
                   isSecondChanceEnabled(teamKey) &&
-                  onChanceClick(teamKey, 'second')
+                  onChanceClick(teamKey, 'secondChance')
                 }
                 style={{
                   width: '120px',
@@ -325,7 +325,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                 aria-label="Use Reveal Two"
                 onClick={() =>
                   isRevealTwoEnabled(teamKey) &&
-                  onChanceClick(teamKey, 'reveal')
+                  onChanceClick(teamKey, 'revealTwo')
                 }
                 style={{
                   width: '120px',
@@ -385,7 +385,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                 type="button"
                 aria-label="Use Shield"
                 onClick={() =>
-                  isShieldEnabled(teamKey) && onChanceClick(teamKey, 'shield')
+                  isShieldEnabled(teamKey) && onChanceClick(teamKey, 'lifeShield')
                 }
                 disabled={!isShieldEnabled(teamKey)}
                 style={{
@@ -443,9 +443,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             >
               <button
                 type="button"
-                aria-label="Use Lockdown"
+                aria-label="Use Lock All"
                 onClick={() =>
-                  isLockEnabled(teamKey) && onChanceClick(teamKey, 'lock')
+                  isLockEnabled(teamKey) && onChanceClick(teamKey, 'lockAll')
                 }
                 disabled={!isLockEnabled(teamKey)}
                 style={{
@@ -464,7 +464,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               >
                 <img
                   src="/images/chance_block.png"
-                  alt="Lockdown"
+                  alt="Lock All"
                   style={{
                     width: '120px',
                     height: '120px',

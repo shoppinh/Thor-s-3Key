@@ -539,20 +539,20 @@ const CardGame = () => {
   /**
    * Handles chance item clicks - shows confirmation popup
    * @param teamName - Which team clicked the chance
-   * @param chanceType - Type of chance (second or reveal)
+   * @param chanceType - Type of chance (secondChance or revealTwo)
    */
   const handleChanceClick = (
     teamName: 'team1' | 'team2',
-    chanceType: 'second' | 'reveal' | 'shield' | 'lock'
+    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll'
   ) => {
     const chanceItemName =
-      chanceType === 'second'
+      chanceType === 'secondChance'
         ? 'Second Chance'
-        : chanceType === 'reveal'
+        : chanceType === 'revealTwo'
           ? 'Reveal Two'
-          : chanceType === 'shield'
-            ? 'Shield'
-            : 'Lockdown';
+          : chanceType === 'lifeShield'
+            ? 'Life Shield'
+            : 'Lock All';
 
     setConfirmPopup({
       isVisible: true,
@@ -795,7 +795,7 @@ const CardGame = () => {
     const { teamName, chanceType } = confirmPopup;
 
     if (teamName && chanceType) {
-      if (chanceType === 'second') {
+      if (chanceType === 'secondChance') {
         // Handle Second Chance logic
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
@@ -813,7 +813,7 @@ const CardGame = () => {
 
         // Implement second chance functionality
         implementSecondChance();
-      } else if (chanceType === 'reveal') {
+      } else if (chanceType === 'revealTwo') {
         // Handle Reveal Two logic
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
@@ -834,7 +834,7 @@ const CardGame = () => {
 
         // Implement reveal two functionality
         implementRevealTwo();
-      } else if (chanceType === 'shield') {
+      } else if (chanceType === 'lifeShield') {
         // Prevent elimination this duel
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
@@ -850,7 +850,7 @@ const CardGame = () => {
           }));
         }
         setDuelData((prev) => ({ ...prev, shieldUsedBy: teamName }));
-      } else if (chanceType === 'lock') {
+      } else if (chanceType === 'lockAll') {
         // Lock opponent power-ups this duel
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
@@ -1037,6 +1037,43 @@ const CardGame = () => {
   };
 
   /**
+   * Determines whether the "Start Game" button should be disabled.
+   *
+   * Rules:
+   * - Disabled while the app is loading data (gameState is 'gameLoading').
+   * - If both teams already have players, then each team's allocated power-ups
+   *   must exactly equal their `totalPowerUps`. If either team does not match,
+   *   the button is disabled.
+   * - If players are not loaded yet, the button remains enabled to allow
+   *   kicking off the sheet loading.
+   *
+   * @returns true if the button should be disabled; otherwise false
+   */
+  const isStartGameDisabled = (): boolean => {
+    if (gameState === 'gameLoading') {
+      return true;
+    }
+
+    const team1AllocatedTotal =
+      team1Alloc.secondChance +
+      team1Alloc.revealTwo +
+      team1Alloc.lifeShield +
+      team1Alloc.lockAll;
+    const team2AllocatedTotal =
+      team2Alloc.secondChance +
+      team2Alloc.revealTwo +
+      team2Alloc.lifeShield +
+      team2Alloc.lockAll;
+
+    const isTeam1AllocationValid =
+      team1AllocatedTotal === team1Data.totalPowerUps;
+    const isTeam2AllocationValid =
+      team2AllocatedTotal === team2Data.totalPowerUps;
+
+    return !(isTeam1AllocationValid && isTeam2AllocationValid);
+  };
+
+  /**
    * Renders a label with a small preview icon positioned to the left of the text.
    * Used in the combined 'setup' screen for power-up labels.
    *
@@ -1083,7 +1120,7 @@ const CardGame = () => {
               style={{
                 display: 'flex',
                 width: '100%',
-                maxWidth: 1300,
+                maxWidth: 1150,
                 alignItems: 'stretch',
                 gap: 50,
                 padding: 20
@@ -1114,7 +1151,7 @@ const CardGame = () => {
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team1Data.totalPowerUps}
+                          max={2}
                           id="t1-second"
                           value={team1Alloc.secondChance}
                           onChange={(e) =>
@@ -1137,7 +1174,7 @@ const CardGame = () => {
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team1Data.totalPowerUps}
+                          max={2}
                           id="t1-reveal"
                           value={team1Alloc.revealTwo}
                           onChange={(e) =>
@@ -1155,12 +1192,12 @@ const CardGame = () => {
                         />
                       </div>
                       <div className="setup-row">
-                        {renderLabelWithIcon('Shield', 'chance_shield.png', 't1-shield')}
+                        {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't1-shield')}
                         <input
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team1Data.totalPowerUps}
+                          max={2}
                           id="t1-shield"
                           value={team1Alloc.lifeShield}
                           onChange={(e) =>
@@ -1178,12 +1215,12 @@ const CardGame = () => {
                         />
                       </div>
                       <div className="setup-row">
-                        {renderLabelWithIcon('Lockdown', 'chance_block.png', 't1-lock')}
+                        {renderLabelWithIcon('Lock All', 'chance_block.png', 't1-lock')}
                         <input
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team1Data.totalPowerUps}
+                          max={2}
                           id="t1-lock"
                           value={team1Alloc.lockAll}
                           onChange={(e) =>
@@ -1202,7 +1239,18 @@ const CardGame = () => {
                       </div>
                       <div className="setup-row">
                         <strong>Total</strong>
-                        <strong>
+                        <strong
+                          style={{
+                            color:
+                              team1Alloc.secondChance +
+                                team1Alloc.revealTwo +
+                                team1Alloc.lifeShield +
+                                team1Alloc.lockAll !==
+                              team1Data.totalPowerUps
+                                ? 'red'
+                                : undefined
+                          }}
+                        >
                           {team1Alloc.secondChance +
                             team1Alloc.revealTwo +
                             team1Alloc.lifeShield +
@@ -1222,7 +1270,7 @@ const CardGame = () => {
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team2Data.totalPowerUps}
+                          max={2}
                           id="t2-second"
                           value={team2Alloc.secondChance}
                           onChange={(e) =>
@@ -1245,7 +1293,7 @@ const CardGame = () => {
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team2Data.totalPowerUps}
+                          max={2}
                           id="t2-reveal"
                           value={team2Alloc.revealTwo}
                           onChange={(e) =>
@@ -1263,12 +1311,12 @@ const CardGame = () => {
                         />
                       </div>
                       <div className="setup-row">
-                        {renderLabelWithIcon('Shield', 'chance_shield.png', 't2-shield')}
+                        {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't2-shield')}
                         <input
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team2Data.totalPowerUps}
+                          max={2}
                           id="t2-shield"
                           value={team2Alloc.lifeShield}
                           onChange={(e) =>
@@ -1286,12 +1334,12 @@ const CardGame = () => {
                         />
                       </div>
                       <div className="setup-row">
-                        {renderLabelWithIcon('Lockdown', 'chance_block.png', 't2-lock')}
+                        {renderLabelWithIcon('Lock All', 'chance_block.png', 't2-lock')}
                         <input
                           className="num-input"
                           type="number"
                           min={0}
-                          max={team2Data.totalPowerUps}
+                          max={2}
                           id="t2-lock"
                           value={team2Alloc.lockAll}
                           onChange={(e) =>
@@ -1310,7 +1358,18 @@ const CardGame = () => {
                       </div>
                       <div className="setup-row">
                         <strong>Total</strong>
-                        <strong>
+                        <strong
+                          style={{
+                            color:
+                              team2Alloc.secondChance +
+                                team2Alloc.revealTwo +
+                                team2Alloc.lifeShield +
+                                team2Alloc.lockAll !==
+                              team2Data.totalPowerUps
+                                ? 'red'
+                                : undefined
+                          }}
+                        >
                           {team2Alloc.secondChance +
                             team2Alloc.revealTwo +
                             team2Alloc.lifeShield +
@@ -1327,7 +1386,7 @@ const CardGame = () => {
               <div style={{ width: 1, background: '#ccc' }} />
 
               {/* Right: Welcome UI */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                 <div>
                   <h1>Thorlit 3Key</h1>
                   <div className={'controlContainer'}>
@@ -1360,21 +1419,7 @@ const CardGame = () => {
                     <button
                       onClick={() => startGame()}
                       className={'btnStart'}
-                      disabled={
-                        gameState == 'gameLoading' ||
-                        ((team1Data.players.length > 0 &&
-                          team2Data.players.length > 0) &&
-                          ((team1Alloc.secondChance +
-                            team1Alloc.revealTwo +
-                            team1Alloc.lifeShield +
-                            team1Alloc.lockAll !==
-                            team1Data.totalPowerUps) ||
-                            (team2Alloc.secondChance +
-                              team2Alloc.revealTwo +
-                              team2Alloc.lifeShield +
-                              team2Alloc.lockAll !==
-                              team2Data.totalPowerUps)))
-                      }
+                      disabled={isStartGameDisabled()}
                     >
                       Start Game
                     </button>

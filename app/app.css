@@ -33,7 +33,19 @@
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Ensure centered numbers across browsers and remove native spin buttons */
+.num-input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield; /* Future-friendly */
+}
+.num-input::-webkit-outer-spin-button,
+.num-input::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Chrome, Safari, Edge */
+  margin: 0;
 }
 .note {
   color: #666;
