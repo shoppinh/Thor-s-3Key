@@ -63,7 +63,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isLockedAgainstSecondTeam =
       duelData.lockUsedBy && duelData.lockUsedBy !== secondPlayerTeam;
     const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
-    const secondTeamHasSecondChance = secondTeamData.powerUps?.second > 0;
+    const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
     const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
     const canSecondChanceNow =
       bothSelected &&
@@ -226,7 +226,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         }}
       >
         {/* Team Name */}
-        {teamData.totalChance > 0 && (
+        {teamData.totalPowerUps > 0 && (
           <h4
             className={'teamName ' + teamKey}
             style={{
@@ -249,7 +249,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           }}
         >
           {/* Second Chance */}
-          {teamData.powerUps.second > 0 && (
+          {teamData.powerUps.secondChance > 0 && (
             <div
               style={{
                 display: 'flex',
@@ -276,6 +276,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  position: 'relative',
                   cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default'
                 }}
                 disabled={!isSecondChanceEnabled(teamKey)}
@@ -291,6 +292,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                       : 'grayscale(100%)'
                   }}
                 />
+                <div className="powerupBadge" aria-hidden>
+                  {teamData.powerUps.secondChance}
+                </div>
               </button>
               <span
                 style={{
@@ -300,13 +304,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   color: isSecondChanceEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
-                Second Chance ({teamData.powerUps.second})
+                Second Chance
               </span>
             </div>
           )}
 
           {/* Reveal Two */}
-          {teamData.powerUps.reveal > 0 && (
+          {teamData.powerUps.revealTwo > 0 && (
             <div
               style={{
                 display: 'flex',
@@ -333,6 +337,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  position: 'relative',
                   cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default'
                 }}
                 disabled={!isRevealTwoEnabled(teamKey)}
@@ -348,6 +353,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                       : 'grayscale(100%)'
                   }}
                 />
+                <div className="powerupBadge" aria-hidden>
+                  {teamData.powerUps.revealTwo}
+                </div>
               </button>
               <span
                 style={{
@@ -357,13 +365,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   color: isRevealTwoEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
-                Reveal Two ({teamData.powerUps.reveal})
+                Reveal Two
               </span>
             </div>
           )}
 
           {/* Shield */}
-          {teamData.powerUps.shield > 0 && (
+          {teamData.powerUps.lifeShield > 0 && (
             <div
               style={{
                 display: 'flex',
@@ -390,6 +398,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
+                  position: 'relative',
                   cursor: isShieldEnabled(teamKey) ? 'pointer' : 'default'
                 }}
               >
@@ -404,6 +413,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                       : 'grayscale(100%)'
                   }}
                 />
+                <div className="powerupBadge" aria-hidden>
+                  {teamData.powerUps.lifeShield}
+                </div>
               </button>
               <span
                 style={{
@@ -413,13 +425,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   color: isShieldEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
-                No Elimination ({teamData.powerUps.shield})
+                Life Shield
               </span>
             </div>
           )}
 
           {/* Lockdown */}
-          {teamData.powerUps.lock > 0 && (
+          {teamData.powerUps.lockAll > 0 && (
             <div
               style={{
                 display: 'flex',
@@ -446,6 +458,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'linear-gradient(135deg, #fff3e0, #ffffff)',
+                  position: 'relative',
                   cursor: isLockEnabled(teamKey) ? 'pointer' : 'default'
                 }}
               >
@@ -460,6 +473,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                       : 'grayscale(100%)'
                   }}
                 />
+                <div className="powerupBadge" aria-hidden>
+                  {teamData.powerUps.lockAll}
+                </div>
               </button>
               <span
                 style={{
@@ -469,7 +485,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   color: isLockEnabled(teamKey) ? '#333' : '#999'
                 }}
               >
-                Lockdown ({teamData.powerUps.lock})
+                Lock All
               </span>
             </div>
           )}

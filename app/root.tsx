@@ -17,7 +17,6 @@ export const links: LinksFunction = () => [
 ];
 
 // existing imports
-import ShareButtons from './components/ShareButtons';
 
 export async function loader() {
   return json({
@@ -115,7 +114,6 @@ export default function App() {
       <body>
         <div id="detail">
           <Outlet context={clientSecrets} />
-          <ShareButtons siteUrl={siteUrl} />
         </div>
 
         <ScrollRestoration />

@@ -87,7 +87,8 @@ const buttonStyle: React.CSSProperties = {
   borderRadius: 8,
   padding: '10px 12px',
   fontWeight: 600,
-  cursor: 'pointer'
+  cursor: 'pointer',
+  textDecoration: 'none'
 };
 
 
