@@ -956,39 +956,43 @@ const CardGame = () => {
 
       setTeam1Data((prev) => ({ ...prev, scoreClass: '' }));
       setTeam2Data((prev) => ({ ...prev, scoreClass: '' }));
-      // Update scores and determine losing team
-      if (isPlayer1Winner) {
-        if (firstPlayerTeam === 'team1') {
-          setTeam1Data((prev) => ({ ...prev, score: prev.score + 1 }));
-          setTimeout(() => {
-            setTeam1Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
-          }, 10);
+
+      // Only update scores if the losing team doesn't have an active shield
+      if (!shouldPreventElimination) {
+        // Update scores and determine losing team
+        if (isPlayer1Winner) {
+          if (firstPlayerTeam === 'team1') {
+            setTeam1Data((prev) => ({ ...prev, score: prev.score + 1 }));
+            setTimeout(() => {
+              setTeam1Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+            }, 10);
+          } else {
+            setTeam2Data((prev) => ({ ...prev, score: prev.score + 1 }));
+            setTimeout(() => {
+              setTeam2Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+            }, 10);
+          }
         } else {
-          setTeam2Data((prev) => ({ ...prev, score: prev.score + 1 }));
-          setTimeout(() => {
-            setTeam2Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
-          }, 10);
+          if (secondPlayerTeam === 'team1') {
+            setTeam1Data((prev) => ({ ...prev, score: prev.score + 1 }));
+            setTimeout(() => {
+              setTeam1Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+            }, 10);
+          } else {
+            setTeam2Data((prev) => ({ ...prev, score: prev.score + 1 }));
+            setTimeout(() => {
+              setTeam2Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+            }, 10);
+          }
         }
-      } else {
-        if (secondPlayerTeam === 'team1') {
-          setTeam1Data((prev) => ({ ...prev, score: prev.score + 1 }));
-          setTimeout(() => {
-            setTeam1Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
-          }, 10);
-        } else {
-          setTeam2Data((prev) => ({ ...prev, score: prev.score + 1 }));
-          setTimeout(() => {
-            setTeam2Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
-          }, 10);
-        }
+
+      // Store the winning team in duelData (only if no shield is active)
+        const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
+        setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
       // Set the duel result
       setDuelResult(winner);
-
-      // Store the winning team in duelData
-      const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
-      setDuelData((prev) => ({ ...prev, winningTeam }));
 
       // Get the current team arrays
       const currentTeam1Players = team1Data.players;
