@@ -170,7 +170,9 @@ const CardGame = () => {
       });
       urls.push(...extraImages);
       await preloadImages(urls);
-    } catch {}
+    } catch (error) {
+      console.error('Error preloading images:', error);
+    }
 
     // Load team player names from Google Sheets
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
@@ -879,7 +881,7 @@ const CardGame = () => {
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
-        setDuelData((prev) => ({ ...prev, shieldUsedBy: teamName }));
+        setDuelData((prev) => ({ ...prev, lifeShieldUsedBy: teamName }));
       } else if (chanceType === 'lockAll') {
         // Lock opponent power-ups this duel
         if (teamName === 'team1') {
