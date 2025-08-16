@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { useOutletContext } from '@remix-run/react';
+import { useCallback, useState, useEffect } from 'react';
+import { useOutletContext, useSearchParams, useNavigate } from '@remix-run/react';
 import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import RoundStatus from '../components/RoundStatus';
 import ChanceStar from '../components/ChanceStar';
@@ -10,6 +10,7 @@ import TeamData from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 import ConfirmPopupData from '~/models/ConfirmPopupData';
 import PlayerData from '~/models/PlayerData';
+import { roomService } from '~/services/roomService';
 import {
   CARDS_COVER,
   createDeck,
@@ -101,6 +102,16 @@ const CardGame = () => {
   const [gameState, setGameState] = useState('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
 
+  // Multiplayer state
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const roomId = searchParams.get('room');
+  const playerName = searchParams.get('player');
+  const [isOnline, setIsOnline] = useState(!!roomId);
+  const [roomPlayers, setRoomPlayers] = useState<any[]>([]);
+  const [isRoomAdmin, setIsRoomAdmin] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
     secondChance: team1Data.powerUps.secondChance,
@@ -123,6 +134,114 @@ const CardGame = () => {
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
+
+  // Multiplayer initialization
+  const loadRoomPlayers = useCallback(async () => {
+    if (!roomId) return;
+    
+    try {
+      const players = await roomService.getPlayersInRoom(roomId);
+      setRoomPlayers(players);
+      
+      // Update team data with online players
+      const team1Players = players.filter(p => p.name.startsWith('Team1:')).map(p => p.name.replace('Team1:', ''));
+      const team2Players = players.filter(p => p.name.startsWith('Team2:')).map(p => p.name.replace('Team2:', ''));
+      
+      if (team1Players.length > 0) {
+        setTeam1Data(prev => ({ ...prev, players: team1Players }));
+      }
+      if (team2Players.length > 0) {
+        setTeam2Data(prev => ({ ...prev, players: team2Players }));
+      }
+    } catch (error) {
+      console.error('Failed to load room players:', error);
+    }
+  }, [roomId]);
+
+  const initializeRoom = useCallback(async () => {
+    if (!roomId || !playerName) return;
+
+    try {
+      setConnectionStatus('connecting');
+      
+      // Join the room
+      const player = await roomService.joinRoom(roomId, playerName);
+      setIsRoomAdmin(player.is_admin);
+      
+      // Load room players
+      await loadRoomPlayers();
+      
+      // Load existing game state if any
+      const room = await roomService.getRoom(roomId);
+      if (room?.game_state === 'playing') {
+        // Load existing game session
+        // This would require adding a method to get session data
+      }
+      
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('Failed to initialize room:', error);
+      setConnectionStatus('disconnected');
+      alert('Failed to join room. Redirecting to lobby...');
+      navigate('/play');
+    }
+  }, [roomId, playerName, navigate, loadRoomPlayers]);
+
+  useEffect(() => {
+    if (roomId && playerName) {
+      initializeRoom();
+    }
+  }, [roomId, playerName, initializeRoom]);
+
+  // Subscribe to room updates
+  useEffect(() => {
+    if (roomId && isOnline) {
+      setConnectionStatus('connecting');
+      
+      roomService.subscribeToRoom(roomId, (payload) => {
+        setConnectionStatus('connected');
+        
+        // Handle real-time updates
+        if (payload.eventType === 'UPDATE' && payload.new) {
+          const sessionData = payload.new.session_data;
+          if (sessionData) {
+            // Sync game state from remote
+            if (sessionData.team1Data) setTeam1Data(sessionData.team1Data);
+            if (sessionData.team2Data) setTeam2Data(sessionData.team2Data);
+            if (sessionData.duelData) setDuelData(sessionData.duelData);
+            if (sessionData.gameState) setGameState(sessionData.gameState);
+            if (sessionData.roundNumber) setRoundNumber(sessionData.roundNumber);
+          }
+        }
+        
+        // Handle player changes
+        if (payload.table === 'players') {
+          loadRoomPlayers();
+        }
+      });
+    }
+  }, [roomId, isOnline, loadRoomPlayers]);
+
+  // Sync local state to remote when playing online
+  useEffect(() => {
+    if (roomId && isOnline && gameState === 'gamePlaying' && isRoomAdmin) {
+      const gameStateData = {
+        team1Data,
+        team2Data,
+        duelData,
+        gameState,
+        roundNumber,
+        lastUpdated: Date.now()
+      };
+      
+      // Debounce updates to avoid too many calls
+      const timeoutId = setTimeout(() => {
+        roomService.updateGameState(roomId, gameStateData).catch(console.error);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [team1Data, team2Data, duelData, gameState, roundNumber, roomId, isOnline, isRoomAdmin]);
 
   /**
    * Starts the game with the provided team data
@@ -1644,6 +1763,32 @@ const CardGame = () => {
 
   return (
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
+      {/* Online Status Indicator */}
+      {roomId && (
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          zIndex: 1000,
+          backgroundColor: connectionStatus === 'connected' ? '#28a745' : 
+                          connectionStatus === 'connecting' ? '#ffc107' : '#dc3545',
+          color: 'white'
+        }}>
+          {connectionStatus === 'connected' && '🟢 Online'}
+          {connectionStatus === 'connecting' && '🟡 Connecting...'}
+          {connectionStatus === 'disconnected' && '🔴 Offline'}
+          {roomId && (
+            <div style={{ fontSize: '10px', opacity: 0.8 }}>
+              Room: {roomId.slice(0, 8)}...
+            </div>
+          )}
+        </div>
+      )}
+      
       {renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}
