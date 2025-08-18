@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react'
 import AdminDashboard from '~/components/AdminDashboard'
-import { supabase } from '~/utils/supabaseClient'
+import { authService, type AuthUser } from '~/services/supabaseAuthService'
 
 export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [authError, setAuthError] = useState<string | null>(null)
@@ -16,17 +16,11 @@ export default function Admin() {
   }, [])
 
   const checkAuthAndAdminStatus = async () => {
-    console.log("Yo!")
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      const { user, error } = await authService.getCurrentUser()
 
-      console.log("🚀 ---------------------------------------------------------🚀");
-      console.log("🚀 ~ admin.tsx:18 ~ checkAuthAndAdminStatus ~ user:", user);
-      console.log("🚀 ---------------------------------------------------------🚀");
-
-      
-      if (authError) {
-        console.error('Auth error:', authError)
+      if (error) {
+        console.error('Auth error:', error)
         setLoading(false)
         return
       }
@@ -35,20 +29,8 @@ export default function Admin() {
 
       if (user) {
         // Check if user is an admin
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', user.id)
-          .single()
-        
-          console.log("🚀 ---------------------------------------------------------🚀");
-          console.log("🚀 ~ admin.tsx:40 ~ checkAuthAndAdminStatus ~ data:", data);
-          console.log("🚀 ---------------------------------------------------------🚀");
-        if (error && error.code !== 'PGRST116') {
-          console.error('Admin check error:', error)
-        }
-        
-        setIsAdmin(!!data)
+        const isAdminUser = await authService.isAdmin(user.id)
+        setIsAdmin(isAdminUser)
       }
     } catch (error) {
       console.error('Failed to check admin status:', error)
@@ -62,25 +44,30 @@ export default function Admin() {
     e.preventDefault();
     setAuthError(null);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { user, error } = await authService.signIn({
         email,
         password
       });
+      
       if (error) {
         setAuthError(error.message);
         console.error('Sign in error:', error);
-      } else {
-        setUser(data.user);
+      } else if (user) {
+        setUser(user);
+        // Check if user is an admin after sign in
+        const isAdminUser = await authService.isAdmin(user.id);
+        setIsAdmin(isAdminUser);
       }
-    } catch (error: any) {
-      setAuthError(error.message || 'Unknown error');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAuthError(errorMessage);
       console.error('Sign in error:', error);
     }
   }
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
+      const { error } = await authService.signOut()
       if (error) {
         console.error('Sign out error:', error)
       } else {

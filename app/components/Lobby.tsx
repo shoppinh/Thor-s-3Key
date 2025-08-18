@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { roomService } from '~/services/roomService'
 
 interface LobbyProps {
-  onJoinRoom: (roomId: string, playerName: string) => void
-  playerName: string
-  setPlayerName: (name: string) => void
+  readonly onJoinRoom: (roomId: string, playerName: string) => void
+  readonly playerName: string
+  readonly setPlayerName: (name: string) => void
+  readonly user?: { id: string; email?: string }
 }
 
 interface Room {
@@ -18,7 +19,7 @@ interface Room {
   playerCount?: number
 }
 
-export default function Lobby({ onJoinRoom, playerName, setPlayerName }: LobbyProps) {
+export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: LobbyProps) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -71,11 +72,16 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName }: LobbyPr
       alert('Please enter your name')
       return
     }
+    
+    if (!user) {
+      alert('You must be logged in to create a room')
+      return
+    }
 
     try {
       setCreating(true)
-      const room = await roomService.createRoom(newRoomName.trim())
-      await roomService.joinRoom(room.id, playerName.trim())
+      const room = await roomService.createRoom(newRoomName.trim(), user.id)
+      await roomService.joinRoom(room.id, playerName.trim(), user.id)
       
       // Join the created room
       onJoinRoom(room.id, playerName.trim())
@@ -94,9 +100,14 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName }: LobbyPr
       alert('Please enter your name')
       return
     }
+    
+    if (!user) {
+      alert('You must be logged in to join a room')
+      return
+    }
 
     try {
-      await roomService.joinRoom(roomId, playerName.trim())
+      await roomService.joinRoom(roomId, playerName.trim(), user.id)
       onJoinRoom(roomId, playerName.trim())
     } catch (error) {
       console.error('Failed to join room:', error)
@@ -252,91 +263,99 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName }: LobbyPr
           </button>
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            Loading rooms...
-          </div>
-        ) : rooms.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px', 
-            color: '#666',
-            border: '1px solid #ddd',
-            borderRadius: '8px'
-          }}>
-            <h4>No rooms available</h4>
-            <p>Create a new room to start playing!</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: '15px' }}>
-            {rooms.map((room) => (
-              <div
-                key={room.id}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  backgroundColor: 'white',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-              >
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center' 
-                }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 8px 0' }}>{room.name}</h4>
-                    <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#666' }}>
-                      <span style={{ 
-                        color: getStatusColor(room.game_state),
-                        fontWeight: 'bold'
-                      }}>
-                        {room.game_state.toUpperCase()}
-                      </span>
-                      <span>Players: {room.playerCount}/{room.max_players}</span>
-                      {room.current_round > 0 && <span>Round: {room.current_round}</span>}
-                      <span>Created: {new Date(room.created_at).toLocaleTimeString()}</span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => handleJoinRoom(room.id)}
-                    disabled={
-                      !playerName.trim() || 
-                      (room.playerCount || 0) >= room.max_players ||
-                      room.game_state === 'playing'
-                    }
-                    style={{
-                      padding: '10px 20px',
-                      backgroundColor: 
-                        !playerName.trim() || 
-                        (room.playerCount || 0) >= room.max_players ||
-                        room.game_state === 'playing'
-                          ? '#6c757d' 
-                          : '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 
-                        !playerName.trim() || 
-                        (room.playerCount || 0) >= room.max_players ||
-                        room.game_state === 'playing'
-                          ? 'not-allowed' 
-                          : 'pointer'
-                    }}
-                  >
-                    {(room.playerCount || 0) >= room.max_players 
-                      ? 'Full' 
-                      : room.game_state === 'playing' 
-                        ? 'In Progress' 
-                        : 'Join'}
-                  </button>
-                </div>
+        {(() => {
+          if (loading) {
+            return (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                Loading rooms...
               </div>
-            ))}
+            );
+          }
+          
+          if (rooms.length === 0) {
+            return (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px'
+              }}>
+                <h4>No rooms available</h4>
+                <p>Create a new room to start playing!</p>
+              </div>
+            );
+          }
+          
+          return (
+          <div style={{ display: 'grid', gap: '15px' }}>
+            {rooms.map((room) => {
+              const isRoomFull = (room.playerCount || 0) >= room.max_players;
+              const isRoomPlaying = room.game_state === 'playing';
+              const isDisabled = !playerName.trim() || isRoomFull || isRoomPlaying;
+              // const hasAlreadyJoined = room.players.some((player) => player.name === playerName);
+              let buttonText = 'Join';
+              if (isRoomFull) {
+                buttonText = 'Full';
+              } else if (isRoomPlaying) {
+                buttonText = 'In Progress';
+              } 
+              // else if (hasAlreadyJoined) {
+              //   buttonText = 'Rejoin';
+              // }
+              
+              return (
+                <div
+                  key={room.id}
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: 'white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center' 
+                  }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 8px 0' }}>{room.name}</h4>
+                      <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#666' }}>
+                        <span style={{ 
+                          color: getStatusColor(room.game_state),
+                          fontWeight: 'bold'
+                        }}>
+                          {room.game_state.toUpperCase()}
+                        </span>
+                        <span>Players: {room.playerCount}/{room.max_players}</span>
+                        {room.current_round > 0 && <span>Round: {room.current_round}</span>}
+                        <span>Created: {new Date(room.created_at).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleJoinRoom(room.id)}
+                      disabled={isDisabled}
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: isDisabled ? '#6c757d' : '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {buttonText}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   )

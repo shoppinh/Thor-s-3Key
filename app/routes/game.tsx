@@ -1,5 +1,9 @@
 import { useCallback, useState, useEffect } from 'react';
-import { useOutletContext, useSearchParams, useNavigate } from '@remix-run/react';
+import {
+  useOutletContext,
+  useSearchParams,
+  useNavigate
+} from '@remix-run/react';
 import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import RoundStatus from '../components/RoundStatus';
 import ChanceStar from '../components/ChanceStar';
@@ -19,9 +23,10 @@ import {
   drawCards,
   getCardImage,
   calculateSum,
-    determineWinner,
-    preloadImages
+  determineWinner,
+  preloadImages
 } from '~/utils/gameUtil';
+
 
 const DECKS = createDeck();
 
@@ -38,6 +43,188 @@ type PowerUpsAllocation = {
   lifeShield: number;
   lockAll: number;
 };
+
+const GameMemberList = ({ 
+  team1, 
+  team2,
+  onSwapPlayers
+}: { 
+  team1: string[], 
+  team2: string[],
+  onSwapPlayers?: (team1Index: number, team2Index: number) => void 
+}) => {
+  const [selectedTeam1Player, setSelectedTeam1Player] = useState<number | null>(null);
+  const [selectedTeam2Player, setSelectedTeam2Player] = useState<number | null>(null);
+  
+  const handlePlayerClick = (team: 'team1' | 'team2', index: number) => {
+    if (team === 'team1') {
+      // If already selected, deselect
+      if (selectedTeam1Player === index) {
+        setSelectedTeam1Player(null);
+      } else {
+        setSelectedTeam1Player(index);
+        // If we have both selections, swap them
+        if (selectedTeam2Player !== null && onSwapPlayers) {
+          onSwapPlayers(index, selectedTeam2Player);
+          setSelectedTeam1Player(null);
+          setSelectedTeam2Player(null);
+        }
+      }
+    } else {
+      // If already selected, deselect
+      if (selectedTeam2Player === index) {
+        setSelectedTeam2Player(null);
+      } else {
+        setSelectedTeam2Player(index);
+        // If we have both selections, swap them
+        if (selectedTeam1Player !== null && onSwapPlayers) {
+          onSwapPlayers(selectedTeam1Player, index);
+          setSelectedTeam1Player(null);
+          setSelectedTeam2Player(null);
+        }
+      }
+    }
+  };
+  
+  return (
+    <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <h2 style={{ 
+          color: '#e74c3c', 
+          borderBottom: '2px solid #e74c3c',
+          paddingBottom: '5px',
+          marginBottom: '10px'
+        }}>
+          Team 1
+        </h2>
+        <div style={{ 
+          padding: 0, 
+          margin: 0 
+        }}>
+          {team1.map((player, index) => (
+            <div 
+              key={`team1-${index}`}
+              onClick={() => onSwapPlayers && handlePlayerClick('team1', index)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSwapPlayers && handlePlayerClick('team1', index);
+                }
+              }}
+              tabIndex={onSwapPlayers ? 0 : undefined}
+              role={onSwapPlayers ? "button" : undefined}
+              style={{
+                padding: '8px 12px',
+                margin: '4px 0',
+                backgroundColor: selectedTeam1Player === index ? '#e74c3c33' : '#f8f9fa',
+                borderRadius: '4px',
+                cursor: onSwapPlayers ? 'pointer' : 'default',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ 
+                display: 'inline-block', 
+                width: '24px', 
+                height: '24px', 
+                borderRadius: '50%', 
+                backgroundColor: '#e74c3c',
+                color: 'white',
+                textAlign: 'center',
+                lineHeight: '24px',
+                marginRight: '10px',
+                fontSize: '12px'
+              }}>
+                {index + 1}
+              </span>
+              {player}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div>
+        <h2 style={{ 
+          color: '#3498db', 
+          borderBottom: '2px solid #3498db',
+          paddingBottom: '5px',
+          marginBottom: '10px'
+        }}>
+          Team 2
+        </h2>
+        <div style={{ 
+          padding: 0, 
+          margin: 0 
+        }}>
+          {team2.map((player, index) => (
+            <div 
+              key={`team2-${index}`}
+              onClick={() => onSwapPlayers && handlePlayerClick('team2', index)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSwapPlayers && handlePlayerClick('team2', index);
+                }
+              }}
+              tabIndex={onSwapPlayers ? 0 : undefined}
+              role={onSwapPlayers ? "button" : undefined}
+              style={{
+                padding: '8px 12px',
+                margin: '4px 0',
+                backgroundColor: selectedTeam2Player === index ? '#3498db33' : '#f8f9fa',
+                borderRadius: '4px',
+                cursor: onSwapPlayers ? 'pointer' : 'default',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ 
+                display: 'inline-block', 
+                width: '24px', 
+                height: '24px', 
+                borderRadius: '50%', 
+                backgroundColor: '#3498db',
+                color: 'white',
+                textAlign: 'center',
+                lineHeight: '24px',
+                marginRight: '10px',
+                fontSize: '12px'
+              }}>
+                {index + 1}
+              </span>
+              {player}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {onSwapPlayers && (
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button 
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#2ecc71',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onClick={() => {
+              setSelectedTeam1Player(null);
+              setSelectedTeam2Player(null);
+            }}
+          >
+            Reset Selection
+          </button>
+          <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+            Click on players from different teams to swap them
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const CardGame = () => {
   const clientSecrets = useOutletContext<RootContext>();
@@ -107,10 +294,25 @@ const CardGame = () => {
   const navigate = useNavigate();
   const roomId = searchParams.get('room');
   const playerName = searchParams.get('player');
-  const [isOnline, setIsOnline] = useState(!!roomId);
-  const [roomPlayers, setRoomPlayers] = useState<any[]>([]);
+  const isOnline = !!roomId;
+  // Define a type for player data
+  // type RoomPlayer = {
+  //   id: string;
+  //   name: string;
+  //   room_id: string;
+  //   user_id?: string | null;
+  //   avatar_url?: string | null;
+  //   is_admin: boolean;
+  //   is_online: boolean;
+  //   last_seen?: string;
+  //   created_at: string;
+  // };
+  
+  // const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
   const [isRoomAdmin, setIsRoomAdmin] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connecting' | 'connected' | 'disconnected'
+  >('disconnected');
 
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
@@ -138,20 +340,25 @@ const CardGame = () => {
   // Multiplayer initialization
   const loadRoomPlayers = useCallback(async () => {
     if (!roomId) return;
-    
+
     try {
       const players = await roomService.getPlayersInRoom(roomId);
-      setRoomPlayers(players);
-      
+      console.log("🚀 ~ CardGame ~ players:", players)
+      // setRoomPlayers(players);
+
       // Update team data with online players
-      const team1Players = players.filter(p => p.name.startsWith('Team1:')).map(p => p.name.replace('Team1:', ''));
-      const team2Players = players.filter(p => p.name.startsWith('Team2:')).map(p => p.name.replace('Team2:', ''));
-      
+      const team1Players = players
+        .filter((p) => p.name.startsWith('Team1:'))
+        .map((p) => p.name.replace('Team1:', ''));
+      const team2Players = players
+        .filter((p) => p.name.startsWith('Team2:'))
+        .map((p) => p.name.replace('Team2:', ''));
+
       if (team1Players.length > 0) {
-        setTeam1Data(prev => ({ ...prev, players: team1Players }));
+        setTeam1Data((prev) => ({ ...prev, players: team1Players }));
       }
       if (team2Players.length > 0) {
-        setTeam2Data(prev => ({ ...prev, players: team2Players }));
+        setTeam2Data((prev) => ({ ...prev, players: team2Players }));
       }
     } catch (error) {
       console.error('Failed to load room players:', error);
@@ -163,21 +370,21 @@ const CardGame = () => {
 
     try {
       setConnectionStatus('connecting');
-      
+
       // Join the room
       const player = await roomService.joinRoom(roomId, playerName);
       setIsRoomAdmin(player.is_admin);
-      
+
       // Load room players
       await loadRoomPlayers();
-      
+
       // Load existing game state if any
       const room = await roomService.getRoom(roomId);
       if (room?.game_state === 'playing') {
         // Load existing game session
         // This would require adding a method to get session data
       }
-      
+
       setConnectionStatus('connected');
     } catch (error) {
       console.error('Failed to initialize room:', error);
@@ -197,23 +404,25 @@ const CardGame = () => {
   useEffect(() => {
     if (roomId && isOnline) {
       setConnectionStatus('connecting');
-      
+
       roomService.subscribeToRoom(roomId, (payload) => {
         setConnectionStatus('connected');
-        
+
         // Handle real-time updates
-        if (payload.eventType === 'UPDATE' && payload.new) {
-          const sessionData = payload.new.session_data;
-          if (sessionData) {
-            // Sync game state from remote
-            if (sessionData.team1Data) setTeam1Data(sessionData.team1Data);
-            if (sessionData.team2Data) setTeam2Data(sessionData.team2Data);
-            if (sessionData.duelData) setDuelData(sessionData.duelData);
-            if (sessionData.gameState) setGameState(sessionData.gameState);
-            if (sessionData.roundNumber) setRoundNumber(sessionData.roundNumber);
+                  if (payload.eventType === 'UPDATE' && payload.new) {
+            // Type guard to ensure payload.new has session_data property
+            const payloadNew = payload.new as { session_data?: Record<string, unknown> };
+            if (payloadNew.session_data) {
+              const sessionData = payloadNew.session_data;
+              // Sync game state from remote
+              if ('team1Data' in sessionData) setTeam1Data(sessionData.team1Data as TeamData);
+              if ('team2Data' in sessionData) setTeam2Data(sessionData.team2Data as TeamData);
+              if ('duelData' in sessionData) setDuelData(sessionData.duelData as DuelData);
+              if ('gameState' in sessionData) setGameState(sessionData.gameState as string);
+              if ('roundNumber' in sessionData) setRoundNumber(sessionData.roundNumber as number);
+            }
           }
-        }
-        
+
         // Handle player changes
         if (payload.table === 'players') {
           loadRoomPlayers();
@@ -233,7 +442,7 @@ const CardGame = () => {
         roundNumber,
         lastUpdated: Date.now()
       };
-      
+
       // Debounce updates to avoid too many calls
       const timeoutId = setTimeout(() => {
         roomService.updateGameState(roomId, gameStateData).catch(console.error);
@@ -241,7 +450,16 @@ const CardGame = () => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [team1Data, team2Data, duelData, gameState, roundNumber, roomId, isOnline, isRoomAdmin]);
+  }, [
+    team1Data,
+    team2Data,
+    duelData,
+    gameState,
+    roundNumber,
+    roomId,
+    isOnline,
+    isRoomAdmin
+  ]);
 
   /**
    * Starts the game with the provided team data
@@ -276,14 +494,13 @@ const CardGame = () => {
         '♠': 'spades',
         '♣': 'clubs'
       };
-      const extraImages = [
-        '/images/back_card.png'
-      ];
+      const extraImages = ['/images/back_card.png'];
       const urls: string[] = [];
       allValues.forEach((v) => {
         Object.keys(suitNames).forEach((s) => {
           const suit = suitNames[s];
-          const numToName = (num: number): string => (num === 1 ? 'ace' : num.toString());
+          const numToName = (num: number): string =>
+            num === 1 ? 'ace' : num.toString();
           urls.push(`/images/${numToName(v)}_of_${suit}.png`);
         });
       });
@@ -294,40 +511,51 @@ const CardGame = () => {
     }
 
     // Load team player names from Google Sheets
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
+    if (!roomId) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${API_KEY}`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
+        const team1Temp: string[] = [];
+        const team2Temp: string[] = [];
+        let index = 1;
+        data.values.slice(1).forEach((item: string[]) => {
+          if (item[0]) {
+            team1Temp.push(item[0]);
+          } else {
+            team1Temp.push(`ANONYMOUS #${index}`);
+            index++;
+          }
 
-      const team1Temp: string[] = [];
-      const team2Temp: string[] = [];
-      let index = 1;
-      data.values.slice(1).forEach((item: string[]) => {
-        if (item[0]) {
-          team1Temp.push(item[0]);
-        } else {
-          team1Temp.push(`ANONYMOUS #${index}`);
-          index++;
-        }
+          if (item[1]) {
+            team2Temp.push(item[1]);
+          } else {
+            team2Temp.push(`ANONYMOUS #${index}`);
+            index++;
+          }
+        });
 
-        if (item[1]) {
-          team2Temp.push(item[1]);
-        } else {
-          team2Temp.push(`ANONYMOUS #${index}`);
-          index++;
-        }
-      });
+        const shuffledTeam1 = shuffleArray(team1Temp);
+        const shuffledTeam2 = shuffleArray(team2Temp);
 
-      const shuffledTeam1 = shuffleArray(team1Temp);
-      const shuffledTeam2 = shuffleArray(team2Temp);
+        setTeam1Data((prev) => ({
+          ...prev,
+          players: shuffledTeam1,
+          powerUps: { ...team1Alloc }
+        }));
+        setTeam2Data((prev) => ({
+          ...prev,
+          players: shuffledTeam2,
+          powerUps: { ...team2Alloc }
+        }));
 
-      setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
-      setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team2Alloc } }));
-
-      startGameWithTeams(shuffledTeam1, shuffledTeam2);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+        startGameWithTeams(shuffledTeam1, shuffledTeam2);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    } else {
+      startGameWithTeams(team1Data.players, team2Data.players);
     }
   };
 
@@ -594,42 +822,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topLeftPlayerData,
-                cards: newData.topLeftCards,
-                sum: calculateSum(newData.topLeftCards)
-              }
+                  ...newData.topLeftPlayerData,
+                  cards: newData.topLeftCards,
+                  sum: calculateSum(newData.topLeftCards)
+                }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomLeftPlayerData,
-                cards: newData.bottomLeftCards,
-                sum: calculateSum(newData.bottomLeftCards)
-              }
+                  ...newData.bottomLeftPlayerData,
+                  cards: newData.bottomLeftCards,
+                  sum: calculateSum(newData.bottomLeftCards)
+                }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topRightPlayerData,
-                cards: newData.topRightCards,
-                sum: calculateSum(newData.topRightCards)
-              }
+                  ...newData.topRightPlayerData,
+                  cards: newData.topRightCards,
+                  sum: calculateSum(newData.topRightCards)
+                }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomRightPlayerData,
-                cards: newData.bottomRightCards,
-                sum: calculateSum(newData.bottomRightCards)
-              }
+                  ...newData.bottomRightPlayerData,
+                  cards: newData.bottomRightCards,
+                  sum: calculateSum(newData.bottomRightCards)
+                }
               : newData.bottomRightPlayerData
         };
 
@@ -951,13 +1179,19 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              secondChance: prev.powerUps.secondChance - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              secondChance: prev.powerUps.secondChance - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -969,13 +1203,19 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              revealTwo: prev.powerUps.revealTwo - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              revealTwo: prev.powerUps.revealTwo - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -990,13 +1230,19 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              lifeShield: prev.powerUps.lifeShield - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              lifeShield: prev.powerUps.lifeShield - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -1105,8 +1351,10 @@ const CardGame = () => {
           }
         }
 
-      // Store the winning team in duelData (only if no shield is active)
-        const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
+        // Store the winning team in duelData (only if no shield is active)
+        const winningTeam = isPlayer1Winner
+          ? firstPlayerTeam
+          : secondPlayerTeam;
         setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
@@ -1180,17 +1428,16 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onCardClick();
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onCardClick();
+                }
               }
-            }
             : undefined
         }
       />
     ));
   };
-
 
   /**
    * Determines whether the "Start Game" button should be disabled.
@@ -1270,7 +1517,10 @@ const CardGame = () => {
     htmlFor: string
   ) => {
     return (
-      <label htmlFor={htmlFor} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <label
+        htmlFor={htmlFor}
+        style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+      >
         <img
           src={`/images/${imageFileName}`}
           alt=""
@@ -1317,7 +1567,13 @@ const CardGame = () => {
                     margin: '0 0 0 auto'
                   }}
                 >
-                  <h2 style={{ textAlign: 'center', marginTop: 0, marginBottom: 0 }}>
+                  <h2
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 0,
+                      marginBottom: 0
+                    }}
+                  >
                     Power-ups Setup
                   </h2>
                   <div
@@ -1336,19 +1592,33 @@ const CardGame = () => {
                       checked={setupForBothTeams}
                       onChange={(e) => setSetupForBothTeams(e.target.checked)}
                     />
-                    <label htmlFor="setup-both">Setup power-ups for both teams</label>
+                    <label htmlFor="setup-both">
+                      Setup power-ups for both teams
+                    </label>
                   </div>
                   <div
                     className="setup-grid"
-                    style={setupForBothTeams ? { gridTemplateColumns: '1fr', justifyItems: 'center' } : undefined}
+                    style={
+                      setupForBothTeams
+                        ? { gridTemplateColumns: '1fr', justifyItems: 'center' }
+                        : undefined
+                    }
                   >
                     {setupForBothTeams ? (
                       <div className="setup-card">
                         <div className="setup-row">
-                          {renderLabelWithIcon('Second Chance', 'chance_second.png', 'both-second')}
+                          {renderLabelWithIcon(
+                            'Second Chance',
+                            'chance_second.png',
+                            'both-second'
+                          )}
                           <input
                             className="num-input"
-                            style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                            style={
+                              team1Alloc.secondChance > 2
+                                ? { borderColor: 'red' }
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             max={2}
@@ -1357,17 +1627,28 @@ const CardGame = () => {
                             onChange={(e) => {
                               const v = Math.max(
                                 0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
                               );
                               setBothTeamsAlloc('secondChance', v);
                             }}
                           />
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 'both-reveal')}
+                          {renderLabelWithIcon(
+                            'Reveal Two',
+                            'chance_reveal.png',
+                            'both-reveal'
+                          )}
                           <input
                             className="num-input"
-                            style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                            style={
+                              team1Alloc.revealTwo > 2
+                                ? { borderColor: 'red' }
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             max={2}
@@ -1376,17 +1657,28 @@ const CardGame = () => {
                             onChange={(e) => {
                               const v = Math.max(
                                 0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
                               );
                               setBothTeamsAlloc('revealTwo', v);
                             }}
                           />
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Life Shield', 'chance_shield.png', 'both-shield')}
+                          {renderLabelWithIcon(
+                            'Life Shield',
+                            'chance_shield.png',
+                            'both-shield'
+                          )}
                           <input
                             className="num-input"
-                            style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                            style={
+                              team1Alloc.lifeShield > 2
+                                ? { borderColor: 'red' }
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             max={2}
@@ -1395,17 +1687,28 @@ const CardGame = () => {
                             onChange={(e) => {
                               const v = Math.max(
                                 0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
                               );
                               setBothTeamsAlloc('lifeShield', v);
                             }}
                           />
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Lock All', 'chance_block.png', 'both-lock')}
+                          {renderLabelWithIcon(
+                            'Lock All',
+                            'chance_block.png',
+                            'both-lock'
+                          )}
                           <input
                             className="num-input"
-                            style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
+                            style={
+                              team1Alloc.lockAll > 2
+                                ? { borderColor: 'red' }
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             max={2}
@@ -1414,7 +1717,10 @@ const CardGame = () => {
                             onChange={(e) => {
                               const v = Math.max(
                                 0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                Math.min(
+                                  team1Data.totalPowerUps,
+                                  Number(e.target.value)
+                                )
                               );
                               setBothTeamsAlloc('lockAll', v);
                             }}
@@ -1429,7 +1735,7 @@ const CardGame = () => {
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
                                   team1Alloc.lockAll !==
-                                  team1Data.totalPowerUps
+                                team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
                             }}
@@ -1445,14 +1751,25 @@ const CardGame = () => {
                     ) : (
                       <>
                         <div className="setup-card">
-                          <h3 className={'teamName team1'} style={{ marginTop: 0 }}>
+                          <h3
+                            className={'teamName team1'}
+                            style={{ marginTop: 0 }}
+                          >
                             {team1Data.name}
                           </h3>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Second Chance', 'chance_second.png', 't1-second')}
+                            {renderLabelWithIcon(
+                              'Second Chance',
+                              'chance_second.png',
+                              't1-second'
+                            )}
                             <input
                               className="num-input"
-                              style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.secondChance > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1473,10 +1790,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't1-reveal')}
+                            {renderLabelWithIcon(
+                              'Reveal Two',
+                              'chance_reveal.png',
+                              't1-reveal'
+                            )}
                             <input
                               className="num-input"
-                              style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.revealTwo > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1497,10 +1822,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't1-shield')}
+                            {renderLabelWithIcon(
+                              'Life Shield',
+                              'chance_shield.png',
+                              't1-shield'
+                            )}
                             <input
                               className="num-input"
-                              style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.lifeShield > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1521,10 +1854,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Lock All', 'chance_block.png', 't1-lock')}
+                            {renderLabelWithIcon(
+                              'Lock All',
+                              'chance_block.png',
+                              't1-lock'
+                            )}
                             <input
                               className="num-input"
-                              style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.lockAll > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1553,7 +1894,7 @@ const CardGame = () => {
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
                                     team1Alloc.lockAll !==
-                                    team1Data.totalPowerUps
+                                  team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -1568,14 +1909,25 @@ const CardGame = () => {
                         </div>
 
                         <div className="setup-card">
-                          <h3 className={'teamName team2'} style={{ marginTop: 0 }}>
+                          <h3
+                            className={'teamName team2'}
+                            style={{ marginTop: 0 }}
+                          >
                             {team2Data.name}
                           </h3>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Second Chance', 'chance_second.png', 't2-second')}
+                            {renderLabelWithIcon(
+                              'Second Chance',
+                              'chance_second.png',
+                              't2-second'
+                            )}
                             <input
                               className="num-input"
-                              style={team2Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team2Alloc.secondChance > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1596,10 +1948,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't2-reveal')}
+                            {renderLabelWithIcon(
+                              'Reveal Two',
+                              'chance_reveal.png',
+                              't2-reveal'
+                            )}
                             <input
                               className="num-input"
-                              style={team2Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team2Alloc.revealTwo > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1620,10 +1980,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't2-shield')}
+                            {renderLabelWithIcon(
+                              'Life Shield',
+                              'chance_shield.png',
+                              't2-shield'
+                            )}
                             <input
                               className="num-input"
-                              style={team2Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team2Alloc.lifeShield > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1644,10 +2012,18 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Lock All', 'chance_block.png', 't2-lock')}
+                            {renderLabelWithIcon(
+                              'Lock All',
+                              'chance_block.png',
+                              't2-lock'
+                            )}
                             <input
                               className="num-input"
-                              style={team2Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team2Alloc.lockAll > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1676,7 +2052,7 @@ const CardGame = () => {
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
                                     team2Alloc.lockAll !==
-                                    team2Data.totalPowerUps
+                                  team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -1692,8 +2068,16 @@ const CardGame = () => {
                       </>
                     )}
                   </div>
-                  <p className="note" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
-                    Each team must have a total of 4 power-ups, with no more than 2 of the same type.
+                  <p
+                    className="note"
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 10,
+                      marginBottom: 0
+                    }}
+                  >
+                    Each team must have a total of 4 power-ups, with no more
+                    than 2 of the same type.
                   </p>
                   <div style={{ textAlign: 'center' }}>
                     <a
@@ -1706,7 +2090,6 @@ const CardGame = () => {
                       Power-ups instruction
                     </a>
                   </div>
-
                 </div>
               </div>
 
@@ -1714,35 +2097,71 @@ const CardGame = () => {
               <div style={{ width: 1, background: '#ccc' }} />
 
               {/* Right: Welcome UI */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start'
+                }}
+              >
                 <div>
                   <h1>Thorlit 3Key</h1>
-                  <div className={'controlContainer'}>
-                    <label className={'labelControl'} htmlFor="sheetId">
-                      Sheet Id
-                    </label>
-                    <input
-                      className={'textControl'}
-                      id="sheetId"
-                      type="text"
-                      value={sheetId}
-                      onChange={(e) => setSheetId(e.target.value)}
-                      disabled={gameState != 'setup'}
+                  {!roomId ? (
+                    <>
+                      <div className={'controlContainer'}>
+                        <label className={'labelControl'} htmlFor="sheetId">
+                          Sheet Id
+                        </label>
+                        <input
+                          className={'textControl'}
+                          id="sheetId"
+                          type="text"
+                          value={sheetId}
+                          onChange={(e) => setSheetId(e.target.value)}
+                          disabled={gameState != 'setup'}
+                        />
+                      </div>
+                      <div className={'controlContainer'}>
+                        <label className={'labelControl'} htmlFor="sheetRange">
+                          Sheet Range
+                        </label>
+                        <input
+                          className={'textControl'}
+                          id="sheetRange"
+                          type="text"
+                          value={sheetRange}
+                          onChange={(e) => setSheetRange(e.target.value)}
+                          disabled={gameState != 'setup'}
+                        />
+                      </div>
+                    </>
+                  ): (
+                    <GameMemberList 
+                      team1={team1Data.players} 
+                      team2={team2Data.players}
+                      onSwapPlayers={(team1Index, team2Index) => {
+                        // Create copies of the player arrays
+                        const newTeam1Players = [...team1Data.players];
+                        const newTeam2Players = [...team2Data.players];
+                        
+                        // Swap the players
+                        const temp = newTeam1Players[team1Index];
+                        newTeam1Players[team1Index] = newTeam2Players[team2Index];
+                        newTeam2Players[team2Index] = temp;
+                        
+                        // Update state
+                        setTeam1Data(prev => ({
+                          ...prev,
+                          players: newTeam1Players
+                        }));
+                        
+                        setTeam2Data(prev => ({
+                          ...prev,
+                          players: newTeam2Players
+                        }));
+                      }}
                     />
-                  </div>
-                  <div className={'controlContainer'}>
-                    <label className={'labelControl'} htmlFor="sheetRange">
-                      Sheet Range
-                    </label>
-                    <input
-                      className={'textControl'}
-                      id="sheetRange"
-                      type="text"
-                      value={sheetRange}
-                      onChange={(e) => setSheetRange(e.target.value)}
-                      disabled={gameState != 'setup'}
-                    />
-                  </div>
+                  )}
                   <div>
                     <button
                       onClick={() => startGame()}
@@ -1765,19 +2184,25 @@ const CardGame = () => {
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
       {/* Online Status Indicator */}
       {roomId && (
-        <div style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          zIndex: 1000,
-          backgroundColor: connectionStatus === 'connected' ? '#28a745' : 
-                          connectionStatus === 'connecting' ? '#ffc107' : '#dc3545',
-          color: 'white'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: '10px',
+            right: '10px',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            zIndex: 1000,
+            backgroundColor:
+              connectionStatus === 'connected'
+                ? '#28a745'
+                : connectionStatus === 'connecting'
+                  ? '#ffc107'
+                  : '#dc3545',
+            color: 'white'
+          }}
+        >
           {connectionStatus === 'connected' && '🟢 Online'}
           {connectionStatus === 'connecting' && '🟡 Connecting...'}
           {connectionStatus === 'disconnected' && '🔴 Offline'}
@@ -1788,7 +2213,7 @@ const CardGame = () => {
           )}
         </div>
       )}
-      
+
       {renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}
@@ -1820,13 +2245,13 @@ const CardGame = () => {
                   />
                 )}
               </h2>
-              <ul className={'ulTeam'}>
+              <div className={'ulTeam'}>
                 {team1Data.players.map((member, index) => (
-                  <li className={'memberItem'} key={index}>
+                  <div className={'memberItem'} key={index}>
                     {member}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -1931,13 +2356,13 @@ const CardGame = () => {
                 )}
                 Team 2
               </h2>
-              <ul className={'ulTeam'}>
+              <div className={'ulTeam'}>
                 {team2Data.players.map((member, index) => (
-                  <li className={'memberItem'} key={index}>
+                  <div className={'memberItem'} key={index}>
                     {member}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         </>

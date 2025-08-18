@@ -1,11 +1,27 @@
 import { supabase } from '~/utils/supabaseClient'
 import type { Database } from '~/utils/supabaseClient'
-import type TeamData from '~/models/TeamData'
-import type DuelData from '~/models/DuelData'
+import { authService } from './supabaseAuthService'
+
 
 type Room = Database['public']['Tables']['rooms']['Row']
 type Player = Database['public']['Tables']['players']['Row']
+// We'll use this type when implementing game session loading functionality
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type GameSession = Database['public']['Tables']['game_sessions']['Row']
+
+// Define type for team data in game state
+interface TeamData {
+  score?: number;
+  powerUps?: Record<string, number>;
+}
+
+// Define game state interface
+interface GameState extends Record<string, unknown> {
+  gameState?: string;
+  roundNumber?: number;
+  team1Data?: TeamData;
+  team2Data?: TeamData;
+}
 
 export interface RoomServiceInterface {
   // Room Management
@@ -16,8 +32,8 @@ export interface RoomServiceInterface {
   getRoom(roomId: string): Promise<Room | null>
   
   // Game State Management
-  updateGameState(roomId: string, gameState: any): Promise<void>
-  subscribeToRoom(roomId: string, callback: (payload: any) => void): void
+  updateGameState(roomId: string, gameState: GameState): Promise<void>
+  subscribeToRoom(roomId: string, callback: (payload: Record<string, unknown>) => void): void
   
   // Player Management
   getPlayersInRoom(roomId: string): Promise<Player[]>
@@ -26,6 +42,17 @@ export interface RoomServiceInterface {
 
 export class RoomService implements RoomServiceInterface {
   async createRoom(name: string, createdBy?: string): Promise<Room> {
+    // Get current user to set as room creator
+    if (!createdBy) {
+      const { user, error } = await authService.getCurrentUser();
+      
+      if (error || !user) {
+        throw new Error('You must be logged in to create a room');
+      }
+      
+      createdBy = user.id;
+    }
+    
     const { data, error } = await supabase
       .from('rooms')
       .insert({
@@ -47,6 +74,16 @@ export class RoomService implements RoomServiceInterface {
   }
 
   async joinRoom(roomId: string, playerName: string, userId?: string): Promise<Player> {
+    // Get current user if userId not provided
+    if (!userId) {
+      const { user, error } = await authService.getCurrentUser();
+      
+      if (error || !user) {
+        throw new Error('You must be logged in to join a room');
+      }
+      
+      userId = user.id;
+    }
     // Check if room exists and has space
     const room = await this.getRoom(roomId)
     if (!room) throw new Error('Room not found')
@@ -57,14 +94,12 @@ export class RoomService implements RoomServiceInterface {
     }
 
     // Check if user is already in the room
-    if (userId) {
       const existingPlayer = players.find(p => p.user_id === userId)
       if (existingPlayer) {
         // Update player status to online
         await this.updatePlayerStatus(existingPlayer.id, true)
         return existingPlayer
       }
-    }
 
     const { data, error } = await supabase
       .from('players')
@@ -77,9 +112,9 @@ export class RoomService implements RoomServiceInterface {
       })
       .select()
       .single()
-
     if (error) throw error
     return data
+
   }
 
   async leaveRoom(roomId: string, playerId: string): Promise<void> {
@@ -112,7 +147,7 @@ export class RoomService implements RoomServiceInterface {
     return data
   }
 
-  async updateGameState(roomId: string, gameState: any): Promise<void> {
+  async updateGameState(roomId: string, gameState: GameState): Promise<void> {
     // Update both the room status and create/update a game session
     const { error: roomError } = await supabase
       .from('rooms')
@@ -167,8 +202,8 @@ export class RoomService implements RoomServiceInterface {
     }
   }
 
-  subscribeToRoom(roomId: string, callback: (payload: any) => void): void {
-    const channel = supabase
+  subscribeToRoom(roomId: string, callback: (payload: Record<string, unknown>) => void): void {
+    supabase
       .channel(`room_${roomId}`)
       .on(
         'postgres_changes',
