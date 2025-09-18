@@ -1057,14 +1057,14 @@ const CardGame = () => {
           if (losingTeam === 'team1') {
             setTeam1Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [...prev.players, losingPlayer] };
+                return { ...prev, players: [losingPlayer,...prev.players ] };
               }
               return prev;
             });
           } else {
             setTeam2Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [...prev.players, losingPlayer] };
+                return { ...prev, players: [losingPlayer,...prev.players ] };
               }
               return prev;
             });
