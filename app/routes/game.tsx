@@ -123,6 +123,7 @@ const CardGame = () => {
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
+  const [setupMode, setSetupMode] = useState<'per-team' | 'both' | 'random'>('per-team');
 
   /**
    * Starts the game with the provided team data
@@ -1138,6 +1139,44 @@ const CardGame = () => {
   };
 
   /**
+   * Randomizes a valid power-ups allocation and applies it to BOTH teams.
+   *
+   * Constraints enforced:
+   * - Sum equals `team1Data.totalPowerUps` (shared allocation for both teams)
+   * - Each type is capped at 2
+   */
+  const randomizeBothTeamsAllocation = (): void => {
+    const total = team1Data.totalPowerUps;
+    const maxPerType = 2;
+    const result: PowerUpsAllocation = {
+      secondChance: 0,
+      revealTwo: 0,
+      lifeShield: 0,
+      lockAll: 0
+    };
+
+    const keys: (keyof PowerUpsAllocation)[] = [
+      'secondChance',
+      'revealTwo',
+      'lifeShield',
+      'lockAll'
+    ];
+
+    let placed = 0;
+    while (placed < total) {
+      // Collect available types that are still under the cap
+      const available = keys.filter((k) => result[k] < maxPerType);
+      if (available.length === 0) break;
+      const pick = available[Math.floor(Math.random() * available.length)];
+      result[pick] += 1;
+      placed += 1;
+    }
+
+    setTeam1Alloc(result);
+    setTeam2Alloc(result);
+  };
+
+  /**
    * Renders a label with a small preview icon positioned to the left of the text.
    * Used in the combined 'setup' screen for power-up labels.
    *
@@ -1204,20 +1243,53 @@ const CardGame = () => {
                   <div
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: 6,
                       marginTop: 6,
                       marginBottom: 15
                     }}
                   >
-                    <input
-                      id="setup-both"
-                      type="checkbox"
-                      checked={setupForBothTeams}
-                      onChange={(e) => setSetupForBothTeams(e.target.checked)}
-                    />
-                    <label htmlFor="setup-both">Setup power-ups for both teams</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-per-team"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'per-team'}
+                        onChange={() => {
+                          setSetupMode('per-team');
+                          setSetupForBothTeams(false);
+                        }}
+                      />
+                      <label htmlFor="mode-per-team">Each team setups their own power-ups</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-both"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'both'}
+                        onChange={() => {
+                          setSetupMode('both');
+                          setSetupForBothTeams(true);
+                        }}
+                      />
+                      <label htmlFor="mode-both">Setup power-ups for both teams</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-random"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'random'}
+                        onChange={() => {
+                          setSetupMode('random');
+                          setSetupForBothTeams(true);
+                          randomizeBothTeamsAllocation();
+                        }}
+                      />
+                      <label htmlFor="mode-random">Random power-ups for both teams</label>
+                    </div>
                   </div>
                   <div
                     className="setup-grid"
@@ -1227,79 +1299,95 @@ const CardGame = () => {
                       <div className="setup-card">
                         <div className="setup-row">
                           {renderLabelWithIcon('Second Chance', 'chance_second.png', 'both-second')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-second"
-                            value={team1Alloc.secondChance}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('secondChance', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-second"
+                              value={team1Alloc.secondChance}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('secondChance', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 'both-reveal')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-reveal"
-                            value={team1Alloc.revealTwo}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('revealTwo', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-reveal"
+                              value={team1Alloc.revealTwo}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('revealTwo', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Life Shield', 'chance_shield.png', 'both-shield')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-shield"
-                            value={team1Alloc.lifeShield}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('lifeShield', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-shield"
+                              value={team1Alloc.lifeShield}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('lifeShield', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Lock All', 'chance_block.png', 'both-lock')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-lock"
-                            value={team1Alloc.lockAll}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('lockAll', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-lock"
+                              value={team1Alloc.lockAll}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('lockAll', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           <strong>Total</strong>
