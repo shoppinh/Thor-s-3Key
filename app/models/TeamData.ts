@@ -8,6 +8,7 @@ export default interface TeamData {
     revealTwo: number;
     lifeShield: number;
     lockAll: number;
+    removeWorst: number;
   };
   players: string[];
 }

@@ -48,7 +48,26 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   // Helper function to determine if player can make a selection
   // True when: no cards drawn (normal case)
   // After Second Chance, show calculated number instead of Draw Cards
-  const canMakeSelection = playerData.cards.length === 0;
+  const disabledByRemoveWorst = (() => {
+    const disabled = new Set(duelData.removedWorstGroups || []);
+    const key =
+      side === 'left'
+        ? playerData === duelData.topLeftPlayerData
+          ? 'top-left'
+          : playerData === duelData.bottomLeftPlayerData
+            ? 'bottom-left'
+            : null
+        : playerData === duelData.topRightPlayerData
+          ? 'top-right'
+          : playerData === duelData.bottomRightPlayerData
+            ? 'bottom-right'
+            : null;
+    return key ? disabled.has(key) : false;
+  })();
+  const isBlankHand = playerData.cards.length === 0;
+  const canClickDraw = isBlankHand && !disabledByRemoveWorst;
+  const shouldShowDrawButton = isBlankHand;
+  const isDrawDisabled = disabled || disabledByRemoveWorst;
 
   return (
     <div
@@ -63,13 +82,13 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           <div className={'playerContainer'}>
             <h2 className={'m0'}>{playerData.name || '?'}</h2>
             <div className={'drawCardsContainer'}>
-              {canMakeSelection && (
+              {shouldShowDrawButton && (
                 <>
                   <img
                     className={'leftHandPointer'}
                     style={{
                       top: '15px',
-                      display: disabled ? 'none' : 'block'
+                      display: isDrawDisabled ? 'none' : 'block'
                     }}
                     src="images/left-hand.png"
                     alt="cursor"
@@ -79,15 +98,15 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                     className={'btn'}
                     style={{
                       width: '480px',
-                      cursor: disabled ? 'default' : 'pointer'
+                      cursor: isDrawDisabled ? 'default' : 'pointer'
                     }}
-                    disabled={disabled}
+                    disabled={isDrawDisabled}
                   >
                     Draw Cards
                   </button>
                 </>
               )}
-              {!canMakeSelection && (
+              {!isBlankHand && (
                 <span
                   className={
                     playerData.team === ''
@@ -117,8 +136,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
             <div className={'cardContainer'}>
               {renderTheCards(
                 playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canMakeSelection ? onSelect : undefined,
-                disabled
+                canClickDraw ? onSelect : undefined,
+                isDrawDisabled
               )}
             </div>
           </div>
@@ -129,13 +148,13 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           <div className={'playerContainer'}>
             <h2 className={'m0'}>{playerData.name || '?'}</h2>
             <div className={'drawCardsContainer'}>
-              {canMakeSelection && (
+              {shouldShowDrawButton && (
                 <>
                   <img
                     className={'rightHandPointer'}
                     style={{
                       top: '15px',
-                      display: disabled ? 'none' : 'block'
+                      display: isDrawDisabled ? 'none' : 'block'
                     }}
                     src="images/right-hand.png"
                     alt="cursor"
@@ -145,15 +164,15 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                     className={'btn'}
                     style={{
                       width: '480px',
-                      cursor: disabled ? 'default' : 'pointer'
+                      cursor: isDrawDisabled ? 'default' : 'pointer'
                     }}
-                    disabled={disabled}
+                    disabled={isDrawDisabled}
                   >
                     Draw Cards
                   </button>
                 </>
               )}
-              {!canMakeSelection && (
+              {!isBlankHand && (
                 <span
                   className={
                     playerData.team === ''
@@ -183,8 +202,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
             <div className={'cardContainer'}>
               {renderTheCards(
                 playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canMakeSelection ? onSelect : undefined,
-                disabled
+                canClickDraw ? onSelect : undefined,
+                isDrawDisabled
               )}
             </div>
           </div>
