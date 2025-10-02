@@ -1,6 +1,6 @@
 import React from 'react';
-import PlayerData from '~/models/PlayerData';
-import DuelData from '~/models/DuelData';
+import PlayerData from '../models/PlayerData';
+import DuelData from '../models/DuelData';
 
 interface Card {
   value: number;
@@ -96,16 +96,16 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                   }
                   onClick={
                     playerData.name === '?' &&
-                    playerData.team === '' &&
-                    !disabled
+                      playerData.team === '' &&
+                      !disabled
                       ? onSelect
                       : undefined
                   }
                   style={{
                     cursor:
                       playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
+                        playerData.team === '' &&
+                        !disabled
                         ? 'pointer'
                         : 'default'
                   }}
@@ -162,16 +162,16 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                   }
                   onClick={
                     playerData.name === '?' &&
-                    playerData.team === '' &&
-                    !disabled
+                      playerData.team === '' &&
+                      !disabled
                       ? onSelect
                       : undefined
                   }
                   style={{
                     cursor:
                       playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
+                        playerData.team === '' &&
+                        !disabled
                         ? 'pointer'
                         : 'default'
                   }}

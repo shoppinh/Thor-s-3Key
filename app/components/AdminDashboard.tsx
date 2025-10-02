@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { roomService } from '~/services/roomService'
+import { roomService } from '../services/roomService'
 
 interface AdminDashboardProps {
   isAdmin: boolean
@@ -9,15 +9,15 @@ interface RoomWithPlayers {
   id: string
   name: string
   status: string
-  game_state: string
   current_round: number
   max_players: number
   created_at: string
+  created_by: string
   players: Array<{
     id: string
     name: string
     is_online: boolean
-    is_admin: boolean
+    // is_admin: boolean
   }>
   session?: {
     team1_score: number
@@ -39,18 +39,18 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
   const loadRooms = async () => {
     try {
       setLoading(true)
-      
+
       // Get all rooms
       const allRooms = await roomService.getRooms()
-      
+
       // Get players and sessions for each room
       const roomsWithDetails = await Promise.all(
         allRooms.map(async (room) => {
           const players = await roomService.getPlayersInRoom(room.id)
-          
+
           // Get session data if room is playing
           const session = null
-          if (room.game_state === 'playing') {
+          if (room.status === 'playing') {
             // This would require adding a method to get session by room_id
             // session = await roomService.getSessionByRoomId(room.id)
           }
@@ -61,7 +61,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
               id: p.id,
               name: p.name,
               is_online: p.is_online,
-              is_admin: p.is_admin
+              // is_admin: p.is_admin
             })),
             session
           }
@@ -78,7 +78,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
 
   const handleKickPlayer = async (roomId: string, playerId: string) => {
     if (!confirm('Are you sure you want to kick this player?')) return
-    
+
     try {
       await roomService.kickPlayer(roomId, playerId)
       await loadRooms() // Refresh data
@@ -90,7 +90,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
 
   const handleEndGame = async (roomId: string) => {
     if (!confirm('Are you sure you want to end this game?')) return
-    
+
     try {
       await roomService.forceEndGame(roomId)
       await loadRooms() // Refresh data
@@ -130,9 +130,9 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>Admin Dashboard</h1>
-      
+
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <button 
+        <button
           onClick={loadRooms}
           style={{
             padding: '10px 20px',
@@ -146,7 +146,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
           Refresh
         </button>
         <span>Total Rooms: {rooms.length}</span>
-        <span>Active Games: {rooms.filter(r => r.game_state === 'playing').length}</span>
+        <span>Active Games: {rooms.filter(r => r.status === 'playing').length}</span>
       </div>
 
       <div style={{ display: 'grid', gap: '20px' }}>
@@ -157,7 +157,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
               border: '1px solid #ddd',
               borderRadius: '8px',
               padding: '20px',
-              backgroundColor: room.game_state === 'playing' ? '#f0f8ff' : '#fff'
+              backgroundColor: room.status === 'playing' ? '#f0f8ff' : '#fff'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -165,12 +165,11 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
                 <h3 style={{ margin: '0 0 5px 0' }}>{room.name}</h3>
                 <div style={{ display: 'flex', gap: '10px', fontSize: '14px', color: '#666' }}>
                   <span>Status: <strong>{room.status}</strong></span>
-                  <span>Game State: <strong>{room.game_state}</strong></span>
                   <span>Round: <strong>{room.current_round}</strong></span>
                   <span>Players: <strong>{room.players.length}/{room.max_players}</strong></span>
                 </div>
               </div>
-              
+
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={() => setSelectedRoom(selectedRoom === room.id ? null : room.id)}
@@ -185,8 +184,8 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
                 >
                   {selectedRoom === room.id ? 'Hide Details' : 'Show Details'}
                 </button>
-                
-                {room.game_state === 'playing' && (
+
+                {room.status === 'playing' && (
                   <button
                     onClick={() => handleEndGame(room.id)}
                     style={{
@@ -226,9 +225,9 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
                           }}
                         >
                           <div>
-                            <span style={{ fontWeight: player.is_admin ? 'bold' : 'normal' }}>
+                            <span style={{ fontWeight: player.id === room.created_at ? 'bold' : 'normal' }}>
                               {player.name}
-                              {player.is_admin && ' (Admin)'}
+                              {player.id === room.created_by && ' (Admin)'}
                             </span>
                             <br />
                             <small style={{ color: player.is_online ? 'green' : 'red' }}>
@@ -292,7 +291,7 @@ export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
                         </div>
                       </div>
                     )}
-                    
+
                     <div style={{ fontSize: '14px', color: '#666' }}>
                       <p>Room ID: <code>{room.id}</code></p>
                       <p>Created: {new Date(room.created_at).toLocaleString()}</p>

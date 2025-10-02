@@ -19,7 +19,8 @@ export default function Play() {
   const checkAuthStatus = async () => {
     try {
       const { user, error } = await authService.getCurrentUser()
-      
+      console.log("Authenticated user", user);
+
       if (error) {
         console.error('Auth error:', error)
       }
@@ -49,7 +50,7 @@ export default function Play() {
         email,
         password
       })
-      
+
       if (error) {
         setAuthError(error.message)
         console.error('Sign in error:', error)
@@ -68,10 +69,10 @@ export default function Play() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         flexDirection: 'column',
         gap: '20px'
@@ -133,7 +134,7 @@ export default function Play() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      <Lobby 
+      <Lobby
         onJoinRoom={handleJoinRoom}
         playerName={playerName}
         setPlayerName={setPlayerName}

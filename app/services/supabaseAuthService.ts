@@ -1,5 +1,4 @@
-import { supabase } from '~/utils/supabaseClient';
-
+import { supabase } from '../utils/supabaseClient';
 export interface AuthUser {
   id: string;
   email?: string;

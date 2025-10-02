@@ -1,11 +1,11 @@
 import React from 'react';
-import TeamData from '~/models/TeamData';
+import TeamData from '../models/TeamData';
+import DuelData from '../models/DuelData';
 // import { getTeamByPlayer } from '~/utils/gameUtil';
 
 /**
  * Props for RoundStatus component
  */
-import DuelData from '~/models/DuelData';
 
 interface RoundStatusProps {
   duelResult: string;

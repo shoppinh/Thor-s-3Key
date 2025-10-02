@@ -10,11 +10,11 @@ import ChanceStar from '../components/ChanceStar';
 import ConfirmPopup from '../components/ConfirmPopup';
 import PowerupGuideModal from '../components/PowerupGuideModal';
 import Card from '../models/Card';
-import TeamData from '~/models/TeamData';
-import DuelData from '~/models/DuelData';
-import ConfirmPopupData from '~/models/ConfirmPopupData';
-import PlayerData from '~/models/PlayerData';
-import { roomService } from '~/services/roomService';
+import TeamData from '../models/TeamData';
+import DuelData from '../models/DuelData';
+import ConfirmPopupData from '../models/ConfirmPopupData';
+import PlayerData from '../models/PlayerData';
+import { roomService } from '../services/roomService';
 import {
   CARDS_COVER,
   createDeck,
@@ -25,7 +25,8 @@ import {
   calculateSum,
   determineWinner,
   preloadImages
-} from '~/utils/gameUtil';
+} from '../utils/gameUtil';
+import { authService } from '~/services/supabaseAuthService';
 
 
 const DECKS = createDeck();
@@ -44,18 +45,20 @@ type PowerUpsAllocation = {
   lockAll: number;
 };
 
-const GameMemberList = ({ 
-  team1, 
+const GameMemberList = ({
+  team1,
   team2,
-  onSwapPlayers
-}: { 
-  team1: string[], 
+  onSwapPlayers,
+  onSwapTeam,
+}: {
+  team1: string[],
   team2: string[],
-  onSwapPlayers?: (team1Index: number, team2Index: number) => void 
+  onSwapPlayers?: (team1Index: number, team2Index: number) => void
+  onSwapTeam?: () => void
 }) => {
   const [selectedTeam1Player, setSelectedTeam1Player] = useState<number | null>(null);
   const [selectedTeam2Player, setSelectedTeam2Player] = useState<number | null>(null);
-  
+
   const handlePlayerClick = (team: 'team1' | 'team2', index: number) => {
     if (team === 'team1') {
       // If already selected, deselect
@@ -85,24 +88,24 @@ const GameMemberList = ({
       }
     }
   };
-  
+
   return (
     <div style={{ width: '100%', maxWidth: '400px' }}>
       <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ 
-          color: '#e74c3c', 
+        <h2 style={{
+          color: '#e74c3c',
           borderBottom: '2px solid #e74c3c',
           paddingBottom: '5px',
           marginBottom: '10px'
         }}>
           Team 1
         </h2>
-        <div style={{ 
-          padding: 0, 
-          margin: 0 
+        <div style={{
+          padding: 0,
+          margin: 0
         }}>
           {team1.map((player, index) => (
-            <div 
+            <div
               key={`team1-${index}`}
               onClick={() => onSwapPlayers && handlePlayerClick('team1', index)}
               onKeyDown={(e) => {
@@ -123,11 +126,11 @@ const GameMemberList = ({
                 alignItems: 'center'
               }}
             >
-              <span style={{ 
-                display: 'inline-block', 
-                width: '24px', 
-                height: '24px', 
-                borderRadius: '50%', 
+              <span style={{
+                display: 'inline-block',
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
                 backgroundColor: '#e74c3c',
                 color: 'white',
                 textAlign: 'center',
@@ -142,22 +145,22 @@ const GameMemberList = ({
           ))}
         </div>
       </div>
-      
+
       <div>
-        <h2 style={{ 
-          color: '#3498db', 
+        <h2 style={{
+          color: '#3498db',
           borderBottom: '2px solid #3498db',
           paddingBottom: '5px',
           marginBottom: '10px'
         }}>
           Team 2
         </h2>
-        <div style={{ 
-          padding: 0, 
-          margin: 0 
+        <div style={{
+          padding: 0,
+          margin: 0
         }}>
           {team2.map((player, index) => (
-            <div 
+            <div
               key={`team2-${index}`}
               onClick={() => onSwapPlayers && handlePlayerClick('team2', index)}
               onKeyDown={(e) => {
@@ -178,11 +181,11 @@ const GameMemberList = ({
                 alignItems: 'center'
               }}
             >
-              <span style={{ 
-                display: 'inline-block', 
-                width: '24px', 
-                height: '24px', 
-                borderRadius: '50%', 
+              <span style={{
+                display: 'inline-block',
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
                 backgroundColor: '#3498db',
                 color: 'white',
                 textAlign: 'center',
@@ -197,10 +200,10 @@ const GameMemberList = ({
           ))}
         </div>
       </div>
-      
+
       {onSwapPlayers && (
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <button 
+          <button
             style={{
               padding: '8px 16px',
               backgroundColor: '#2ecc71',
@@ -222,6 +225,25 @@ const GameMemberList = ({
           </p>
         </div>
       )}
+
+      {onSwapTeam &&
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#2ecc71',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onClick={onSwapTeam}
+          >
+            Swap team
+          </button>
+        </div>
+      }
     </div>
   );
 }
@@ -307,7 +329,7 @@ const CardGame = () => {
   //   last_seen?: string;
   //   created_at: string;
   // };
-  
+
   // const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
   const [isRoomAdmin, setIsRoomAdmin] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
@@ -348,10 +370,10 @@ const CardGame = () => {
 
       // Update team data with online players
       const team1Players = players
-        .filter((p) => p.name.startsWith('Team1:'))
+        .filter((p) => p.team === 'team1')
         .map((p) => p.name.replace('Team1:', ''));
       const team2Players = players
-        .filter((p) => p.name.startsWith('Team2:'))
+        .filter((p) => p.team === 'team2')
         .map((p) => p.name.replace('Team2:', ''));
 
       if (team1Players.length > 0) {
@@ -373,14 +395,18 @@ const CardGame = () => {
 
       // Join the room
       const player = await roomService.joinRoom(roomId, playerName);
-      setIsRoomAdmin(player.is_admin);
+
 
       // Load room players
       await loadRoomPlayers();
 
       // Load existing game state if any
       const room = await roomService.getRoom(roomId);
-      if (room?.game_state === 'playing') {
+      console.log("room", room)
+
+      setIsRoomAdmin(player.user_id === room?.created_by);
+      if (room?.status === 'playing') {
+        alert("The game is running. Do you want to join ?")
         // Load existing game session
         // This would require adding a method to get session data
       }
@@ -409,19 +435,19 @@ const CardGame = () => {
         setConnectionStatus('connected');
 
         // Handle real-time updates
-                  if (payload.eventType === 'UPDATE' && payload.new) {
-            // Type guard to ensure payload.new has session_data property
-            const payloadNew = payload.new as { session_data?: Record<string, unknown> };
-            if (payloadNew.session_data) {
-              const sessionData = payloadNew.session_data;
-              // Sync game state from remote
-              if ('team1Data' in sessionData) setTeam1Data(sessionData.team1Data as TeamData);
-              if ('team2Data' in sessionData) setTeam2Data(sessionData.team2Data as TeamData);
-              if ('duelData' in sessionData) setDuelData(sessionData.duelData as DuelData);
-              if ('gameState' in sessionData) setGameState(sessionData.gameState as string);
-              if ('roundNumber' in sessionData) setRoundNumber(sessionData.roundNumber as number);
-            }
+        if (payload.eventType === 'UPDATE' && payload.new) {
+          // Type guard to ensure payload.new has session_data property
+          const payloadNew = payload.new as { session_data?: Record<string, unknown> };
+          if (payloadNew.session_data) {
+            const sessionData = payloadNew.session_data;
+            // Sync game state from remote
+            if ('team1Data' in sessionData) setTeam1Data(sessionData.team1Data as TeamData);
+            if ('team2Data' in sessionData) setTeam2Data(sessionData.team2Data as TeamData);
+            if ('duelData' in sessionData) setDuelData(sessionData.duelData as DuelData);
+            if ('gameState' in sessionData) setGameState(sessionData.gameState as string);
+            if ('roundNumber' in sessionData) setRoundNumber(sessionData.roundNumber as number);
           }
+        }
 
         // Handle player changes
         if (payload.table === 'players') {
@@ -466,13 +492,18 @@ const CardGame = () => {
    * @param team1Data - Array of team 1 player names
    * @param team2Data - Array of team 2 player names
    */
-  const startGameWithTeams = (team1Data: string[], team2Data: string[]) => {
+  const startGameWithTeams = async (team1Data: string[], team2Data: string[]) => {
     if (team1Data.length === 0 || team2Data.length === 0) {
       alert('Both teams must have at least one player.');
       return;
     }
 
     setGameState('gamePlaying');
+    // update the room status
+    if (roomId) {
+      console.log("roomId", roomId)
+      await roomService.updateRoomStatus(roomId, 'playing')
+    }
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
     nextRound(team1Data, team2Data);
@@ -822,42 +853,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topLeftPlayerData,
-                  cards: newData.topLeftCards,
-                  sum: calculateSum(newData.topLeftCards)
-                }
+                ...newData.topLeftPlayerData,
+                cards: newData.topLeftCards,
+                sum: calculateSum(newData.topLeftCards)
+              }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomLeftPlayerData,
-                  cards: newData.bottomLeftCards,
-                  sum: calculateSum(newData.bottomLeftCards)
-                }
+                ...newData.bottomLeftPlayerData,
+                cards: newData.bottomLeftCards,
+                sum: calculateSum(newData.bottomLeftCards)
+              }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topRightPlayerData,
-                  cards: newData.topRightCards,
-                  sum: calculateSum(newData.topRightCards)
-                }
+                ...newData.topRightPlayerData,
+                cards: newData.topRightCards,
+                sum: calculateSum(newData.topRightCards)
+              }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomRightPlayerData,
-                  cards: newData.bottomRightCards,
-                  sum: calculateSum(newData.bottomRightCards)
-                }
+                ...newData.bottomRightPlayerData,
+                cards: newData.bottomRightCards,
+                sum: calculateSum(newData.bottomRightCards)
+              }
               : newData.bottomRightPlayerData
         };
 
@@ -1057,14 +1088,14 @@ const CardGame = () => {
           if (losingTeam === 'team1') {
             setTeam1Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer,...prev.players ] };
+                return { ...prev, players: [losingPlayer, ...prev.players] };
               }
               return prev;
             });
           } else {
             setTeam2Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer,...prev.players ] };
+                return { ...prev, players: [losingPlayer, ...prev.players] };
               }
               return prev;
             });
@@ -1428,11 +1459,11 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onCardClick();
-                }
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onCardClick();
               }
+            }
             : undefined
         }
       />
@@ -1455,6 +1486,10 @@ const CardGame = () => {
   const isStartGameDisabled = (): boolean => {
     if (gameState === 'gameLoading') {
       return true;
+    }
+
+    if (!isRoomAdmin) {
+      return true
     }
 
     /**
@@ -1735,7 +1770,7 @@ const CardGame = () => {
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
                                   team1Alloc.lockAll !==
-                                team1Data.totalPowerUps
+                                  team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
                             }}
@@ -1894,7 +1929,7 @@ const CardGame = () => {
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
                                     team1Alloc.lockAll !==
-                                  team1Data.totalPowerUps
+                                    team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -2052,7 +2087,7 @@ const CardGame = () => {
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
                                     team2Alloc.lockAll !==
-                                  team2Data.totalPowerUps
+                                    team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -2135,30 +2170,33 @@ const CardGame = () => {
                         />
                       </div>
                     </>
-                  ): (
-                    <GameMemberList 
-                      team1={team1Data.players} 
+                  ) : (
+                    <GameMemberList
+                      team1={team1Data.players}
                       team2={team2Data.players}
                       onSwapPlayers={(team1Index, team2Index) => {
                         // Create copies of the player arrays
                         const newTeam1Players = [...team1Data.players];
                         const newTeam2Players = [...team2Data.players];
-                        
+
                         // Swap the players
                         const temp = newTeam1Players[team1Index];
                         newTeam1Players[team1Index] = newTeam2Players[team2Index];
                         newTeam2Players[team2Index] = temp;
-                        
+
                         // Update state
                         setTeam1Data(prev => ({
                           ...prev,
                           players: newTeam1Players
                         }));
-                        
+
                         setTeam2Data(prev => ({
                           ...prev,
                           players: newTeam2Players
                         }));
+                      }}
+                      onSwapTeam={async () => {
+                        await roomService.swapTeam(roomId)
                       }}
                     />
                   )}

@@ -1,5 +1,5 @@
-import { supabase } from '~/utils/supabaseClient'
-import type { Database } from '~/utils/supabaseClient'
+import { supabase } from '../utils/supabaseClient'
+import type { Database } from '../utils/supabaseClient'
 import { authService } from './supabaseAuthService'
 
 
@@ -30,11 +30,11 @@ export interface RoomServiceInterface {
   leaveRoom(roomId: string, playerId: string): Promise<void>
   getRooms(): Promise<Room[]>
   getRoom(roomId: string): Promise<Room | null>
-  
+
   // Game State Management
   updateGameState(roomId: string, gameState: GameState): Promise<void>
   subscribeToRoom(roomId: string, callback: (payload: Record<string, unknown>) => void): void
-  
+
   // Player Management
   getPlayersInRoom(roomId: string): Promise<Player[]>
   updatePlayerStatus(playerId: string, isOnline: boolean): Promise<void>
@@ -45,21 +45,20 @@ export class RoomService implements RoomServiceInterface {
     // Get current user to set as room creator
     if (!createdBy) {
       const { user, error } = await authService.getCurrentUser();
-      
+
       if (error || !user) {
         throw new Error('You must be logged in to create a room');
       }
-      
+
       createdBy = user.id;
     }
-    
+
     const { data, error } = await supabase
       .from('rooms')
       .insert({
         name,
         created_by: createdBy,
         status: 'waiting',
-        game_state: 'waiting',
         settings: {
           maxPlayers: 6,
           powerUpsPerTeam: 4,
@@ -77,29 +76,29 @@ export class RoomService implements RoomServiceInterface {
     // Get current user if userId not provided
     if (!userId) {
       const { user, error } = await authService.getCurrentUser();
-      
+
       if (error || !user) {
         throw new Error('You must be logged in to join a room');
       }
-      
+
       userId = user.id;
     }
     // Check if room exists and has space
     const room = await this.getRoom(roomId)
     if (!room) throw new Error('Room not found')
-    
+
     const players = await this.getPlayersInRoom(roomId)
     if (players.length >= room.max_players) {
       throw new Error('Room is full')
     }
 
     // Check if user is already in the room
-      const existingPlayer = players.find(p => p.user_id === userId)
-      if (existingPlayer) {
-        // Update player status to online
-        await this.updatePlayerStatus(existingPlayer.id, true)
-        return existingPlayer
-      }
+    const existingPlayer = players.find(p => p.user_id === userId)
+    if (existingPlayer) {
+      // Update player status to online
+      await this.updatePlayerStatus(existingPlayer.id, true)
+      return existingPlayer
+    }
 
     const { data, error } = await supabase
       .from('players')
@@ -108,7 +107,8 @@ export class RoomService implements RoomServiceInterface {
         room_id: roomId,
         user_id: userId,
         is_online: true,
-        is_admin: players.length === 0 // First player becomes admin
+        team: 'team1'
+        // is_admin: players.length === 0 // First player becomes admin
       })
       .select()
       .single()
@@ -152,7 +152,7 @@ export class RoomService implements RoomServiceInterface {
     const { error: roomError } = await supabase
       .from('rooms')
       .update({
-        game_state: gameState.gameState,
+        status: gameState.gameState,
         current_round: gameState.roundNumber || 0
       })
       .eq('id', roomId)
@@ -263,11 +263,11 @@ export class RoomService implements RoomServiceInterface {
 
   async forceEndGame(roomId: string): Promise<void> {
     await this.updateRoomStatus(roomId, 'finished')
-    
+
     // Mark game session as finished
     const { error } = await supabase
       .from('game_sessions')
-      .update({ 
+      .update({
         finished_at: new Date().toISOString()
       })
       .eq('room_id', roomId)
@@ -290,6 +290,29 @@ export class RoomService implements RoomServiceInterface {
       .eq('room_id', roomId)
 
     if (error) throw error
+  }
+
+  async swapTeam(roomId: string) {
+
+    const { user } = await authService.getCurrentUser()
+    const players = await this.getPlayersInRoom(roomId)
+
+
+    // Check if user is already in the room
+    const existingPlayer = players.find(p => p.user_id === user?.id)
+    if (existingPlayer) {
+      // Update player status to online
+      const { error } = await supabase
+        .from('players')
+        .update({
+          last_seen: new Date().toISOString(),
+          team: existingPlayer.team === 'team1' ? 'team2' :
+            'team1'
+        })
+        .eq('id', existingPlayer.id)
+
+      if (error) throw error
+    }
   }
 }
 

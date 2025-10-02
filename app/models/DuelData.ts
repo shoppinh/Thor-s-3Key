@@ -1,5 +1,5 @@
-import Card from '~/models/Card';
-import PlayerData from '~/models/PlayerData';
+import Card from "./Card";
+import PlayerData from "./PlayerData";
 
 export default interface DuelData {
   duelIndex: number;
@@ -22,20 +22,20 @@ export default interface DuelData {
     bottomLeft: Card[];
     topRight: Card[];
     bottomRight: Card[];
-  };  
+  };
   winningTeam?: 'team1' | 'team2' | null; // store team has won the current duel
   player1SideSelected?:
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right'
-    | ''; // first player's selection
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | ''; // first player's selection
   player2SideSelected?:
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right'
-    | ''; // second player's selection
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | ''; // second player's selection
   player1Name: string; // player1 is the first player in the current duel
   player1Team: 'team1' | 'team2' | null; // store team of the first player
   player2Name: string; // player2 is the second player in the current duel

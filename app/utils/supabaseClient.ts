@@ -18,9 +18,8 @@ export interface Database {
           status: 'waiting' | 'setup' | 'playing' | 'finished'
           max_players: number
           current_round: number
-          game_state: 'waiting' | 'setup' | 'playing' | 'finished'
           settings: Record<string, any>
-          created_by: string | null
+          created_by: string
           created_at: string
         }
         Insert: {
@@ -29,7 +28,6 @@ export interface Database {
           status?: 'waiting' | 'setup' | 'playing' | 'finished'
           max_players?: number
           current_round?: number
-          game_state?: 'waiting' | 'setup' | 'playing' | 'finished'
           settings?: Record<string, any>
           created_by?: string
           created_at?: string
@@ -40,7 +38,6 @@ export interface Database {
           status?: 'waiting' | 'setup' | 'playing' | 'finished'
           max_players?: number
           current_round?: number
-          game_state?: 'waiting' | 'setup' | 'playing' | 'finished'
           settings?: Record<string, any>
           created_by?: string
           created_at?: string
@@ -53,7 +50,10 @@ export interface Database {
           room_id: string
           user_id: string | null
           avatar_url: string | null
-          is_admin: boolean
+          position: number
+          team: string
+          cards?: Record<string, any>
+          // is_admin: boolean
           is_online: boolean
           last_seen: string
           created_at: string
@@ -64,7 +64,10 @@ export interface Database {
           room_id: string
           user_id?: string
           avatar_url?: string
-          is_admin?: boolean
+          position: number
+          team: string
+          cards?: Record<string, any>
+          // is_admin?: boolean
           is_online?: boolean
           last_seen?: string
           created_at?: string
@@ -75,7 +78,10 @@ export interface Database {
           room_id?: string
           user_id?: string
           avatar_url?: string
-          is_admin?: boolean
+          position?: number
+          team?: string
+          cards?: Record<string, any>
+          // is_admin?: boolean
           is_online?: boolean
           last_seen?: string
           created_at?: string

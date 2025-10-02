@@ -12,7 +12,6 @@ interface Room {
   id: string
   name: string
   status: string
-  game_state: string
   max_players: number
   current_round: number
   created_at: string
@@ -28,7 +27,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
 
   useEffect(() => {
     loadRooms()
-    
+
     // Refresh rooms every 5 seconds
     const interval = setInterval(loadRooms, 5000)
     return () => clearInterval(interval)
@@ -37,7 +36,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
   const loadRooms = async () => {
     try {
       const allRooms = await roomService.getRooms()
-      
+
       // Get player count for each room
       const roomsWithCounts = await Promise.all(
         allRooms.map(async (room) => {
@@ -51,7 +50,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
 
       // Filter to show only waiting/setup rooms
       const availableRooms = roomsWithCounts.filter(
-        room => room.game_state === 'waiting' || room.game_state === 'setup'
+        room => room.status === 'waiting' || room.status === 'setup'
       )
 
       setRooms(availableRooms)
@@ -72,7 +71,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
       alert('Please enter your name')
       return
     }
-    
+
     if (!user) {
       alert('You must be logged in to create a room')
       return
@@ -82,7 +81,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
       setCreating(true)
       const room = await roomService.createRoom(newRoomName.trim(), user.id)
       await roomService.joinRoom(room.id, playerName.trim(), user.id)
-      
+
       // Join the created room
       onJoinRoom(room.id, playerName.trim())
     } catch (error) {
@@ -100,7 +99,7 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
       alert('Please enter your name')
       return
     }
-    
+
     if (!user) {
       alert('You must be logged in to join a room')
       return
@@ -126,19 +125,19 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
   }
 
   return (
-    <div style={{ 
-      maxWidth: '800px', 
-      margin: '0 auto', 
+    <div style={{
+      maxWidth: '800px',
+      margin: '0 auto',
       padding: '20px',
       fontFamily: 'Arial, sans-serif'
     }}>
       <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Thor's 3Key - Game Lobby</h1>
-      
+
       {/* Player Name Input */}
-      <div style={{ 
-        marginBottom: '30px', 
-        padding: '20px', 
-        border: '1px solid #ddd', 
+      <div style={{
+        marginBottom: '30px',
+        padding: '20px',
+        border: '1px solid #ddd',
         borderRadius: '8px',
         backgroundColor: '#f8f9fa'
       }}>
@@ -179,9 +178,9 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
             Create New Room
           </button>
         ) : (
-          <div style={{ 
-            padding: '20px', 
-            border: '1px solid #ddd', 
+          <div style={{
+            padding: '20px',
+            border: '1px solid #ddd',
             borderRadius: '8px',
             backgroundColor: '#f8f9fa'
           }}>
@@ -241,11 +240,11 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
 
       {/* Rooms List */}
       <div>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '20px' 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
         }}>
           <h3>Available Rooms</h3>
           <button
@@ -271,12 +270,12 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
               </div>
             );
           }
-          
+
           if (rooms.length === 0) {
             return (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '40px', 
+              <div style={{
+                textAlign: 'center',
+                padding: '40px',
                 color: '#666',
                 border: '1px solid #ddd',
                 borderRadius: '8px'
@@ -286,74 +285,74 @@ export default function Lobby({ onJoinRoom, playerName, setPlayerName, user }: L
               </div>
             );
           }
-          
+
           return (
-          <div style={{ display: 'grid', gap: '15px' }}>
-            {rooms.map((room) => {
-              const isRoomFull = (room.playerCount || 0) >= room.max_players;
-              const isRoomPlaying = room.game_state === 'playing';
-              const isDisabled = !playerName.trim() || isRoomFull || isRoomPlaying;
-              // const hasAlreadyJoined = room.players.some((player) => player.name === playerName);
-              let buttonText = 'Join';
-              if (isRoomFull) {
-                buttonText = 'Full';
-              } else if (isRoomPlaying) {
-                buttonText = 'In Progress';
-              } 
-              // else if (hasAlreadyJoined) {
-              //   buttonText = 'Rejoin';
-              // }
-              
-              return (
-                <div
-                  key={room.id}
-                  style={{
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    backgroundColor: 'white',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
-                >
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center' 
-                  }}>
-                    <div>
-                      <h4 style={{ margin: '0 0 8px 0' }}>{room.name}</h4>
-                      <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#666' }}>
-                        <span style={{ 
-                          color: getStatusColor(room.game_state),
-                          fontWeight: 'bold'
-                        }}>
-                          {room.game_state.toUpperCase()}
-                        </span>
-                        <span>Players: {room.playerCount}/{room.max_players}</span>
-                        {room.current_round > 0 && <span>Round: {room.current_round}</span>}
-                        <span>Created: {new Date(room.created_at).toLocaleTimeString()}</span>
+            <div style={{ display: 'grid', gap: '15px' }}>
+              {rooms.map((room) => {
+                const isRoomFull = (room.playerCount || 0) >= room.max_players;
+                const isRoomPlaying = room.status === 'playing';
+                const isDisabled = !playerName.trim() || isRoomFull || isRoomPlaying;
+                // const hasAlreadyJoined = room.players.some((player) => player.name === playerName);
+                let buttonText = 'Join';
+                if (isRoomFull) {
+                  buttonText = 'Full';
+                } else if (isRoomPlaying) {
+                  buttonText = 'In Progress';
+                }
+                // else if (hasAlreadyJoined) {
+                //   buttonText = 'Rejoin';
+                // }
+
+                return (
+                  <div
+                    key={room.id}
+                    style={{
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      backgroundColor: 'white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 8px 0' }}>{room.name}</h4>
+                        <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#666' }}>
+                          <span style={{
+                            color: getStatusColor(room.status),
+                            fontWeight: 'bold'
+                          }}>
+                            {room.status.toUpperCase()}
+                          </span>
+                          <span>Players: {room.playerCount}/{room.max_players}</span>
+                          {room.current_round > 0 && <span>Round: {room.current_round}</span>}
+                          <span>Created: {new Date(room.created_at).toLocaleTimeString()}</span>
+                        </div>
                       </div>
+
+                      <button
+                        onClick={() => handleJoinRoom(room.id)}
+                        disabled={isDisabled}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: isDisabled ? '#6c757d' : '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {buttonText}
+                      </button>
                     </div>
-                    
-                    <button
-                      onClick={() => handleJoinRoom(room.id)}
-                      disabled={isDisabled}
-                      style={{
-                        padding: '10px 20px',
-                        backgroundColor: isDisabled ? '#6c757d' : '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: isDisabled ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {buttonText}
-                    </button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
           );
         })()}
       </div>
