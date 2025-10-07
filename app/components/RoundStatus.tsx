@@ -618,7 +618,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }}
     >
       {/* Left Part - Team 1 Chances */}
-      <div style={{ flex: '0 0 540px' }}>
+      <div
+        style={{
+          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
+          minWidth: '150px',
+          maxWidth: '100%',
+          transition: 'flex-basis 0.2s'
+        }}
+      >
         {renderTeamChances(team1Data, 'team1')}
       </div>
 
@@ -675,7 +682,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Right Part - Team 2 Chances */}
-      <div style={{ flex: '0 0 540px' }}>
+      <div
+        style={{
+          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
+          minWidth: '150px',
+          maxWidth: '100%',
+          transition: 'flex-basis 0.2s'
+        }}
+      >
         {renderTeamChances(team2Data, 'team2')}
       </div>
     </div>

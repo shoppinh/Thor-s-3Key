@@ -1377,8 +1377,6 @@ const CardGame = () => {
                         onChange={() => {
                           setSetupMode('both');
                           setSetupForBothTeams(true);
-                          // Keep both allocations in sync when switching into combined mode
-                          setTeam2Alloc((prev) => ({ ...team1Alloc }));
                         }}
                       />
                       <label htmlFor="mode-both">Setup power-ups for both teams</label>
@@ -1394,7 +1392,6 @@ const CardGame = () => {
                           setSetupForBothTeams(true);
                           randomizeBothTeamsAllocation();
                           // Ensure both teams share the same values after randomization
-                          setTeam2Alloc((prev) => ({ ...team1Alloc }));
                         }}
                       />
                       <label htmlFor="mode-random">Random power-ups for both teams</label>
