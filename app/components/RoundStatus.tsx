@@ -21,7 +21,7 @@ interface RoundStatusProps {
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
     teamName: 'team1' | 'team2',
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll'
+    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll' | 'removeWorst'
   ) => void;
 }
 
@@ -131,6 +131,23 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         return false;
       }
 
+      // Single-use per team per duel
+      if ((duelData.secondChanceUsedByTeams || []).includes(team)) {
+        return false;
+      }
+
+      // If there are no available groups to select (all revealed or removed), disable Second Chance
+      const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
+      const availableCountForAny = [
+        !disabledByRemoveWorst.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('bottom-left') && !duelData.bottomLeftRevealed && duelData.bottomLeftPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
+      ].filter(Boolean).length;
+      if (availableCountForAny === 0) {
+        return false;
+      }
+
       // If only first player has made their selection
       if (duelData.player1SideSelected && !duelData.player2SideSelected) {
         // Enable Second Chance for the first player's team (they can redo their selection)
@@ -216,6 +233,35 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       if (duelData.lockAllUsedBy) return false;
       // Disallow using Lock All on the second player's turn (only first player may lock)
       if (duelData.duelIndex === 1) return false;
+      return true;
+    };
+
+    // Helper: Remove Worst (disable the worst available group per rules)
+    const isRemoveWorstEnabled = (team: 'team1' | 'team2') => {
+      const currentTurnTeam = getCurrentTurnTeam();
+      if (currentTurnTeam !== team) return false;
+      if (isFinishDuel) return false;
+      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) return false;
+      // Enforce per-duel single use per team
+      if ((duelData.removeWorstUsedByTeams || []).includes(team)) return false;
+
+      // Team must not have made their selection yet (before first selection of their turn)
+      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+      const hasThisTeamSelected =
+        (team === firstPlayerTeam && !!duelData.player1SideSelected) ||
+        (team === secondPlayerTeam && !!duelData.player2SideSelected);
+      if (hasThisTeamSelected) return false;
+
+      // Can't use if only one available group remains
+      const disabled = new Set(duelData.removedWorstGroups || []);
+      const availableCount = [
+        !disabled.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
+        !disabled.has('bottom-left') && !duelData.bottomLeftRevealed && duelData.bottomLeftPlayerData.cards.length === 0,
+        !disabled.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
+        !disabled.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
+      ].filter(Boolean).length;
+      if (availableCount <= 1) return false;
+
       return true;
     };
 
@@ -491,6 +537,64 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               </span>
             </div>
           )}
+
+          {/* Remove Worst */}
+        {teamData.powerUps.removeWorst > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: isRemoveWorstEnabled(teamKey) ? 'pointer' : 'default',
+              opacity: isRemoveWorstEnabled(teamKey) ? 1 : 0.5
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Use Remove Worst"
+              onClick={() =>
+                isRemoveWorstEnabled(teamKey) && onChanceClick(teamKey, 'removeWorst')
+              }
+              disabled={!isRemoveWorstEnabled(teamKey)}
+              style={{
+                width: '120px',
+                height: '120px',
+                marginBottom: '4px',
+                borderRadius: '12px',
+                border: '3px solid #f44336',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #ffebee, #ffffff)',
+                position: 'relative',
+                cursor: isRemoveWorstEnabled(teamKey) ? 'pointer' : 'default'
+              }}
+            >
+              <img
+                src="/images/chance_remove.png"
+                alt="Remove Worst"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  filter: isRemoveWorstEnabled(teamKey) ? 'none' : 'grayscale(100%)'
+                }}
+              />
+              <div className="powerupBadge" aria-hidden>
+                {teamData.powerUps.removeWorst}
+              </div>
+            </button>
+            <span
+              style={{
+                fontSize: '15px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: isRemoveWorstEnabled(teamKey) ? '#333' : '#999'
+              }}
+            >
+              Remove Worst
+            </span>
+          </div>
+        )}
         </div>
       </div>
     );
@@ -514,7 +618,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }}
     >
       {/* Left Part - Team 1 Chances */}
-      <div style={{ flex: '0 0 150px' }}>
+      <div
+        style={{
+          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
+          minWidth: '150px',
+          maxWidth: '100%',
+          transition: 'flex-basis 0.2s'
+        }}
+      >
         {renderTeamChances(team1Data, 'team1')}
       </div>
 
@@ -571,7 +682,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Right Part - Team 2 Chances */}
-      <div style={{ flex: '0 0 150px' }}>
+      <div
+        style={{
+          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
+          minWidth: '150px',
+          maxWidth: '100%',
+          transition: 'flex-basis 0.2s'
+        }}
+      >
         {renderTeamChances(team2Data, 'team2')}
       </div>
     </div>

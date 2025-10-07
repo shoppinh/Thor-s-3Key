@@ -19,7 +19,9 @@ import {
   getCardImage,
   calculateSum,
     determineWinner,
-    preloadImages
+    preloadImages,
+    getCardHighestSuitAndValue,
+    suitRank
 } from '~/utils/gameUtil';
 
 const DECKS = createDeck();
@@ -36,6 +38,7 @@ type PowerUpsAllocation = {
   revealTwo: number;
   lifeShield: number;
   lockAll: number;
+  removeWorst: number;
 };
 
 const CardGame = () => {
@@ -45,7 +48,7 @@ const CardGame = () => {
     score: 0,
     scoreClass: '',
     totalPowerUps: 4,
-    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1 },
+    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1, removeWorst: 0 },
     players: []
   });
   const [team2Data, setTeam2Data] = useState<TeamData>({
@@ -53,7 +56,7 @@ const CardGame = () => {
     score: 0,
     scoreClass: '',
     totalPowerUps: 4,
-    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1 },
+    powerUps: { secondChance: 1, revealTwo: 1, lifeShield: 1, lockAll: 1, removeWorst: 0 },
     players: []
   });
   const [duelData, setDuelData] = useState<DuelData>({
@@ -85,6 +88,7 @@ const CardGame = () => {
     revealTwoUsedBy: null,
     lifeShieldUsedBy: null,
     lockAllUsedBy: null,
+    removedWorstGroups: [],
     player1SideSelected: '',
     player2SideSelected: '',
     winningTeam: null
@@ -106,13 +110,15 @@ const CardGame = () => {
     secondChance: team1Data.powerUps.secondChance,
     revealTwo: team1Data.powerUps.revealTwo,
     lifeShield: team1Data.powerUps.lifeShield,
-    lockAll: team1Data.powerUps.lockAll
+    lockAll: team1Data.powerUps.lockAll,
+    removeWorst: team1Data.powerUps.removeWorst ?? 0
   });
   const [team2Alloc, setTeam2Alloc] = useState<PowerUpsAllocation>({
     secondChance: team2Data.powerUps.secondChance,
     revealTwo: team2Data.powerUps.revealTwo,
     lifeShield: team2Data.powerUps.lifeShield,
-    lockAll: team2Data.powerUps.lockAll
+    lockAll: team2Data.powerUps.lockAll,
+    removeWorst: team2Data.powerUps.removeWorst ?? 0
   });
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
@@ -123,6 +129,7 @@ const CardGame = () => {
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
+  const [setupMode, setSetupMode] = useState<'per-team' | 'both' | 'random'>('per-team');
 
   /**
    * Starts the game with the provided team data
@@ -203,8 +210,14 @@ const CardGame = () => {
       const shuffledTeam1 = shuffleArray(team1Temp);
       const shuffledTeam2 = shuffleArray(team2Temp);
 
-      setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
-      setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team2Alloc } }));
+      // Respect setup mode at start: in both/random modes, apply shared allocation
+      if (setupMode === 'both' || setupMode === 'random') {
+        setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
+        setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team1Alloc } }));
+      } else {
+        setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
+        setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team2Alloc } }));
+      }
 
       startGameWithTeams(shuffledTeam1, shuffledTeam2);
     } catch (error) {
@@ -262,6 +275,9 @@ const CardGame = () => {
         revealTwoUsedBy: null,
         lifeShieldUsedBy: null,
         lockAllUsedBy: null,
+        removedWorstGroups: [],
+        removeWorstUsedByTeams: [],
+        secondChanceUsedByTeams: [],
         player1SideSelected: '',
         player2SideSelected: '',
         winningTeam: null
@@ -467,8 +483,22 @@ const CardGame = () => {
           !secondTeamIsWinning &&
           !isSecondTeamLocked;
 
-        // Reveal all cards if the second team doesn't have Second Chance available
-        const shouldRevealAllCards = !secondTeamHasSecondChance;
+        // Additional constraints: must have at least one selectable group remaining (not removed, not revealed, not already drawn)
+        const disabledGroups = new Set(newData.removedWorstGroups || []);
+        const availableCount = [
+          !disabledGroups.has('top-left') && !newData.topLeftRevealed && newData.topLeftPlayerData.cards.length === 0,
+          !disabledGroups.has('bottom-left') && !newData.bottomLeftRevealed && newData.bottomLeftPlayerData.cards.length === 0,
+          !disabledGroups.has('top-right') && !newData.topRightRevealed && newData.topRightPlayerData.cards.length === 0,
+          !disabledGroups.has('bottom-right') && !newData.bottomRightRevealed && newData.bottomRightPlayerData.cards.length === 0
+        ].filter(Boolean).length;
+        const secondChanceUsedThisDuel = (newData.secondChanceUsedByTeams || []).includes(
+          (secondPlayerTeam as 'team1' | 'team2')
+        );
+        const canSecondTeamUseSecondChance =
+          secondTeamHasSecondChance && availableCount > 0 && !secondChanceUsedThisDuel;
+
+        // Reveal all cards if the second team doesn't have Second Chance available OR usable
+        const shouldRevealAllCards = !canSecondTeamUseSecondChance;
 
         const updatedData = {
           ...newData,
@@ -575,7 +605,7 @@ const CardGame = () => {
    */
   const handleChanceClick = (
     teamName: 'team1' | 'team2',
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll'
+    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll' | 'removeWorst'
   ) => {
     const chanceItemName =
       chanceType === 'secondChance'
@@ -584,7 +614,9 @@ const CardGame = () => {
           ? 'Reveal Two'
           : chanceType === 'lifeShield'
             ? 'Life Shield'
-            : 'Lock All';
+            : chanceType === 'lockAll'
+              ? 'Lock All'
+              : 'Remove Worst';
 
     setConfirmPopup({
       isVisible: true,
@@ -845,6 +877,11 @@ const CardGame = () => {
 
         // Implement second chance functionality
         implementSecondChance();
+        // Mark team has used Second Chance this duel (single-use per team per duel)
+        setDuelData((prev) => ({
+          ...prev,
+          secondChanceUsedByTeams: [ ...(prev.secondChanceUsedByTeams || []), teamName ]
+        }));
       } else if (chanceType === 'revealTwo') {
         // Handle Reveal Two logic
         if (teamName === 'team1') {
@@ -898,6 +935,64 @@ const CardGame = () => {
           }));
         }
         setDuelData((prev) => ({ ...prev, lockAllUsedBy: teamName }));
+      } else if (chanceType === 'removeWorst') {
+        // Remove Worst: disable the worst available card group
+        const disabled = new Set(duelData.removedWorstGroups || []);
+        const availableGroups: { key: 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right'; cards: Card[] }[] = [];
+        if (!duelData.topLeftRevealed && !disabled.has('top-left')) availableGroups.push({ key: 'top-left', cards: duelData.topLeftCards });
+        if (!duelData.bottomLeftRevealed && !disabled.has('bottom-left')) availableGroups.push({ key: 'bottom-left', cards: duelData.bottomLeftCards });
+        if (!duelData.topRightRevealed && !disabled.has('top-right')) availableGroups.push({ key: 'top-right', cards: duelData.topRightCards });
+        if (!duelData.bottomRightRevealed && !disabled.has('bottom-right')) availableGroups.push({ key: 'bottom-right', cards: duelData.bottomRightCards });
+
+        if (availableGroups.length > 1) {
+          // Find worst by sum, then by highest-card suit/value ascending
+          const pickWorst = (groups: typeof availableGroups) => {
+            let worst = groups[0];
+            const getHighest = getCardHighestSuitAndValue;
+            for (let i = 1; i < groups.length; i++) {
+              const a = worst;
+              const b = groups[i];
+              const sumA = calculateSum(a.cards);
+              const sumB = calculateSum(b.cards);
+              if (sumB < sumA) {
+                worst = b;
+              } else if (sumB === sumA) {
+                const ha = getHighest(a.cards);
+                const hb = getHighest(b.cards);
+                if (suitRank[hb.suit] < suitRank[ha.suit]) {
+                  worst = b;
+                } else if (suitRank[hb.suit] === suitRank[ha.suit]) {
+                  const haVal = ha.value === 1 ? 14 : ha.value;
+                  const hbVal = hb.value === 1 ? 14 : hb.value;
+                  if (hbVal < haVal) worst = b;
+                }
+              }
+            }
+            return worst.key;
+          };
+
+          const worstKey = pickWorst(availableGroups);
+          // Spend power-up
+          if (teamName === 'team1') {
+            setTeam1Data((prev) => ({
+              ...prev,
+              powerUps: { ...prev.powerUps, removeWorst: prev.powerUps.removeWorst - 1 },
+              totalPowerUps: prev.totalPowerUps - 1
+            }));
+          } else {
+            setTeam2Data((prev) => ({
+              ...prev,
+              powerUps: { ...prev.powerUps, removeWorst: prev.powerUps.removeWorst - 1 },
+              totalPowerUps: prev.totalPowerUps - 1
+            }));
+          }
+          // Store disabled group for this duel and mark team has used it (one use per team per duel)
+          setDuelData((prev) => ({
+            ...prev,
+            removedWorstGroups: [ ...(prev.removedWorstGroups || []), worstKey ],
+            removeWorstUsedByTeams: [ ...(prev.removeWorstUsedByTeams || []), teamName ]
+          }));
+        }
       }
     }
 
@@ -1101,15 +1196,24 @@ const CardGame = () => {
       total: number
     ): boolean => {
       const sum =
-        alloc.secondChance + alloc.revealTwo + alloc.lifeShield + alloc.lockAll;
+        alloc.secondChance + alloc.revealTwo + alloc.lifeShield + alloc.lockAll + alloc.removeWorst;
       const perTypeValid =
         alloc.secondChance <= 2 &&
         alloc.revealTwo <= 2 &&
         alloc.lifeShield <= 2 &&
-        alloc.lockAll <= 2;
+        alloc.lockAll <= 2 &&
+        alloc.removeWorst <= 2;
       return sum === total && perTypeValid;
     };
 
+    // Validation should depend on current setup mode
+    if (setupMode === 'both' || setupMode === 'random') {
+      // In combined/random mode we treat both teams as sharing the same allocation
+      const isAllocValid = isAllocationValid(team1Alloc, team1Data.totalPowerUps);
+      return !isAllocValid;
+    }
+
+    // Per-team mode: validate both independently
     const isTeam1AllocationValid = isAllocationValid(
       team1Alloc,
       team1Data.totalPowerUps
@@ -1135,6 +1239,46 @@ const CardGame = () => {
   ): void => {
     setTeam1Alloc((prev) => ({ ...prev, [key]: value }));
     setTeam2Alloc((prev) => ({ ...prev, [key]: value }));
+  };
+
+  /**
+   * Randomizes a valid power-ups allocation and applies it to BOTH teams.
+   *
+   * Constraints enforced:
+   * - Sum equals `team1Data.totalPowerUps` (shared allocation for both teams)
+   * - Each type is capped at 2
+   */
+  const randomizeBothTeamsAllocation = (): void => {
+    const total = team1Data.totalPowerUps;
+    const maxPerType = 2;
+    const result: PowerUpsAllocation = {
+      secondChance: 0,
+      revealTwo: 0,
+      lifeShield: 0,
+      lockAll: 0,
+      removeWorst: 0
+    };
+
+    const keys: (keyof PowerUpsAllocation)[] = [
+      'secondChance',
+      'revealTwo',
+      'lifeShield',
+      'lockAll',
+      'removeWorst'
+    ];
+
+    let placed = 0;
+    while (placed < total) {
+      // Collect available types that are still under the cap
+      const available = keys.filter((k) => result[k] < maxPerType);
+      if (available.length === 0) break;
+      const pick = available[Math.floor(Math.random() * available.length)];
+      result[pick] += 1;
+      placed += 1;
+    }
+
+    setTeam1Alloc(result);
+    setTeam2Alloc(result);
   };
 
   /**
@@ -1204,20 +1348,54 @@ const CardGame = () => {
                   <div
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: 6,
                       marginTop: 6,
                       marginBottom: 15
                     }}
                   >
-                    <input
-                      id="setup-both"
-                      type="checkbox"
-                      checked={setupForBothTeams}
-                      onChange={(e) => setSetupForBothTeams(e.target.checked)}
-                    />
-                    <label htmlFor="setup-both">Setup power-ups for both teams</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-per-team"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'per-team'}
+                        onChange={() => {
+                          setSetupMode('per-team');
+                          setSetupForBothTeams(false);
+                        }}
+                      />
+                      <label htmlFor="mode-per-team">Each team setups their own power-ups</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-both"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'both'}
+                        onChange={() => {
+                          setSetupMode('both');
+                          setSetupForBothTeams(true);
+                        }}
+                      />
+                      <label htmlFor="mode-both">Setup power-ups for both teams</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        id="mode-random"
+                        name="setup-mode"
+                        type="radio"
+                        checked={setupMode === 'random'}
+                        onChange={() => {
+                          setSetupMode('random');
+                          setSetupForBothTeams(true);
+                          randomizeBothTeamsAllocation();
+                          // Ensure both teams share the same values after randomization
+                        }}
+                      />
+                      <label htmlFor="mode-random">Random power-ups for both teams</label>
+                    </div>
                   </div>
                   <div
                     className="setup-grid"
@@ -1227,79 +1405,118 @@ const CardGame = () => {
                       <div className="setup-card">
                         <div className="setup-row">
                           {renderLabelWithIcon('Second Chance', 'chance_second.png', 'both-second')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-second"
-                            value={team1Alloc.secondChance}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('secondChance', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-second"
+                              value={team1Alloc.secondChance}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('secondChance', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 'both-reveal')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-reveal"
-                            value={team1Alloc.revealTwo}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('revealTwo', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-reveal"
+                              value={team1Alloc.revealTwo}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('revealTwo', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Life Shield', 'chance_shield.png', 'both-shield')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-shield"
-                            value={team1Alloc.lifeShield}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('lifeShield', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-shield"
+                              value={team1Alloc.lifeShield}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('lifeShield', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon('Lock All', 'chance_block.png', 'both-lock')}
-                          <input
-                            className="num-input"
-                            style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
-                            type="number"
-                            min={0}
-                            max={2}
-                            id="both-lock"
-                            value={team1Alloc.lockAll}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.min(team1Data.totalPowerUps, Number(e.target.value))
-                              );
-                              setBothTeamsAlloc('lockAll', v);
-                            }}
-                          />
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.lockAll > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-lock"
+                              value={team1Alloc.lockAll}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('lockAll', v);
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="setup-row">
+                          {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 'both-remove')}
+                          {setupMode === 'random' ? (
+                            <strong>?</strong>
+                          ) : (
+                            <input
+                              className="num-input"
+                              style={team1Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="both-remove"
+                              value={team1Alloc.removeWorst}
+                              onChange={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                );
+                                setBothTeamsAlloc('removeWorst', v);
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="setup-row">
                           <strong>Total</strong>
@@ -1309,7 +1526,8 @@ const CardGame = () => {
                                 team1Alloc.secondChance +
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
-                                  team1Alloc.lockAll !==
+                                  team1Alloc.lockAll +
+                                  team1Alloc.removeWorst !==
                                   team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
@@ -1318,7 +1536,8 @@ const CardGame = () => {
                             {team1Alloc.secondChance +
                               team1Alloc.revealTwo +
                               team1Alloc.lifeShield +
-                              team1Alloc.lockAll}{' '}
+                              team1Alloc.lockAll +
+                              team1Alloc.removeWorst}{' '}
                             / {team1Data.totalPowerUps}
                           </strong>
                         </div>
@@ -1426,6 +1645,30 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
+                            {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 't1-remove')}
+                            <input
+                              className="num-input"
+                              style={team1Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="t1-remove"
+                              value={team1Alloc.removeWorst}
+                              onChange={(e) =>
+                                setTeam1Alloc({
+                                  ...team1Alloc,
+                                  removeWorst: Math.max(
+                                    0,
+                                    Math.min(
+                                      team1Data.totalPowerUps,
+                                      Number(e.target.value)
+                                    )
+                                  )
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="setup-row">
                             <strong>Total</strong>
                             <strong
                               style={{
@@ -1433,7 +1676,8 @@ const CardGame = () => {
                                   team1Alloc.secondChance +
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
-                                    team1Alloc.lockAll !==
+                                    team1Alloc.lockAll +
+                                    team1Alloc.removeWorst !==
                                     team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
@@ -1442,7 +1686,8 @@ const CardGame = () => {
                               {team1Alloc.secondChance +
                                 team1Alloc.revealTwo +
                                 team1Alloc.lifeShield +
-                                team1Alloc.lockAll}{' '}
+                                team1Alloc.lockAll +
+                                team1Alloc.removeWorst}{' '}
                               / {team1Data.totalPowerUps}
                             </strong>
                           </div>
@@ -1549,6 +1794,30 @@ const CardGame = () => {
                             />
                           </div>
                           <div className="setup-row">
+                            {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 't2-remove')}
+                            <input
+                              className="num-input"
+                              style={team2Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                              type="number"
+                              min={0}
+                              max={2}
+                              id="t2-remove"
+                              value={team2Alloc.removeWorst}
+                              onChange={(e) =>
+                                setTeam2Alloc({
+                                  ...team2Alloc,
+                                  removeWorst: Math.max(
+                                    0,
+                                    Math.min(
+                                      team2Data.totalPowerUps,
+                                      Number(e.target.value)
+                                    )
+                                  )
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="setup-row">
                             <strong>Total</strong>
                             <strong
                               style={{
@@ -1556,7 +1825,8 @@ const CardGame = () => {
                                   team2Alloc.secondChance +
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
-                                    team2Alloc.lockAll !==
+                                    team2Alloc.lockAll +
+                                    team2Alloc.removeWorst !==
                                     team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
@@ -1565,7 +1835,8 @@ const CardGame = () => {
                               {team2Alloc.secondChance +
                                 team2Alloc.revealTwo +
                                 team2Alloc.lifeShield +
-                                team2Alloc.lockAll}{' '}
+                                team2Alloc.lockAll +
+                                team2Alloc.removeWorst}{' '}
                               / {team2Data.totalPowerUps}
                             </strong>
                           </div>

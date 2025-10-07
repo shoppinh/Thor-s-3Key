@@ -76,7 +76,7 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
                         <div style={{ textAlign: 'left' }}>
                             <div style={{ fontWeight: 700, textAlign: 'left' }}>Life Shield</div>
                             <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Prevents elimination for your team in this duel even if you lose.
+                                Prevent elimination for your team in this duel even if you lose.
                             </div>
                         </div>
                     </div>
@@ -85,7 +85,16 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
                         <div style={{ textAlign: 'left' }}>
                             <div style={{ fontWeight: 700, textAlign: 'left' }}>Lock All</div>
                             <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Locks the opponent from using any power-ups for the rest of this duel.
+                                Lock the opponent from using any power-ups for the rest of this duel.
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <img src="/images/chance_remove.png" alt="Remove Worst" width={72} height={72} />
+                        <div style={{ textAlign: 'left' }}>
+                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Remove Worst</div>
+                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
+                                Remove the worst card group from selection.
                             </div>
                         </div>
                     </div>
