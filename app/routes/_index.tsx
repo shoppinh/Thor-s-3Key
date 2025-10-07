@@ -24,7 +24,7 @@ export default function IndexRoute() {
   return (
     <main style={styles.wrapper}>
       <section style={styles.hero}>        
-        <h1 style={styles.h1}>Thor's 3Key</h1>
+        <h1 style={styles.h1}>Thor&#39;s 3Key</h1>
         <p style={styles.tagline}>
           Team-based card chaos with power-ups. Stream-friendly. Stupidly fun.
         </p>

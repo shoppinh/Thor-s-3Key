@@ -1,0 +1,311 @@
+import { useCallback } from 'react';
+import DuelData from '~/models/DuelData';
+import TeamData from '~/models/TeamData';
+import Card from '~/models/Card';
+import { calculateSum, determineWinner } from '~/utils/gameUtil';
+
+type UsePlayerSelectionProps = {
+  duelData: DuelData;
+  setDuelData: React.Dispatch<React.SetStateAction<DuelData>>;
+  team1Data: TeamData;
+  team2Data: TeamData;
+  setIsFirstTurn: React.Dispatch<React.SetStateAction<boolean>>;
+  calculateResult: (params: {
+    p1Sum: number;
+    p2Sum: number;
+    p1Cards: Card[];
+    p2Cards: Card[];
+    p1Name: string;
+    p2Name: string;
+    p1Team?: 'team1' | 'team2' | null;
+    p2Team?: 'team1' | 'team2' | null;
+  }) => void;
+};
+
+export const usePlayerSelection = ({
+  duelData,
+  setDuelData,
+  team1Data,
+  team2Data,
+  setIsFirstTurn,
+  calculateResult,
+}: UsePlayerSelectionProps) => {
+  const playerSelect = useCallback(
+    (side: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
+      let pCards: Card[];
+      let pSum: number;
+
+      const currentPlayer = duelData.currentPlayerName; // Capture current player before any updates
+      const newDuelIndex = duelData.duelIndex + 1;
+      setIsFirstTurn(false);
+      const teamName = team1Data.players.includes(currentPlayer)
+        ? 'team1'
+        : 'team2';
+
+      if (side === 'top-left') {
+        pCards = duelData.topLeftCards;
+        pSum = calculateSum(pCards);
+      } else if (side === 'bottom-left') {
+        pCards = duelData.bottomLeftCards;
+        pSum = calculateSum(pCards);
+      } else if (side === 'top-right') {
+        pCards = duelData.topRightCards;
+        pSum = calculateSum(pCards);
+      } else {
+        // bottom-right
+        pCards = duelData.bottomRightCards;
+        pSum = calculateSum(pCards);
+      }
+
+      if (duelData.duelIndex == 0) {
+        // first draw in a duel
+        const updates: Partial<DuelData> = {
+          duelIndex: newDuelIndex,
+          currentPlayerName: duelData.currentPlayerName, // Keep current player for now
+          player1Name: currentPlayer,
+          player1Team: teamName,
+          player1SideSelected: side
+        };
+
+        // Track which team has made their selection (using side selection instead)
+
+        if (side === 'top-left') {
+          updates.topLeftPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.topLeftRevealed = true;
+        } else if (side === 'bottom-left') {
+          updates.bottomLeftPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.bottomLeftRevealed = true;
+        } else if (side === 'top-right') {
+          updates.topRightPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.topRightRevealed = true;
+        } else {
+          updates.bottomRightPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.bottomRightRevealed = true;
+        }
+
+        setDuelData((prev) => ({ ...prev, ...updates }));
+      } else {
+        // second draw in a duel
+        // Don't automatically finish the duel and reveal all cards
+        // Let teams have a chance to use their Second Chance items
+
+        const updates: Partial<DuelData> = {
+          duelIndex: newDuelIndex,
+          player2SideSelected: side,
+          player2Name: currentPlayer,
+          player2Team: teamName
+          // Don't set currentPlayerName here - let calculateResult handle it
+          // Don't set isFinishDuel to true yet
+        };
+
+        // Track which team has made their selection (using side selection instead)
+
+        if (side === 'top-left') {
+          updates.topLeftPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.topLeftRevealed = true;
+        } else if (side === 'bottom-left') {
+          updates.bottomLeftPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.bottomLeftRevealed = true;
+        } else if (side === 'top-right') {
+          updates.topRightPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.topRightRevealed = true;
+        } else {
+          updates.bottomRightPlayerData = {
+            name: currentPlayer,
+            team: teamName,
+            sum: pSum,
+            cards: pCards
+          };
+          updates.bottomRightRevealed = true;
+        }
+
+        setDuelData((prev) => {
+          const newData = { ...prev, ...updates };
+
+          // Always calculate the result after second player makes their selection
+          // Get the first player's data from their selected position
+          let firstPlayerData: { name: string; sum: number; cards: Card[] } = {
+            name: '',
+            sum: 0,
+            cards: []
+          };
+          if (newData.player1SideSelected === 'top-left') {
+            firstPlayerData = newData.topLeftPlayerData;
+          } else if (newData.player1SideSelected === 'bottom-left') {
+            firstPlayerData = newData.bottomLeftPlayerData;
+          } else if (newData.player1SideSelected === 'top-right') {
+            firstPlayerData = newData.topRightPlayerData;
+          } else if (newData.player1SideSelected === 'bottom-right') {
+            firstPlayerData = newData.bottomRightPlayerData;
+          }
+
+          // Get the second player's data from their selected position
+          let secondPlayerData: { name: string; sum: number; cards: Card[] } = {
+            name: '',
+            sum: 0,
+            cards: []
+          };
+          if (newData.player2SideSelected === 'top-left') {
+            secondPlayerData = newData.topLeftPlayerData;
+          } else if (newData.player2SideSelected === 'bottom-left') {
+            secondPlayerData = newData.bottomLeftPlayerData;
+          } else if (newData.player2SideSelected === 'top-right') {
+            secondPlayerData = newData.topRightPlayerData;
+          } else if (newData.player2SideSelected === 'bottom-right') {
+            secondPlayerData = newData.bottomRightPlayerData;
+          }
+
+          // Determine who wins to check if second team needs Second Chance
+          const { isPlayer1Winner } = determineWinner(
+            firstPlayerData.sum,
+            secondPlayerData.sum,
+            firstPlayerData.cards,
+            secondPlayerData.cards,
+            firstPlayerData.name,
+            secondPlayerData.name
+          );
+
+          // Determine which team just made the second selection
+          const secondPlayerTeam = newData.player2Team;
+          const secondTeamData =
+            secondPlayerTeam === 'team1' ? team1Data : team2Data;
+
+          // Check if the second team has Second Chance available
+          // Second Chance is NOT available if:
+          // 1. They already used it, OR
+          // 2. They are the winning team (they don't need Second Chance)
+          const secondTeamAlreadyUsedSecondChance =
+            secondTeamData.powerUps.secondChance <= 0;
+          const secondTeamIsWinning =
+            (secondPlayerTeam === newData.player1Team && isPlayer1Winner) ||
+            (secondPlayerTeam === newData.player2Team && !isPlayer1Winner);
+
+          const isSecondTeamLocked =
+            newData.lockAllUsedBy !== null &&
+            newData.lockAllUsedBy !== secondPlayerTeam;
+          const secondTeamHasSecondChance =
+            !secondTeamAlreadyUsedSecondChance &&
+            !secondTeamIsWinning &&
+            !isSecondTeamLocked;
+
+          // Additional constraints: must have at least one selectable group remaining (not removed, not revealed, not already drawn)
+          const disabledGroups = new Set(newData.removedWorstGroups || []);
+          const availableCount = [
+            !disabledGroups.has('top-left') && !newData.topLeftRevealed && newData.topLeftPlayerData.cards.length === 0,
+            !disabledGroups.has('bottom-left') && !newData.bottomLeftRevealed && newData.bottomLeftPlayerData.cards.length === 0,
+            !disabledGroups.has('top-right') && !newData.topRightRevealed && newData.topRightPlayerData.cards.length === 0,
+            !disabledGroups.has('bottom-right') && !newData.bottomRightRevealed && newData.bottomRightPlayerData.cards.length === 0
+          ].filter(Boolean).length;
+          const secondChanceUsedThisDuel = (newData.secondChanceUsedByTeams || []).includes(
+            (secondPlayerTeam as 'team1' | 'team2')
+          );
+          const canSecondTeamUseSecondChance =
+            secondTeamHasSecondChance && availableCount > 0 && !secondChanceUsedThisDuel;
+
+          // Reveal all cards if the second team doesn't have Second Chance available OR usable
+          const shouldRevealAllCards = !canSecondTeamUseSecondChance;
+
+          const updatedData = {
+            ...newData,
+            topLeftPlayerData:
+              (newData.topLeftPlayerData.cards.length == 0 ||
+                !newData.topLeftRevealed) &&
+              shouldRevealAllCards
+                ? {
+                  ...newData.topLeftPlayerData,
+                  cards: newData.topLeftCards,
+                  sum: calculateSum(newData.topLeftCards)
+                }
+                : newData.topLeftPlayerData,
+            bottomLeftPlayerData:
+              (newData.bottomLeftPlayerData.cards.length == 0 ||
+                !newData.bottomLeftRevealed) &&
+              shouldRevealAllCards
+                ? {
+                  ...newData.bottomLeftPlayerData,
+                  cards: newData.bottomLeftCards,
+                  sum: calculateSum(newData.bottomLeftCards)
+                }
+                : newData.bottomLeftPlayerData,
+            topRightPlayerData:
+              (newData.topRightPlayerData.cards.length == 0 ||
+                !newData.topRightRevealed) &&
+              shouldRevealAllCards
+                ? {
+                  ...newData.topRightPlayerData,
+                  cards: newData.topRightCards,
+                  sum: calculateSum(newData.topRightCards)
+                }
+                : newData.topRightPlayerData,
+            bottomRightPlayerData:
+              (newData.bottomRightPlayerData.cards.length == 0 ||
+                !newData.bottomRightRevealed) &&
+              shouldRevealAllCards
+                ? {
+                  ...newData.bottomRightPlayerData,
+                  cards: newData.bottomRightCards,
+                  sum: calculateSum(newData.bottomRightCards)
+                }
+                : newData.bottomRightPlayerData
+          };
+
+          // Calculate the result
+          calculateResult({
+            p1Sum: firstPlayerData.sum,
+            p2Sum: secondPlayerData.sum,
+            p1Cards: firstPlayerData.cards,
+            p2Cards: secondPlayerData.cards,
+            p1Name: firstPlayerData.name,
+            p2Name: secondPlayerData.name,
+            p1Team: updatedData.player1Team,
+            p2Team: updatedData.player2Team
+          });
+
+          // Mark duel as finished
+          return {
+            ...updatedData,
+            isFinishDuel: true
+          };
+        });
+      }
+    },
+    [duelData, setDuelData, team1Data, team2Data, setIsFirstTurn, calculateResult]
+  );
+
+  return { playerSelect };
+};

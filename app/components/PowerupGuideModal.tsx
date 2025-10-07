@@ -21,9 +21,7 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
 
     return (
         <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="powerup-guide-title"
+            role="button"
             style={{
                 position: 'fixed',
                 top: 0,
@@ -37,8 +35,17 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
                 zIndex: 1000
             }}
             onClick={onClose}
+            onKeyDown={(e) => {
+                if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+                    onClose();
+                }
+            }}
+            tabIndex={0}
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="powerup-guide-title"
                 style={{
                     background: '#fff',
                     borderRadius: 12,
@@ -47,7 +54,6 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
                     boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
                     position: 'relative'
                 }}
-                onClick={(e) => e.stopPropagation()}
             >
                 <h2 id="powerup-guide-title" style={{ marginTop: 0, marginBottom: 12 }}>
                     Power-ups instruction

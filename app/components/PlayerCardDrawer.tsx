@@ -48,22 +48,26 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   // Helper function to determine if player can make a selection
   // True when: no cards drawn (normal case)
   // After Second Chance, show calculated number instead of Draw Cards
-  const disabledByRemoveWorst = (() => {
+  const getDisabledByRemoveWorst = () => {
     const disabled = new Set(duelData.removedWorstGroups || []);
-    const key =
-      side === 'left'
-        ? playerData === duelData.topLeftPlayerData
-          ? 'top-left'
-          : playerData === duelData.bottomLeftPlayerData
-            ? 'bottom-left'
-            : null
-        : playerData === duelData.topRightPlayerData
-          ? 'top-right'
-          : playerData === duelData.bottomRightPlayerData
-            ? 'bottom-right'
-            : null;
+    let key: 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right' | null = null;
+    if (side === 'left') {
+      if (playerData === duelData.topLeftPlayerData) {
+        key = 'top-left';
+      } else if (playerData === duelData.bottomLeftPlayerData) {
+        key = 'bottom-left';
+      }
+    } else {
+      if (playerData === duelData.topRightPlayerData) {
+        key = 'top-right';
+      } else if (playerData === duelData.bottomRightPlayerData) {
+        key = 'bottom-right';
+      }
+    }
     return key ? disabled.has(key) : false;
-  })();
+  };
+
+  const disabledByRemoveWorst = getDisabledByRemoveWorst();
   const isBlankHand = playerData.cards.length === 0;
   const canClickDraw = isBlankHand && !disabledByRemoveWorst;
   const shouldShowDrawButton = isBlankHand;
@@ -78,136 +82,97 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
       }}
     >
       {side === 'left' && (
-        <>
-          <div className={'playerContainer'}>
-            <h2 className={'m0'}>{playerData.name || '?'}</h2>
-            <div className={'drawCardsContainer'}>
-              {shouldShowDrawButton && (
-                <>
-                  <img
-                    className={'leftHandPointer'}
-                    style={{
-                      top: '15px',
-                      display: isDrawDisabled ? 'none' : 'block'
-                    }}
-                    src="images/left-hand.png"
-                    alt="cursor"
-                  />
-                  <button
-                    onClick={onSelect}
-                    className={'btn'}
-                    style={{
-                      width: '480px',
-                      cursor: isDrawDisabled ? 'default' : 'pointer'
-                    }}
-                    disabled={isDrawDisabled}
-                  >
-                    Draw Cards
-                  </button>
-                </>
-              )}
-              {!isBlankHand && (
-                <span
-                  className={
-                    playerData.team === ''
-                      ? 'sumNumber text-black'
-                      : 'sumNumber ' + playerData.team
-                  }
-                  onClick={
-                    playerData.name === '?' &&
-                    playerData.team === '' &&
-                    !disabled
-                      ? onSelect
-                      : undefined
-                  }
-                  style={{
-                    cursor:
-                      playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
-                        ? 'pointer'
-                        : 'default'
-                  }}
-                >
-                  {playerData.sum}
-                </span>
-              )}
-            </div>
-            <div className={'cardContainer'}>
-              {renderTheCards(
-                playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canClickDraw ? onSelect : undefined,
-                isDrawDisabled
-              )}
-            </div>
+        <div className={'playerContainer'}>
+          <h2 className={'m0'}>{playerData.name || '?'}</h2>
+          <div className={'drawCardsContainer'}>
+
           </div>
-        </>
+          <div className={'cardContainer'}>
+            {renderTheCards(
+              playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+              canClickDraw ? onSelect : undefined,
+              isDrawDisabled
+            )}
+          </div>
+        </div>
       )}
       {side === 'right' && (
-        <>
-          <div className={'playerContainer'}>
-            <h2 className={'m0'}>{playerData.name || '?'}</h2>
-            <div className={'drawCardsContainer'}>
-              {shouldShowDrawButton && (
-                <>
-                  <img
-                    className={'rightHandPointer'}
-                    style={{
-                      top: '15px',
-                      display: isDrawDisabled ? 'none' : 'block'
-                    }}
-                    src="images/right-hand.png"
-                    alt="cursor"
-                  />
-                  <button
-                    onClick={onSelect}
-                    className={'btn'}
-                    style={{
-                      width: '480px',
-                      cursor: isDrawDisabled ? 'default' : 'pointer'
-                    }}
-                    disabled={isDrawDisabled}
-                  >
-                    Draw Cards
-                  </button>
-                </>
-              )}
-              {!isBlankHand && (
-                <span
-                  className={
-                    playerData.team === ''
-                      ? 'sumNumber text-black'
-                      : 'sumNumber ' + playerData.team
-                  }
-                  onClick={
+        <div className={'playerContainer'}>
+          <h2 className={'m0'}>{playerData.name || '?'}</h2>
+          <div className={'drawCardsContainer'}>
+            {shouldShowDrawButton && (
+              <>
+                <img
+                  className={'rightHandPointer'}
+                  style={{
+                    top: '15px',
+                    display: isDrawDisabled ? 'none' : 'block'
+                  }}
+                  src="images/right-hand.png"
+                  alt="cursor"
+                />
+                <button
+                  onClick={onSelect}
+                  className={'btn'}
+                  style={{
+                    width: '480px',
+                    cursor: isDrawDisabled ? 'default' : 'pointer'
+                  }}
+                  disabled={isDrawDisabled}
+                >
+                  Draw Cards
+                </button>
+              </>
+            )}
+            {!isBlankHand && (
+              <span
+                className={
+                  playerData.team === ''
+                    ? 'sumNumber text-black'
+                    : 'sumNumber ' + playerData.team
+                }
+                onClick={
+                  playerData.name === '?' &&
+                  playerData.team === '' &&
+                  !disabled
+                    ? onSelect
+                    : undefined
+                }
+                onKeyDown={
+                  playerData.name === '?' &&
+                  playerData.team === '' &&
+                  !disabled
+                    ? () => onSelect()
+                    : undefined
+                }
+                style={{
+                  cursor:
                     playerData.name === '?' &&
                     playerData.team === '' &&
                     !disabled
-                      ? onSelect
-                      : undefined
-                  }
-                  style={{
-                    cursor:
-                      playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
-                        ? 'pointer'
-                        : 'default'
-                  }}
-                >
-                  {playerData.sum}
-                </span>
-              )}
-            </div>
-            <div className={'cardContainer'}>
-              {renderTheCards(
-                playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canClickDraw ? onSelect : undefined,
-                isDrawDisabled
-              )}
-            </div>
+                      ? 'pointer'
+                      : 'default'
+                }}
+                tabIndex={
+                  playerData.name === '?' &&
+                  playerData.team === '' &&
+                  !disabled
+                    ? 0
+                    : undefined
+                }
+              >
+                {playerData.sum}
+              </span>
+            )}
           </div>
-        </>
+          <div className={'cardContainer'}>
+            {renderTheCards(
+              playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+              canClickDraw ? onSelect : undefined,
+              isDrawDisabled
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,12 @@ interface ShareButtonsProps {
   readonly siteUrl: string;
 }
 
+interface ShareData {
+  title?: string;
+  text?: string;
+  url?: string;
+}
+
 export default function ShareButtons(props: ShareButtonsProps) {
   const { siteUrl } = props;
 
@@ -19,14 +25,15 @@ export default function ShareButtons(props: ShareButtonsProps) {
 
   const canNativeShare =
     typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
-    typeof (navigator as any).share === 'function';
+    'share' in navigator && typeof navigator.share === 'function';
 
   const onNativeShare = useCallback(async () => {
-    await (navigator as any).share({
+    const shareData: ShareData = {
       title: shareTitle,
       text: shareText,
       url: shareUrl
-    }).catch(() => {});
+    };
+    await navigator.share(shareData).catch(() => {});
   }, [shareTitle, shareText, shareUrl]);
 
   const onCopy = useCallback(async () => {
