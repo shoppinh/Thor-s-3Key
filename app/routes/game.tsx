@@ -1432,8 +1432,6 @@ const CardGame = () => {
                           setSetupMode('random');
                           setSetupForBothTeams(true);
                           randomizeBothTeamsAllocation();
-                          // Ensure both teams share the same values after randomization
-                          setTeam2Alloc(() => ({ ...team1Alloc }));
                         }}
                       />
                       <label htmlFor="mode-random">Random power-ups for both teams</label>
