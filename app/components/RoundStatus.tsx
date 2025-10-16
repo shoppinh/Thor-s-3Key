@@ -684,7 +684,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       {/* Right Part - Team 2 Chances */}
       <div
         style={{
-          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
+          flex: `0 0 ${120 * Object.values(team2Data.powerUps).filter(v => v > 0).length + 40}px`,
           minWidth: '150px',
           maxWidth: '100%',
           transition: 'flex-basis 0.2s'
