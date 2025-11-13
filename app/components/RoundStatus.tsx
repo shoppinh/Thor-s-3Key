@@ -21,7 +21,7 @@ interface RoundStatusProps {
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
     teamName: 'team1' | 'team2',
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'lockAll' | 'removeWorst'
+    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'removeWorst'
   ) => void;
 }
 
@@ -60,15 +60,12 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const bothSelected =
       !!duelData.player1SideSelected && !!duelData.player2SideSelected;
     const secondPlayerTeam = duelData.player2Team;
-    const isLockedAgainstSecondTeam =
-      duelData.lockAllUsedBy && duelData.lockAllUsedBy !== secondPlayerTeam;
     const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
     const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
     const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
     const canSecondChanceNow =
       bothSelected &&
       !!secondPlayerTeam &&
-      !isLockedAgainstSecondTeam &&
       secondTeamHasSecondChance &&
       !secondTeamIsWinner;
 
@@ -87,7 +84,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     duelData.player1SideSelected,
     duelData.player2SideSelected,
     duelData.player2Team,
-    duelData.lockAllUsedBy,
     duelData.winningTeam,
     team1Data,
     team2Data
@@ -125,11 +121,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
-
-      // If opponent locked you, you cannot use power-ups
-      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) {
-        return false;
-      }
 
       // Single-use per team per duel
       if ((duelData.secondChanceUsedByTeams || []).includes(team)) {
@@ -178,11 +169,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
 
-      // If opponent locked you, you cannot use power-ups
-      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) {
-        return false;
-      }
-
       // Only enable chance items for the team whose turn it is
       if (currentTurnTeam !== team) {
         return false;
@@ -218,21 +204,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     // Helper: Life Shield (no elimination this duel)
     const isLifeShieldEnabled = (team: 'team1' | 'team2') => {
       const currentTurnTeam = getCurrentTurnTeam();
-      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) return false;
       if (currentTurnTeam !== team) return false;
       if (isFinishDuel) return false;
-      return true;
-    };
-
-    // Helper: Lock All (opponent cannot use power-ups this duel)
-    const isLockAllEnabled = (team: 'team1' | 'team2') => {
-      const currentTurnTeam = getCurrentTurnTeam();
-      if (currentTurnTeam !== team) return false;
-      if (isFinishDuel) return false;
-      // Cannot lock if someone already locked
-      if (duelData.lockAllUsedBy) return false;
-      // Disallow using Lock All on the second player's turn (only first player may lock)
-      if (duelData.duelIndex === 1) return false;
       return true;
     };
 
@@ -241,7 +214,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== team) return false;
       if (isFinishDuel) return false;
-      if (duelData.lockAllUsedBy && duelData.lockAllUsedBy !== team) return false;
       // Enforce per-duel single use per team
       if ((duelData.removeWorstUsedByTeams || []).includes(team)) return false;
 
@@ -474,66 +446,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                 }}
               >
                 Life Shield
-              </span>
-            </div>
-          )}
-
-          {/* Lock All */}
-          {teamData.powerUps.lockAll > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: isLockAllEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isLockAllEnabled(teamKey) ? 1 : 0.5
-              }}
-            >
-              <button
-                type="button"
-                aria-label="Use Lock All"
-                onClick={() =>
-                  isLockAllEnabled(teamKey) && onChanceClick(teamKey, 'lockAll')
-                }
-                disabled={!isLockAllEnabled(teamKey)}
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  marginBottom: '4px',
-                  borderRadius: '12px',
-                  border: '3px solid #f57c00',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #fff3e0, #ffffff)',
-                  position: 'relative',
-                  cursor: isLockAllEnabled(teamKey) ? 'pointer' : 'default'
-                }}
-              >
-                <img
-                  src="/images/chance_block.png"
-                  alt="Lock All"
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    filter: isLockAllEnabled(teamKey)
-                      ? 'none'
-                      : 'grayscale(100%)'
-                  }}
-                />
-                <div className="powerupBadge" aria-hidden>
-                  {teamData.powerUps.lockAll}
-                </div>
-              </button>
-              <span
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: isLockAllEnabled(teamKey) ? '#333' : '#999'
-                }}
-              >
-                Lock All
               </span>
             </div>
           )}
