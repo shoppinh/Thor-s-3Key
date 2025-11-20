@@ -1,8 +1,5 @@
 import React from 'react';
 
-/**
- * Props for ConfirmPopup component
- */
 interface ConfirmPopupProps {
   isVisible: boolean;
   chanceItemName: string;
@@ -10,13 +7,6 @@ interface ConfirmPopupProps {
   onCancel: () => void;
 }
 
-/**
- * Confirmation popup component for chance item usage
- * @param isVisible - Whether the popup should be displayed
- * @param chanceItemName - Name of the chance item being used
- * @param onConfirm - Callback when user clicks Yes
- * @param onCancel - Callback when user clicks No
- */
 const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   isVisible,
   chanceItemName,
@@ -33,7 +23,8 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(5px)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -41,76 +32,56 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
       }}
     >
       <div
+        className="rpg-panel"
         style={{
-          backgroundColor: 'white',
-          borderRadius: '10px',
-          padding: '30px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          padding: '40px',
           textAlign: 'center',
-          minWidth: '300px'
+          minWidth: '400px',
+          background: 'rgba(15, 12, 41, 0.95)',
+          border: '2px solid var(--color-primary)'
         }}
       >
         <h3
+          className="text-glow"
           style={{
-            margin: '0 0 20px 0',
-            fontSize: '18px',
-            color: '#333'
+            margin: '0 0 30px 0',
+            fontSize: '24px',
+            color: '#fff',
+            fontFamily: 'var(--font-header)',
+            letterSpacing: '1px'
           }}
         >
-          Do you want to use {chanceItemName}?
+          ACTIVATE <span style={{ color: 'var(--color-accent)' }}>{chanceItemName.toUpperCase()}</span>?
         </h3>
 
         <div
           style={{
             display: 'flex',
-            gap: '15px',
+            gap: '20px',
             justifyContent: 'center'
           }}
         >
           <button
             onClick={onConfirm}
+            className="rpg-button"
             style={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              padding: '10px 20px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              minWidth: '120px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#45a049';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#4CAF50';
+              minWidth: '140px',
+              background: 'var(--color-primary)',
+              fontSize: '18px'
             }}
           >
-            Yes
+            CONFIRM
           </button>
 
           <button
             onClick={onCancel}
+            className="rpg-button secondary"
             style={{
-              backgroundColor: '#f44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              padding: '10px 20px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              minWidth: '120px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#da190b';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f44336';
+              minWidth: '140px',
+              fontSize: '18px'
             }}
           >
-            No
+            CANCEL
           </button>
         </div>
       </div>

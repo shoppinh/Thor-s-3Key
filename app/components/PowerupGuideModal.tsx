@@ -1,36 +1,64 @@
 import React from 'react';
 
-/**
- * Props for `PowerupGuideModal` component
- */
 export interface PowerupGuideModalProps {
-    /** Controls whether the modal is visible */
     readonly isOpen: boolean;
-    /** Called when the modal requests to be closed (overlay or Close button) */
     readonly onClose: () => void;
 }
 
-/**
- * Modal dialog that lists all power-ups with icon and guidance text.
- *
- * Renders nothing when `isOpen` is false. The modal can be closed by clicking
- * the overlay or the Close button.
- */
 const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
+
+    const GuideItem = ({ icon, title, desc }: { icon: string, title: string, desc: string }) => (
+        <div 
+            className="rpg-skewed"
+            style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 20,
+                background: 'rgba(255, 255, 255, 0.05)',
+                padding: '15px',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}
+        >
+            <img 
+                src={icon} 
+                alt={title} 
+                width={64} 
+                height={64} 
+                style={{ 
+                    transform: 'skewX(10deg)', // Counter skew
+                    filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3))'
+                }} 
+            />
+            <div style={{ transform: 'skewX(10deg)', textAlign: 'left' }}>
+                <div style={{ 
+                    fontWeight: 700, 
+                    fontSize: '20px',
+                    color: 'var(--color-accent)',
+                    fontFamily: 'var(--font-header)',
+                    marginBottom: '5px'
+                }}>
+                    {title}
+                </div>
+                <div style={{ fontSize: 16, color: '#ccc' }}>
+                    {desc}
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="powerup-guide-title"
             style={{
                 position: 'fixed',
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
+                background: 'rgba(0,0,0,0.8)',
+                backdropFilter: 'blur(5px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -39,60 +67,59 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
             onClick={onClose}
         >
             <div
+                className="rpg-panel"
                 style={{
-                    background: '#fff',
-                    borderRadius: 12,
-                    padding: 20,
-                    width: 'min(584px, 92%)',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-                    position: 'relative'
+                    padding: '30px',
+                    width: 'min(600px, 90%)',
+                    background: 'rgba(15, 12, 41, 0.95)',
+                    border: '2px solid var(--color-secondary)'
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <h2 id="powerup-guide-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                    Power-ups instruction
+                <h2 
+                    className="text-glow"
+                    style={{ 
+                        marginTop: 0, 
+                        marginBottom: 25,
+                        textAlign: 'center',
+                        color: '#fff',
+                        fontSize: '32px'
+                    }}
+                >
+                    SYSTEM GUIDE
                 </h2>
-                <div style={{ display: 'grid', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src="/images/chance_second.png" alt="Second Chance" width={72} height={72} />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Second Chance</div>
-                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                The player can have another selection if they had a bad one.
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src="/images/chance_reveal.png" alt="Reveal Two" width={72} height={72} />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Reveal Two</div>
-                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Show the first two cards at all positions while keeping the last card hidden.
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src="/images/chance_shield.png" alt="Life Shield" width={72} height={72} />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Life Shield</div>
-                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Prevent elimination for your team in this duel even if you lose.
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src="/images/chance_remove.png" alt="Remove Worst" width={72} height={72} />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Remove Worst</div>
-                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Remove the worst card group from selection.
-                            </div>
-                        </div>
-                    </div>
+                
+                <div style={{ display: 'grid', gap: 15 }}>
+                    <GuideItem 
+                        icon="/images/chance_second.png" 
+                        title="SECOND CHANCE" 
+                        desc="Reroll your destiny. Select a new card group if the first one fails you."
+                    />
+                    <GuideItem 
+                        icon="/images/chance_reveal.png" 
+                        title="REVEAL TWO" 
+                        desc="Scan the battlefield. Reveal the first two cards of all groups."
+                    />
+                    <GuideItem 
+                        icon="/images/chance_shield.png" 
+                        title="LIFE SHIELD" 
+                        desc="Absolute defense. Prevent elimination for this duel."
+                    />
+                    <GuideItem 
+                        icon="/images/chance_remove.png" 
+                        title="REMOVE WORST" 
+                        desc="Tactical elimination. Remove the worst option from the board."
+                    />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                    <button type="button" className={'btn'} onClick={onClose} style={{ marginBottom: 8 }}>
-                        Close
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 30 }}>
+                    <button 
+                        type="button" 
+                        className="rpg-button" 
+                        onClick={onClose}
+                        style={{ minWidth: '200px' }}
+                    >
+                        CLOSE GUIDE
                     </button>
                 </div>
             </div>
@@ -101,5 +128,3 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
 };
 
 export default PowerupGuideModal;
-
-
