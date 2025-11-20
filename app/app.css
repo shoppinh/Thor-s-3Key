@@ -77,12 +77,14 @@ button {
   border-right: 2px solid var(--color-text);
 }
 
+/* Skewed Container */
 .rpg-skewed {
-  transform: skewX(var(--skew-angle));
+  transform: skewX(-5deg);
+  display: inline-block;
 }
 
 .rpg-skewed > * {
-  transform: skewX(calc(var(--skew-angle) * -1)); /* Unskew content */
+  transform: skewX(5deg); /* Unskew content */
 }
 
 .rpg-button {
@@ -158,6 +160,11 @@ button {
   0% { transform: translateY(-20px); opacity: 0; }
   50% { transform: translateY(5px); }
   100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes point-left {

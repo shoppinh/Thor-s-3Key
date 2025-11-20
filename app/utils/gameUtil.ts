@@ -105,7 +105,7 @@ export const getCardImage = (value: number, suit: string): string => {
     '♣': 'clubs'
   };
   if (mapNumToCardValues(value) === 'back') {
-    return '/images/back_card.png';
+    return '/images/back_card.jpg';
   }
   return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`;
 };
