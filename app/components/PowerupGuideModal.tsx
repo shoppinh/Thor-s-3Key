@@ -81,15 +81,6 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({ isOpen, onClose }
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src="/images/chance_block.png" alt="Lock All" width={72} height={72} />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700, textAlign: 'left' }}>Lock All</div>
-                            <div style={{ fontSize: 14, color: '#555', textAlign: 'left' }}>
-                                Lock the opponent from using any power-ups for the rest of this duel.
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <img src="/images/chance_remove.png" alt="Remove Worst" width={72} height={72} />
                         <div style={{ textAlign: 'left' }}>
                             <div style={{ fontWeight: 700, textAlign: 'left' }}>Remove Worst</div>

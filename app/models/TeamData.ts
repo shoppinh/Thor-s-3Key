@@ -7,7 +7,6 @@ export default interface TeamData {
     secondChance: number;
     revealTwo: number;
     lifeShield: number;
-    lockAll: number;
     removeWorst: number;
   };
   players: string[];

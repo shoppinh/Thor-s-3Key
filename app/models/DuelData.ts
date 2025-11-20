@@ -42,7 +42,6 @@ export default interface DuelData {
   player2Team: 'team1' | 'team2' | null; // store team of the second player  
   revealTwoUsedBy?: 'team1' | 'team2' | null; // store team has used reveal two in the current duel
   lifeShieldUsedBy?: 'team1' | 'team2' | null; // if set, that team cannot be eliminated this duel
-  lockAllUsedBy?: 'team1' | 'team2' | null; // if set, the other team cannot use power-ups this duel
   /**
    * Card groups disabled by Remove Worst during the current duel.
    * When a group is listed here, its drawer is disabled and cannot be selected.
