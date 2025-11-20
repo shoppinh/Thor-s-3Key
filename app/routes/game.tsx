@@ -161,7 +161,7 @@ const CardGame = () => {
         '♣': 'clubs'
       };
       const extraImages = [
-        '/images/back_card.png'
+        '/images/back_card.jpg'
       ];
       const urls: string[] = [];
       allValues.forEach((v) => {

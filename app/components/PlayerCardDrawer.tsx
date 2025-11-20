@@ -180,7 +180,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           )}
         </div>
 
-        <div className={'cardContainer'} style={{ marginTop: '10px', gap: '8px', justifyContent: 'center' }}>
+        <div className={'cardContainer'} style={{display: 'flex', marginTop: '10px', gap: '8px', justifyContent: 'center' }}>
           {renderTheCards(
             playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
             canClickDraw ? onSelect : undefined,

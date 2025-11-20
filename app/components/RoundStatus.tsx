@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TeamData from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 
@@ -34,6 +34,22 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   nextRound,
   onChanceClick
 }) => {
+  const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
+
+  // Show winner announcement when duelResult changes
+  useEffect(() => {
+    if (duelResult && isFinishDuel) {
+      setShowWinnerAnnouncement(true);
+      
+      // Hide after 2 seconds
+      const timer = setTimeout(() => {
+        setShowWinnerAnnouncement(false);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [duelResult, isFinishDuel]);
+
   // Auto-advance logic (kept from original)
   React.useEffect(() => {
     const noPlayersLeft = Math.min(team1Players.length, team2Players.length) === 0;
@@ -129,59 +145,62 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
     const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) => (
       count > 0 && (
-        <div style={{ position: 'relative', margin: '0 5px' }}>
+        <div style={{ position: 'relative', margin: '0 8px' }}>
           <button
             onClick={() => enabled && onChanceClick(teamKey, type)}
             disabled={!enabled}
             className="rpg-skewed"
             style={{
-              width: '60px',
-              height: '60px',
+              width: '80px',
+              height: '80px',
               background: enabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
-              border: `2px solid ${enabled ? color : '#555'}`,
+              border: `3px solid ${enabled ? color : '#555'}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: enabled ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
-              boxShadow: enabled ? `0 0 10px ${color}` : 'none'
+              boxShadow: enabled ? `0 0 15px ${color}` : 'none'
             }}
           >
             <img 
               src={icon} 
               alt={label} 
               style={{ 
-                width: '40px', 
-                height: '40px', 
+                width: '55px', 
+                height: '55px', 
                 filter: enabled ? 'none' : 'grayscale(100%)',
-                transform: 'skewX(10deg)' // Counter skew
+                transform: 'skewX(5deg)' // Counter skew
               }} 
             />
             <div 
               style={{
                 position: 'absolute',
-                top: '-5px',
-                right: '-5px',
+                top: '-8px',
+                right: '-8px',
                 background: color,
                 color: '#000',
                 borderRadius: '50%',
-                width: '20px',
-                height: '20px',
-                fontSize: '12px',
+                width: '28px',
+                height: '28px',
+                fontSize: '16px',
                 fontWeight: 'bold',
-                lineHeight: '20px',
-                transform: 'skewX(10deg)'
+                lineHeight: '28px',
+                transform: 'skewX(5deg)',
+                boxShadow: `0 0 10px ${color}`
               }}
             >
               {count}
             </div>
           </button>
           <div style={{ 
-            fontSize: '10px', 
+            fontSize: '11px', 
             marginTop: '5px', 
             color: enabled ? '#fff' : '#777',
             textAlign: 'center',
-            textTransform: 'uppercase'
+            textTransform: 'uppercase',
+            fontFamily: 'var(--font-body)',
+            letterSpacing: '0.5px'
           }}>
             {label}
           </div>
@@ -224,7 +243,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             count={teamData.powerUps.removeWorst} 
             enabled={isRemoveWorstEnabled()} 
             icon="/images/chance_remove.png" 
-            label="Ban"
+            label="Remove"
             color="#F44336"
           />
         </div>
@@ -256,6 +275,67 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
       {/* Center Status Display */}
       <div style={{ flex: 2, textAlign: 'center', position: 'relative' }}>
+        {/* Round Winner Announcement */}
+        {showWinnerAnnouncement && (
+          <>
+            {/* Backdrop */}
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.7)',
+                zIndex: 9998,
+                pointerEvents: 'none',
+                animation: 'fade-in 0.3s ease-out'
+              }}
+            />
+            
+            {/* Winner Announcement */}
+            <div 
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 9999,
+                animation: 'fade-in 0.3s ease-out',
+                pointerEvents: 'none'
+              }}
+            >
+              <div 
+                className="rpg-panel"
+                style={{
+                  background: 'rgba(15, 12, 41, 0.98)',
+                  border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                  padding: '40px 60px',
+                  boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                  minWidth: '500px'
+                }}
+              >
+                <div style={{ fontSize: '18px', color: '#aaa', letterSpacing: '3px', marginBottom: '10px' }}>
+                  ROUND RESULT
+                </div>
+                <div 
+                  className="text-glow"
+                  style={{ 
+                    fontSize: '48px', 
+                    fontWeight: 'bold',
+                    color: duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)',
+                    letterSpacing: '2px',
+                    animation: 'pulse-glow 1.5s infinite',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {duelResult}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+        
         <div 
           className="rpg-skewed"
           style={{
