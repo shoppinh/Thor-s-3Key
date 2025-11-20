@@ -13,7 +13,13 @@ import { json, type MetaFunction, type LinksFunction } from '@remix-run/node';
 import appStylesHref from './app.css?url';
 
 export const links: LinksFunction = () => [
-  { rel: 'stylesheet', href: appStylesHref }
+  { rel: 'stylesheet', href: appStylesHref },
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&display=swap'
+  }
 ];
 
 // existing imports

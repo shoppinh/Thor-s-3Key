@@ -1,10 +1,5 @@
 import React from 'react';
 import TeamData from '~/models/TeamData';
-// import { getTeamByPlayer } from '~/utils/gameUtil';
-
-/**
- * Props for RoundStatus component
- */
 import DuelData from '~/models/DuelData';
 
 interface RoundStatusProps {
@@ -25,19 +20,6 @@ interface RoundStatusProps {
   ) => void;
 }
 
-/**
- * Renders the round status information at the bottom of the screen
- * @param duelResult - The result of the current duel (e.g. "Player A Wins!")
- * @param isFirstTurn - Whether this is the first turn of the game
- * @param currentPlayerName - The name of the current player
- * @param duelIndex - The current duel index
- * @param team1 - Array of team 1 members
- * @param team2 - Array of team 2 members
- * @param team1Data - Team 1 data including chance usage flags
- * @param team2Data - Team 2 data including chance usage flags
- * @param nextRound - Callback function to proceed to next round
- * @param onChanceClick - Callback when a chance item is clicked
- */
 const RoundStatus: React.FC<RoundStatusProps> = ({
   duelResult,
   isFirstTurn,
@@ -52,22 +34,15 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   nextRound,
   onChanceClick
 }) => {
-  // Auto-advance to game over: if no players left at end of duel, move after 5 seconds
+  // Auto-advance logic (kept from original)
   React.useEffect(() => {
-    const noPlayersLeft =
-      Math.min(team1Players.length, team2Players.length) === 0;
-    // If Second Chance is still available for the second player's team, do NOT auto-advance yet
-    const bothSelected =
-      !!duelData.player1SideSelected && !!duelData.player2SideSelected;
+    const noPlayersLeft = Math.min(team1Players.length, team2Players.length) === 0;
+    const bothSelected = !!duelData.player1SideSelected && !!duelData.player2SideSelected;
     const secondPlayerTeam = duelData.player2Team;
     const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
     const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
     const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
-    const canSecondChanceNow =
-      bothSelected &&
-      !!secondPlayerTeam &&
-      secondTeamHasSecondChance &&
-      !secondTeamIsWinner;
+    const canSecondChanceNow = bothSelected && !!secondPlayerTeam && secondTeamHasSecondChance && !secondTeamIsWinner;
 
     if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
       const timerId = setTimeout(() => {
@@ -75,156 +50,73 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }, 5000);
       return () => clearTimeout(timerId);
     }
-  }, [
-    duelResult,
-    isFinishDuel,
-    team1Players,
-    team2Players,
-    nextRound,
-    duelData.player1SideSelected,
-    duelData.player2SideSelected,
-    duelData.player2Team,
-    duelData.winningTeam,
-    team1Data,
-    team2Data
-  ]);
-  const renderTeamChances = (
-    teamData: TeamData,
-    teamKey: 'team1' | 'team2'
-  ) => {
-    // Helper function to get team information for both players
-    // Now uses the stored team fields from duelData for better reliability
-    const getPlayerTeams = () => {
-      const firstPlayerTeam = duelData.player1Team;
-      const secondPlayerTeam = duelData.player2Team;
+  }, [duelResult, isFinishDuel, team1Players, team2Players, nextRound, duelData, team1Data, team2Data]);
 
-      return { firstPlayerTeam, secondPlayerTeam };
-    };
-
-    // Helper function to determine which team's turn it is currently
-    const getCurrentTurnTeam = (): 'team1' | 'team2' | null => {
+  const renderTeamChances = (teamData: TeamData, teamKey: 'team1' | 'team2') => {
+    const isTeam1 = teamKey === 'team1';
+    const teamColor = isTeam1 ? 'var(--color-secondary)' : 'var(--color-primary)';
+    
+    // Helper logic for enabling buttons (simplified for brevity, logic matches original)
+    const getPlayerTeams = () => ({ firstPlayerTeam: duelData.player1Team, secondPlayerTeam: duelData.player2Team });
+    const getCurrentTurnTeam = () => {
       if (!duelData.currentPlayerName) return null;
-
-      // Check if current player is in team1
-      if (team1Data.players.includes(duelData.currentPlayerName)) {
-        return 'team1';
-      }
-      // Check if current player is in team2
-      if (team2Data.players.includes(duelData.currentPlayerName)) {
-        return 'team2';
-      }
-
+      if (team1Data.players.includes(duelData.currentPlayerName)) return 'team1';
+      if (team2Data.players.includes(duelData.currentPlayerName)) return 'team2';
       return null;
     };
 
-    // Helper function to check if Second Chance should be enabled for a team
-    const isSecondChanceEnabled = (team: 'team1' | 'team2') => {
+    const isSecondChanceEnabled = () => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
-
-      // Single-use per team per duel
-      if ((duelData.secondChanceUsedByTeams || []).includes(team)) {
-        return false;
-      }
-
-      // If there are no available groups to select (all revealed or removed), disable Second Chance
+      if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) return false;
+      
+      // Check available groups
       const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
-      const availableCountForAny = [
+      const availableCount = [
         !disabledByRemoveWorst.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-left') && !duelData.bottomLeftRevealed && duelData.bottomLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
-      if (availableCountForAny === 0) {
-        return false;
-      }
+      if (availableCount === 0) return false;
 
-      // If only first player has made their selection
-      if (duelData.player1SideSelected && !duelData.player2SideSelected) {
-        // Enable Second Chance for the first player's team (they can redo their selection)
-        return team === firstPlayerTeam;
-      }
-
-      // If both players have made their selections
+      if (duelData.player1SideSelected && !duelData.player2SideSelected) return teamKey === firstPlayerTeam;
       if (duelData.player1SideSelected && duelData.player2SideSelected) {
-        // Enable Second Chance for the second player's team only
-        // But disable if the second team is the winning team (they don't need Second Chance)
-        if (team === secondPlayerTeam) {
-          return duelData.winningTeam !== secondPlayerTeam;
-        }
+        if (teamKey === secondPlayerTeam) return duelData.winningTeam !== secondPlayerTeam;
         return false;
       }
-
-      // If no one has made a selection yet, only enable for current turn team
-      if (currentTurnTeam !== team) {
-        return false;
-      }
-
-      // If no one has made a selection yet, disable Second Chance
+      if (currentTurnTeam !== teamKey) return false;
       return false;
     };
 
-    // Helper function to check if Reveal Two should be enabled for a specific team
-    const isRevealTwoEnabled = (team: 'team1' | 'team2') => {
+    const isRevealTwoEnabled = () => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
-
-      // Only enable chance items for the team whose turn it is
-      if (currentTurnTeam !== team) {
-        return false;
-      }
-
-      // Basic conditions: Reveal Two hasn't been used and duel isn't finished
-      if (duelData.revealTwoUsedBy || isFinishDuel) {
-        return false;
-      }
-
-      // Check if the current team has made their selection and it's not reset by Second Chance
-      const isFirstPlayerTeamSelected =
-        team === firstPlayerTeam && duelData.player1SideSelected;
-      const isSecondPlayerTeamSelected =
-        team === secondPlayerTeam && duelData.player2SideSelected;
-
-      // If first player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
-      if (isFirstPlayerTeamSelected && duelData.player1Name === '?') {
-        return true;
-      }
-
-      // If second player's team has selected but their name is "?" (Second Chance used), enable Reveal Two
-      if (isSecondPlayerTeamSelected && duelData.player2Name === '?') {
-        return true;
-      }
-
-      // Normal logic: disable if team has made their selection (and not using Second Chance)
-      const currentTeamHasSelected =
-        isFirstPlayerTeamSelected || isSecondPlayerTeamSelected;
-      return !currentTeamHasSelected;
+      if (currentTurnTeam !== teamKey) return false;
+      if (duelData.revealTwoUsedBy || isFinishDuel) return false;
+      
+      const isFirstPlayerTeamSelected = teamKey === firstPlayerTeam && duelData.player1SideSelected;
+      const isSecondPlayerTeamSelected = teamKey === secondPlayerTeam && duelData.player2SideSelected;
+      
+      if (isFirstPlayerTeamSelected && duelData.player1Name === '?') return true;
+      if (isSecondPlayerTeamSelected && duelData.player2Name === '?') return true;
+      
+      return !(isFirstPlayerTeamSelected || isSecondPlayerTeamSelected);
     };
 
-    // Helper: Life Shield (no elimination this duel)
-    const isLifeShieldEnabled = (team: 'team1' | 'team2') => {
+    const isLifeShieldEnabled = () => {
       const currentTurnTeam = getCurrentTurnTeam();
-      if (currentTurnTeam !== team) return false;
-      if (isFinishDuel) return false;
-      return true;
+      return currentTurnTeam === teamKey && !isFinishDuel;
     };
 
-    // Helper: Remove Worst (disable the worst available group per rules)
-    const isRemoveWorstEnabled = (team: 'team1' | 'team2') => {
+    const isRemoveWorstEnabled = () => {
       const currentTurnTeam = getCurrentTurnTeam();
-      if (currentTurnTeam !== team) return false;
-      if (isFinishDuel) return false;
-      // Enforce per-duel single use per team
-      if ((duelData.removeWorstUsedByTeams || []).includes(team)) return false;
-
-      // Team must not have made their selection yet (before first selection of their turn)
+      if (currentTurnTeam !== teamKey || isFinishDuel) return false;
+      if ((duelData.removeWorstUsedByTeams || []).includes(teamKey)) return false;
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-      const hasThisTeamSelected =
-        (team === firstPlayerTeam && !!duelData.player1SideSelected) ||
-        (team === secondPlayerTeam && !!duelData.player2SideSelected);
+      const hasThisTeamSelected = (teamKey === firstPlayerTeam && !!duelData.player1SideSelected) || (teamKey === secondPlayerTeam && !!duelData.player2SideSelected);
       if (hasThisTeamSelected) return false;
-
-      // Can't use if only one available group remains
+      
       const disabled = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
         !disabled.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
@@ -232,281 +124,109 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         !disabled.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
         !disabled.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
-      if (availableCount <= 1) return false;
-
-      return true;
+      return availableCount > 1;
     };
 
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
-        }}
-      >
-        {/* Team Name */}
-        {teamData.totalPowerUps > 0 && (
-          <h4
-            className={'teamName ' + teamKey}
+    const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) => (
+      count > 0 && (
+        <div style={{ position: 'relative', margin: '0 5px' }}>
+          <button
+            onClick={() => enabled && onChanceClick(teamKey, type)}
+            disabled={!enabled}
+            className="rpg-skewed"
             style={{
-              fontSize: '18px',
-              margin: '0 0 10px 0',
-              padding: '5px 10px'
-            }}
-          >
-            {teamData.name}
-          </h4>
-        )}
-
-        {/* Chance Items */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '15px',
-            justifyContent: 'center'
-          }}
-        >
-          {/* Second Chance */}
-          {teamData.powerUps.secondChance > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isSecondChanceEnabled(teamKey) ? 1 : 0.5
-              }}
-            >
-              <button
-                type="button"
-                aria-label="Use Second Chance"
-                onClick={() =>
-                  isSecondChanceEnabled(teamKey) &&
-                  onChanceClick(teamKey, 'secondChance')
-                }
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  marginBottom: '4px',
-                  borderRadius: '12px',
-                  border: '3px solid #4CAF50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
-                  position: 'relative',
-                  cursor: isSecondChanceEnabled(teamKey) ? 'pointer' : 'default'
-                }}
-                disabled={!isSecondChanceEnabled(teamKey)}
-              >
-                <img
-                  src="/images/chance_second.png"
-                  alt="Second Chance"
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    filter: isSecondChanceEnabled(teamKey)
-                      ? 'none'
-                      : 'grayscale(100%)'
-                  }}
-                />
-                <div className="powerupBadge" aria-hidden>
-                  {teamData.powerUps.secondChance}
-                </div>
-              </button>
-              <span
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: isSecondChanceEnabled(teamKey) ? '#333' : '#999'
-                }}
-              >
-                Second Chance
-              </span>
-            </div>
-          )}
-
-          {/* Reveal Two */}
-          {teamData.powerUps.revealTwo > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isRevealTwoEnabled(teamKey) ? 1 : 0.5
-              }}
-            >
-              <button
-                type="button"
-                aria-label="Use Reveal Two"
-                onClick={() =>
-                  isRevealTwoEnabled(teamKey) &&
-                  onChanceClick(teamKey, 'revealTwo')
-                }
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  marginBottom: '4px',
-                  borderRadius: '12px',
-                  border: '3px solid #4CAF50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
-                  position: 'relative',
-                  cursor: isRevealTwoEnabled(teamKey) ? 'pointer' : 'default'
-                }}
-                disabled={!isRevealTwoEnabled(teamKey)}
-              >
-                <img
-                  src="/images/chance_reveal.png"
-                  alt="Reveal Two"
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    filter: isRevealTwoEnabled(teamKey)
-                      ? 'none'
-                      : 'grayscale(100%)'
-                  }}
-                />
-                <div className="powerupBadge" aria-hidden>
-                  {teamData.powerUps.revealTwo}
-                </div>
-              </button>
-              <span
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: isRevealTwoEnabled(teamKey) ? '#333' : '#999'
-                }}
-              >
-                Reveal Two
-              </span>
-            </div>
-          )}
-
-          {/* Life Shield */}
-          {teamData.powerUps.lifeShield > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: isLifeShieldEnabled(teamKey) ? 'pointer' : 'default',
-                opacity: isLifeShieldEnabled(teamKey) ? 1 : 0.5
-              }}
-            >
-              <button
-                type="button"
-                aria-label="Use Life Shield"
-                onClick={() =>
-                  isLifeShieldEnabled(teamKey) && onChanceClick(teamKey, 'lifeShield')
-                }
-                disabled={!isLifeShieldEnabled(teamKey)}
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  marginBottom: '4px',
-                  borderRadius: '12px',
-                  border: '3px solid #4CAF50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #e8f5e9, #ffffff)',
-                  position: 'relative',
-                  cursor: isLifeShieldEnabled(teamKey) ? 'pointer' : 'default'
-                }}
-              >
-                <img
-                  src="/images/chance_shield.png"
-                  alt="Life Shield"
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    filter: isLifeShieldEnabled(teamKey)
-                      ? 'none'
-                      : 'grayscale(100%)'
-                  }}
-                />
-                <div className="powerupBadge" aria-hidden>
-                  {teamData.powerUps.lifeShield}
-                </div>
-              </button>
-              <span
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: isLifeShieldEnabled(teamKey) ? '#333' : '#999'
-                }}
-              >
-                Life Shield
-              </span>
-            </div>
-          )}
-
-          {/* Remove Worst */}
-        {teamData.powerUps.removeWorst > 0 && (
-          <div
-            style={{
+              width: '60px',
+              height: '60px',
+              background: enabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
+              border: `2px solid ${enabled ? color : '#555'}`,
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              cursor: isRemoveWorstEnabled(teamKey) ? 'pointer' : 'default',
-              opacity: isRemoveWorstEnabled(teamKey) ? 1 : 0.5
+              justifyContent: 'center',
+              cursor: enabled ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s ease',
+              boxShadow: enabled ? `0 0 10px ${color}` : 'none'
             }}
           >
-            <button
-              type="button"
-              aria-label="Use Remove Worst"
-              onClick={() =>
-                isRemoveWorstEnabled(teamKey) && onChanceClick(teamKey, 'removeWorst')
-              }
-              disabled={!isRemoveWorstEnabled(teamKey)}
+            <img 
+              src={icon} 
+              alt={label} 
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                filter: enabled ? 'none' : 'grayscale(100%)',
+                transform: 'skewX(10deg)' // Counter skew
+              }} 
+            />
+            <div 
               style={{
-                width: '120px',
-                height: '120px',
-                marginBottom: '4px',
-                borderRadius: '12px',
-                border: '3px solid #f44336',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #ffebee, #ffffff)',
-                position: 'relative',
-                cursor: isRemoveWorstEnabled(teamKey) ? 'pointer' : 'default'
-              }}
-            >
-              <img
-                src="/images/chance_remove.png"
-                alt="Remove Worst"
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  filter: isRemoveWorstEnabled(teamKey) ? 'none' : 'grayscale(100%)'
-                }}
-              />
-              <div className="powerupBadge" aria-hidden>
-                {teamData.powerUps.removeWorst}
-              </div>
-            </button>
-            <span
-              style={{
-                fontSize: '15px',
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                background: color,
+                color: '#000',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                color: isRemoveWorstEnabled(teamKey) ? '#333' : '#999'
+                lineHeight: '20px',
+                transform: 'skewX(10deg)'
               }}
             >
-              Remove Worst
-            </span>
+              {count}
+            </div>
+          </button>
+          <div style={{ 
+            fontSize: '10px', 
+            marginTop: '5px', 
+            color: enabled ? '#fff' : '#777',
+            textAlign: 'center',
+            textTransform: 'uppercase'
+          }}>
+            {label}
           </div>
-        )}
+        </div>
+      )
+    );
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h4 style={{ color: teamColor, marginBottom: '10px', textShadow: `0 0 5px ${teamColor}` }}>
+          {teamData.name}
+        </h4>
+        <div style={{ display: 'flex' }}>
+          <PowerUpButton 
+            type="secondChance" 
+            count={teamData.powerUps.secondChance} 
+            enabled={isSecondChanceEnabled()} 
+            icon="/images/chance_second.png" 
+            label="Retry"
+            color="#4CAF50"
+          />
+          <PowerUpButton 
+            type="revealTwo" 
+            count={teamData.powerUps.revealTwo} 
+            enabled={isRevealTwoEnabled()} 
+            icon="/images/chance_reveal.png" 
+            label="Reveal"
+            color="#2196F3"
+          />
+          <PowerUpButton 
+            type="lifeShield" 
+            count={teamData.powerUps.lifeShield} 
+            enabled={isLifeShieldEnabled()} 
+            icon="/images/chance_shield.png" 
+            label="Shield"
+            color="#FFC107"
+          />
+          <PowerUpButton 
+            type="removeWorst" 
+            count={teamData.powerUps.removeWorst} 
+            enabled={isRemoveWorstEnabled()} 
+            icon="/images/chance_remove.png" 
+            label="Ban"
+            color="#F44336"
+          />
         </div>
       </div>
     );
@@ -514,94 +234,80 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
   return (
     <div
+      className="rpg-panel"
       style={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '20px',
+        bottom: '20px',
+        left: '20px',
+        right: '20px',
+        padding: '15px 30px',
         zIndex: 1000,
-        borderTop: '2px solid #ccc',
-        backdropFilter: 'blur(5px)',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        background: 'rgba(15, 12, 41, 0.95)',
+        borderTop: '2px solid var(--color-secondary)'
       }}
     >
-      {/* Left Part - Team 1 Chances */}
-      <div
-        style={{
-          flex: `0 0 ${120 * Object.values(team1Data.powerUps).filter(v => v > 0).length + 40}px`,
-          minWidth: '150px',
-          maxWidth: '100%',
-          transition: 'flex-basis 0.2s'
-        }}
-      >
+      {/* Team 1 Status */}
+      <div style={{ flex: 1 }}>
         {renderTeamChances(team1Data, 'team1')}
       </div>
 
-      {/* Middle Part - Current Content */}
-      <div
-        style={{
-          flex: '1',
-          textAlign: 'center',
-          padding: '0 20px'
-        }}
-      >
-        {isFirstTurn && (
-          <>
-            <h2 className={'playerStatus'}>FIRST PLAYER IS</h2>
-            <h2 className={'blinkInfinite'}>{currentPlayerName}</h2>
-          </>
-        )}
-
-        {!isFirstTurn &&
-          currentPlayerName &&
-          Math.min(team1Players.length, team2Players.length) > 0 && (
-            <>
-              {duelIndex == 2 ? (
-                <h2 className={'playerStatus'}>NEXT PLAYER IS</h2>
-              ) : (
-                <h2 className={'playerStatus'}>CURRENT PLAYER IS</h2>
-              )}
-              <h2 className={'blinkInfinite'}>{currentPlayerName}</h2>
-            </>
-          )}
-
-        {duelResult && duelData.isFinishDuel && (
-          <div className={'relativeContainer'}>
-            {Math.min(team1Players.length, team2Players.length) > 0 && (
+      {/* Center Status Display */}
+      <div style={{ flex: 2, textAlign: 'center', position: 'relative' }}>
+        <div 
+          className="rpg-skewed"
+          style={{
+            background: 'rgba(0,0,0,0.5)',
+            border: '1px solid var(--color-text)',
+            padding: '10px 40px',
+            display: 'inline-block',
+            minWidth: '300px'
+          }}
+        >
+          <div style={{ transform: 'skewX(10deg)' }}>
+            {isFirstTurn ? (
               <>
-                <img
-                  className={'leftHandPointer'}
-                  style={{ top: '25px' }}
-                  src="images/left-hand.png"
-                  alt="cursor"
-                />
-                <button
-                  onClick={() => nextRound(team1Players, team2Players)}
-                  className={'btnNextRound'}
-                  style={{ cursor: 'pointer' }}
-                >
-                  Next Round
-                </button>
+                <div style={{ fontSize: '14px', color: '#aaa', letterSpacing: '2px' }}>CHALLENGER APPROACHING</div>
+                <div className="text-glow" style={{ fontSize: '32px', color: 'var(--color-accent)' }}>{currentPlayerName}</div>
+              </>
+            ) : (
+              <>
+                {currentPlayerName && Math.min(team1Players.length, team2Players.length) > 0 && (
+                  <>
+                    <div style={{ fontSize: '14px', color: '#aaa', letterSpacing: '2px' }}>
+                      {duelIndex === 2 ? 'NEXT TURN' : 'CURRENT TURN'}
+                    </div>
+                    <div className="text-glow" style={{ fontSize: '32px', color: '#fff' }}>{currentPlayerName}</div>
+                  </>
+                )}
               </>
             )}
-            {/* <h2 style={{ marginTop: '20px' }}>{duelResult}</h2> */}
+          </div>
+        </div>
+
+        {duelResult && isFinishDuel && (
+          <div style={{ marginTop: '15px' }}>
+            {Math.min(team1Players.length, team2Players.length) > 0 && (
+              <button
+                onClick={() => nextRound(team1Players, team2Players)}
+                className="rpg-button"
+                style={{ 
+                  fontSize: '18px',
+                  padding: '10px 40px',
+                  animation: 'pulse-glow 2s infinite'
+                }}
+              >
+                NEXT ROUND
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* Right Part - Team 2 Chances */}
-      <div
-        style={{
-          flex: `0 0 ${120 * Object.values(team2Data.powerUps).filter(v => v > 0).length + 40}px`,
-          minWidth: '150px',
-          maxWidth: '100%',
-          transition: 'flex-basis 0.2s'
-        }}
-      >
+      {/* Team 2 Status */}
+      <div style={{ flex: 1 }}>
         {renderTeamChances(team2Data, 'team2')}
       </div>
     </div>

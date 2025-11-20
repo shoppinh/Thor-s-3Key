@@ -27,13 +27,6 @@ interface PlayerCardDrawerProps {
 
 /**
  * Renders a player's card drawing interface with draw button, hand pointer, and card display
- * @param className
- * @param playerData
- * @param onDraw - Callback function when draw button is clicked
- * @param disabled - Whether the draw button is disabled
- * @param side - Which side the player is on (left/right) for hand pointer
- * @param renderTheCards - Function to render the cards
- * @param CARDS_COVER - Array of placeholder cards to show when no cards drawn
  */
 const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   className,
@@ -46,8 +39,6 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   CARDS_COVER
 }) => {
   // Helper function to determine if player can make a selection
-  // True when: no cards drawn (normal case)
-  // After Second Chance, show calculated number instead of Draw Cards
   const disabledByRemoveWorst = (() => {
     const disabled = new Set(duelData.removedWorstGroups || []);
     const key =
@@ -69,148 +60,143 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   const shouldShowDrawButton = isBlankHand;
   const isDrawDisabled = disabled || disabledByRemoveWorst;
 
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '480px',
+    position: 'relative',
+    padding: '5px',
+    transition: 'all 0.3s ease'
+  };
+
   return (
     <div
-      className={className}
+      className={`${className} rpg-panel`}
       style={{
         display: 'flex',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        padding: '10px',
+        margin: '5px',
+        background: 'rgba(15, 12, 41, 0.6)',
+        border: '1px solid rgba(0, 242, 255, 0.3)',
+        opacity: isDrawDisabled && !playerData.name ? 0.5 : 1
       }}
     >
-      {side === 'left' && (
-        <>
-          <div className={'playerContainer'}>
-            <h2 className={'m0'}>{playerData.name || '?'}</h2>
-            <div className={'drawCardsContainer'}>
-              {shouldShowDrawButton && (
-                <>
-                  <img
-                    className={'leftHandPointer'}
-                    style={{
-                      top: '15px',
-                      display: isDrawDisabled ? 'none' : 'block'
-                    }}
-                    src="images/left-hand.png"
-                    alt="cursor"
-                  />
-                  <button
-                    onClick={onSelect}
-                    className={'btn'}
-                    style={{
-                      width: '480px',
-                      cursor: isDrawDisabled ? 'default' : 'pointer'
-                    }}
-                    disabled={isDrawDisabled}
-                  >
-                    Draw Cards
-                  </button>
-                </>
-              )}
-              {!isBlankHand && (
-                <span
-                  className={
-                    playerData.team === ''
-                      ? 'sumNumber text-black'
-                      : 'sumNumber ' + playerData.team
-                  }
-                  onClick={
-                    playerData.name === '?' &&
-                    playerData.team === '' &&
-                    !disabled
-                      ? onSelect
-                      : undefined
-                  }
-                  style={{
-                    cursor:
-                      playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
-                        ? 'pointer'
-                        : 'default'
-                  }}
-                >
-                  {playerData.sum}
-                </span>
-              )}
+      <div className={'playerContainer'} style={containerStyle}>
+        {/* Player Name Header */}
+        <div 
+          className="rpg-skewed"
+          style={{
+            background: 'linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent)',
+            padding: '3px 15px',
+            marginBottom: '8px',
+            borderBottom: '1px solid var(--color-secondary)',
+            textAlign: 'center'
+          }}
+        >
+          <h2 className={'m0 text-glow'} style={{ 
+            color: varColorForTeam(playerData.team),
+            fontSize: '1.5rem',
+            letterSpacing: '1px'
+          }}>
+            {playerData.name || 'UNKNOWN'}
+          </h2>
+        </div>
+
+        <div className={'drawCardsContainer'} style={{ position: 'relative', minHeight: '60px', height: '60px' }}>
+          {shouldShowDrawButton && (
+            <>
+              {/* Animated Hand Pointer */}
+              <img
+                className={side === 'left' ? 'leftHandPointer' : 'rightHandPointer'}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: side === 'left' ? 'auto' : '-80px',
+                  right: side === 'right' ? 'auto' : '-80px',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  display: isDrawDisabled ? 'none' : 'block',
+                  filter: 'drop-shadow(0 0 5px var(--color-secondary))',
+                  width: '60px',
+                  height: '60px',
+                  objectFit: 'contain',
+                  animation: side === 'left' ? 'point-left 1s ease-in-out infinite' : 'point-right 1s ease-in-out infinite'
+                }}
+                src={side === 'left' ? "images/left-hand.png" : "images/right-hand.png"}
+                alt="cursor"
+              />
+              
+              <button
+                onClick={onSelect}
+                className={'rpg-button'}
+                style={{
+                  width: '100%',
+                  height: '50px',
+                  fontSize: '1.2rem',
+                  cursor: isDrawDisabled ? 'default' : 'pointer',
+                  opacity: isDrawDisabled ? 0.5 : 1,
+                  background: isDrawDisabled ? '#333' : 'var(--color-primary)'
+                }}
+                disabled={isDrawDisabled}
+              >
+                {isDrawDisabled ? 'LOCKED' : 'DRAW CARDS'}
+              </button>
+            </>
+          )}
+
+          {!isBlankHand && (
+            <div 
+              className="rpg-skewed"
+              onClick={
+                playerData.name === '?' &&
+                playerData.team === '' &&
+                !disabled
+                  ? onSelect
+                  : undefined
+              }
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '60px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: `2px solid ${varColorForTeam(playerData.team)}`,
+                cursor: playerData.name === '?' && playerData.team === '' && !disabled ? 'pointer' : 'default'
+              }}
+            >
+              <span
+                className="text-glow"
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  color: '#fff',
+                  transform: 'skewX(10deg)' // Counter-skew
+                }}
+              >
+                {playerData.sum}
+              </span>
             </div>
-            <div className={'cardContainer'}>
-              {renderTheCards(
-                playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canClickDraw ? onSelect : undefined,
-                isDrawDisabled
-              )}
-            </div>
-          </div>
-        </>
-      )}
-      {side === 'right' && (
-        <>
-          <div className={'playerContainer'}>
-            <h2 className={'m0'}>{playerData.name || '?'}</h2>
-            <div className={'drawCardsContainer'}>
-              {shouldShowDrawButton && (
-                <>
-                  <img
-                    className={'rightHandPointer'}
-                    style={{
-                      top: '15px',
-                      display: isDrawDisabled ? 'none' : 'block'
-                    }}
-                    src="images/right-hand.png"
-                    alt="cursor"
-                  />
-                  <button
-                    onClick={onSelect}
-                    className={'btn'}
-                    style={{
-                      width: '480px',
-                      cursor: isDrawDisabled ? 'default' : 'pointer'
-                    }}
-                    disabled={isDrawDisabled}
-                  >
-                    Draw Cards
-                  </button>
-                </>
-              )}
-              {!isBlankHand && (
-                <span
-                  className={
-                    playerData.team === ''
-                      ? 'sumNumber text-black'
-                      : 'sumNumber ' + playerData.team
-                  }
-                  onClick={
-                    playerData.name === '?' &&
-                    playerData.team === '' &&
-                    !disabled
-                      ? onSelect
-                      : undefined
-                  }
-                  style={{
-                    cursor:
-                      playerData.name === '?' &&
-                      playerData.team === '' &&
-                      !disabled
-                        ? 'pointer'
-                        : 'default'
-                  }}
-                >
-                  {playerData.sum}
-                </span>
-              )}
-            </div>
-            <div className={'cardContainer'}>
-              {renderTheCards(
-                playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-                canClickDraw ? onSelect : undefined,
-                isDrawDisabled
-              )}
-            </div>
-          </div>
-        </>
-      )}
+          )}
+        </div>
+
+        <div className={'cardContainer'} style={{ marginTop: '10px', gap: '8px', justifyContent: 'center' }}>
+          {renderTheCards(
+            playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
+            canClickDraw ? onSelect : undefined,
+            isDrawDisabled
+          )}
+        </div>
+      </div>
     </div>
   );
+};
+
+// Helper to get color based on team
+const varColorForTeam = (team: string) => {
+  if (team === 'team1') return 'var(--color-secondary)'; // Cyan
+  if (team === 'team2') return 'var(--color-primary)';   // Pink
+  return '#fff';
 };
 
 export default PlayerCardDrawer;

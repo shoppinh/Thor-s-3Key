@@ -1337,20 +1337,31 @@ const CardGame = () => {
                     margin: '0 0 0 auto'
                   }}
                 >
-                  <h2 style={{ textAlign: 'center', marginTop: 0, marginBottom: 0 }}>
-                    Power-ups Setup
+                  <h2 className="text-glow" style={{ 
+                    textAlign: 'center', 
+                    marginTop: 0, 
+                    marginBottom: '20px',
+                    fontSize: '2.5rem',
+                    color: 'var(--color-primary)',
+                    letterSpacing: '3px'
+                  }}>
+                    POWER-UPS SETUP
                   </h2>
                   <div
+                    className="rpg-panel"
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'flex-start',
-                      gap: 6,
+                      gap: 12,
                       marginTop: 6,
-                      marginBottom: 15
+                      marginBottom: 15,
+                      padding: '20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid var(--color-secondary)'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <input
                         id="mode-per-team"
                         name="setup-mode"
@@ -1360,10 +1371,21 @@ const CardGame = () => {
                           setSetupMode('per-team');
                           setSetupForBothTeams(false);
                         }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-primary)',
+                          cursor: 'pointer'
+                        }}
                       />
-                      <label htmlFor="mode-per-team">Each team setups their own power-ups</label>
+                      <label htmlFor="mode-per-team" style={{ 
+                        fontFamily: 'var(--font-body)', 
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: setupMode === 'per-team' ? 'var(--color-primary)' : '#fff'
+                      }}>Each team setups their own power-ups</label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <input
                         id="mode-both"
                         name="setup-mode"
@@ -1375,10 +1397,21 @@ const CardGame = () => {
                           // Keep both allocations in sync when switching into combined mode
                           setTeam2Alloc(() => ({ ...team1Alloc }));
                         }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-primary)',
+                          cursor: 'pointer'
+                        }}
                       />
-                      <label htmlFor="mode-both">Setup power-ups for both teams</label>
+                      <label htmlFor="mode-both" style={{ 
+                        fontFamily: 'var(--font-body)', 
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: setupMode === 'both' ? 'var(--color-primary)' : '#fff'
+                      }}>Setup power-ups for both teams</label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <input
                         id="mode-random-each"
                         name="setup-mode"
@@ -1389,10 +1422,21 @@ const CardGame = () => {
                           setSetupForBothTeams(false);
                           randomizeEachTeamsAllocation();
                         }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-primary)',
+                          cursor: 'pointer'
+                        }}
                       />
-                      <label htmlFor="mode-random-each">Generate power-ups separately for each team</label>
+                      <label htmlFor="mode-random-each" style={{ 
+                        fontFamily: 'var(--font-body)', 
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: setupMode === 'random-each' ? 'var(--color-primary)' : '#fff'
+                      }}>Generate power-ups separately for each team</label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <input
                         id="mode-random"
                         name="setup-mode"
@@ -1403,8 +1447,19 @@ const CardGame = () => {
                           setSetupForBothTeams(true);
                           randomizeBothTeamsAllocation();
                         }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-primary)',
+                          cursor: 'pointer'
+                        }}
                       />
-                      <label htmlFor="mode-random">Random power-ups for both teams</label>
+                      <label htmlFor="mode-random" style={{ 
+                        fontFamily: 'var(--font-body)', 
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: setupMode === 'random' ? 'var(--color-primary)' : '#fff'
+                      }}>Random power-ups for both teams</label>
                     </div>
                   </div>
                   <div
@@ -1809,7 +1864,14 @@ const CardGame = () => {
                       </>
                     )}
                   </div>
-                  <p className="note" style={{ textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
+                  <p className="note" style={{ 
+                    textAlign: 'center', 
+                    marginTop: 10, 
+                    marginBottom: 10,
+                    color: 'var(--color-secondary)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.95rem'
+                  }}>
                     Each team must have a total of 4 power-ups, with no more than 2 of the same type.
                   </p>
                   <div style={{ textAlign: 'center' }}>
@@ -1819,8 +1881,25 @@ const CardGame = () => {
                         e.preventDefault();
                         setIsPowerupGuideOpen(true);
                       }}
+                      style={{
+                        color: 'var(--color-accent)',
+                        textDecoration: 'none',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '1.1rem',
+                        textShadow: '0 0 5px var(--color-accent)',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textShadow = '0 0 15px var(--color-accent)';
+                        e.currentTarget.style.letterSpacing = '1px';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textShadow = '0 0 5px var(--color-accent)';
+                        e.currentTarget.style.letterSpacing = '0px';
+                      }}
                     >
-                      Power-ups instruction
+                      ⚡ POWER-UPS GUIDE ⚡
                     </a>
                   </div>
 
@@ -1828,45 +1907,108 @@ const CardGame = () => {
               </div>
 
               {/* Divider */}
-              <div style={{ width: 1, background: '#ccc' }} />
+              <div style={{ width: 2, background: 'linear-gradient(180deg, transparent, var(--color-secondary), transparent)' }} />
 
               {/* Right: Welcome UI */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                <div>
-                  <h1>Thorlit 3Key</h1>
-                  <div className={'controlContainer'}>
-                    <label className={'labelControl'} htmlFor="sheetId">
-                      Sheet Id
+              <div style={{ display: 'flex', alignItems: '', justifyContent: 'flex-start', padding: '0 20px' }}>
+                <div style={{ width: '100%', maxWidth: '400px' }}>
+                  <h1 className="text-gradient" style={{ 
+                    fontSize: '3rem',
+                    margin: '0 0 30px 0',
+                    textAlign: 'center',
+                    letterSpacing: '2px'
+                  }}>THOR'S 3KEY</h1>
+                  
+                  <div className="rpg-panel" style={{
+                    padding: '20px',
+                    background: 'rgba(15, 12, 41, 0.8)',
+                    border: '2px solid var(--color-secondary)',
+                    marginBottom: '20px'
+                  }}>
+                    <label className="text-glow" htmlFor="sheetId" style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: 'var(--color-secondary)',
+                      fontSize: '1.1rem',
+                      fontFamily: 'var(--font-body)',
+                      letterSpacing: '1px'
+                    }}>
+                      SHEET ID
                     </label>
                     <input
-                      className={'textControl'}
+                      className="rpg-input"
                       id="sheetId"
                       type="text"
                       value={sheetId}
                       onChange={(e) => setSheetId(e.target.value)}
                       disabled={gameState != 'setup'}
+                      style={{
+                        padding: '12px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '2px solid var(--color-secondary)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        fontFamily: 'var(--font-body)',
+                        borderRadius: '4px',
+                        boxShadow: '0 0 10px rgba(0, 242, 255, 0.3)',
+                        transition: 'all 0.3s ease'
+                      }}
                     />
                   </div>
-                  <div className={'controlContainer'}>
-                    <label className={'labelControl'} htmlFor="sheetRange">
-                      Sheet Range
+                  
+                  <div className="rpg-panel" style={{
+                    padding: '20px',
+                    background: 'rgba(15, 12, 41, 0.8)',
+                    border: '2px solid var(--color-secondary)',
+                    marginBottom: '30px'
+                  }}>
+                    <label className="text-glow" htmlFor="sheetRange" style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: 'var(--color-secondary)',
+                      fontSize: '1.1rem',
+                      fontFamily: 'var(--font-body)',
+                      letterSpacing: '1px'
+                    }}>
+                      SHEET RANGE
                     </label>
                     <input
-                      className={'textControl'}
+                      className="rpg-input"
                       id="sheetRange"
                       type="text"
                       value={sheetRange}
                       onChange={(e) => setSheetRange(e.target.value)}
                       disabled={gameState != 'setup'}
+                      style={{
+                        padding: '12px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '2px solid var(--color-secondary)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        fontFamily: 'var(--font-body)',
+                        borderRadius: '4px',
+                        boxShadow: '0 0 10px rgba(0, 242, 255, 0.3)',
+                        transition: 'all 0.3s ease'
+                      }}
                     />
                   </div>
-                  <div>
+                  
+                  <div style={{ textAlign: 'center' }}>
                     <button
                       onClick={() => startGame()}
-                      className={'btnStart'}
+                      className="rpg-button"
                       disabled={isStartGameDisabled()}
+                      style={{
+                        width: '100%',
+                        padding: '15px 30px',
+                        fontSize: '1.5rem',
+                        letterSpacing: '2px',
+                        background: isStartGameDisabled() ? '#333' : 'var(--color-primary)',
+                        cursor: isStartGameDisabled() ? 'not-allowed' : 'pointer',
+                        opacity: isStartGameDisabled() ? 0.5 : 1
+                      }}
                     >
-                      Start Game
+                      START GAME
                     </button>
                   </div>
                 </div>
@@ -1891,15 +2033,32 @@ const CardGame = () => {
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '40px',
+              padding: '20px'
             }}
           >
-            <div style={{ width: '140px' }}>
-              <div className={'scoreContainer ' + team1Data.scoreClass}>
-                <span style={{ paddingBottom: '10px' }}>{team1Data.score}</span>
+            {/* Team 1 Panel */}
+            <div className="rpg-panel" style={{ width: '200px', padding: '20px', background: 'rgba(15, 12, 41, 0.9)', border: '2px solid var(--color-primary)' }}>
+              <div style={{ 
+                fontSize: '48px', 
+                fontWeight: 'bold', 
+                textAlign: 'center',
+                color: 'var(--color-accent)',
+                marginBottom: '10px',
+                textShadow: '0 0 10px var(--color-accent)'
+              }}>
+                {team1Data.score}
               </div>
-              <h2 className="teamName team1" style={{ position: 'relative' }}>
-                Team 1
+              <h2 className="text-glow" style={{ 
+                textAlign: 'center',
+                color: 'var(--color-primary)',
+                fontSize: '24px',
+                margin: '10px 0',
+                position: 'relative'
+              }}>
+                TEAM 1
                 {team1Data.totalPowerUps > 0 && (
                   <ChanceStar
                     number={team1Data.totalPowerUps}
@@ -1911,24 +2070,27 @@ const CardGame = () => {
                   />
                 )}
               </h2>
-              <ul className={'ulTeam'}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '15px' }}>
                 {team1Data.players.map((member, index) => (
-                  <li className={'memberItem'} key={index}>
+                  <div key={index} style={{
+                    padding: '8px',
+                    marginBottom: '5px',
+                    background: 'rgba(255, 0, 85, 0.1)',
+                    border: '1px solid rgba(255, 0, 85, 0.3)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-body)'
+                  }}>
                     {member}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    marginRight: '70px'
-                  }}
-                >
+
+            {/* Battle Arena */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '100px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <PlayerCardDrawer
                     className={'mb-1'}
                     playerData={duelData.topLeftPlayerData}
@@ -1962,14 +2124,7 @@ const CardGame = () => {
                     }
                   />
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    marginLeft: '70px'
-                  }}
-                >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <PlayerCardDrawer
                     className={'mb-1'}
                     playerData={duelData.topRightPlayerData}
@@ -2005,11 +2160,26 @@ const CardGame = () => {
                 </div>
               </div>
             </div>
-            <div style={{ width: '140px' }}>
-              <div className={'scoreContainer ' + team2Data.scoreClass}>
-                <span style={{ paddingBottom: '10px' }}>{team2Data.score}</span>
+
+            {/* Team 2 Panel */}
+            <div className="rpg-panel" style={{ width: '200px', padding: '20px', background: 'rgba(15, 12, 41, 0.9)', border: '2px solid var(--color-secondary)' }}>
+              <div style={{ 
+                fontSize: '48px', 
+                fontWeight: 'bold', 
+                textAlign: 'center',
+                color: 'var(--color-accent)',
+                marginBottom: '10px',
+                textShadow: '0 0 10px var(--color-accent)'
+              }}>
+                {team2Data.score}
               </div>
-              <h2 className="teamName team2" style={{ position: 'relative' }}>
+              <h2 className="text-glow" style={{ 
+                textAlign: 'center',
+                color: 'var(--color-secondary)',
+                fontSize: '24px',
+                margin: '10px 0',
+                position: 'relative'
+              }}>
                 {team2Data.totalPowerUps > 0 && (
                   <ChanceStar
                     number={team2Data.totalPowerUps}
@@ -2020,15 +2190,23 @@ const CardGame = () => {
                     }}
                   />
                 )}
-                Team 2
+                TEAM 2
               </h2>
-              <ul className={'ulTeam'}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '15px' }}>
                 {team2Data.players.map((member, index) => (
-                  <li className={'memberItem'} key={index}>
+                  <div key={index} style={{
+                    padding: '8px',
+                    marginBottom: '5px',
+                    background: 'rgba(0, 242, 255, 0.1)',
+                    border: '1px solid rgba(0, 242, 255, 0.3)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-body)'
+                  }}>
                     {member}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         </>
@@ -2059,20 +2237,47 @@ const CardGame = () => {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '100%'
+            height: '100%',
+            gap: '30px'
           }}
         >
-          <div>
-            <h2 style={{ color: 'red', margin: 0 }}>Game Over</h2>
-            <h2 style={{ fontSize: '48px', fontWeight: 'bold', margin: 0 }}>
-              {teamWinner}
+          <div className="rpg-panel" style={{ 
+            padding: '40px 60px',
+            textAlign: 'center',
+            background: 'rgba(15, 12, 41, 0.95)',
+            border: '3px solid var(--color-accent)'
+          }}>
+            <h2 className="text-glow" style={{ 
+              color: 'var(--color-primary)', 
+              margin: '0 0 20px 0',
+              fontSize: '32px',
+              letterSpacing: '3px'
+            }}>
+              BATTLE COMPLETE
             </h2>
-            <img
-              style={{ marginTop: '20px' }}
-              src="/images/the-end.webp"
-              alt=""
-              width="600"
-            />
+            <h1 className="text-gradient" style={{ 
+              fontSize: '64px', 
+              fontWeight: 'bold', 
+              margin: '20px 0',
+              textShadow: '0 0 20px var(--color-accent)'
+            }}>
+              {teamWinner}
+            </h1>
+            <div className="rpg-panel" style={{ 
+              marginTop: '30px',
+              padding: '20px',
+              background: 'rgba(0,0,0,0.3)'
+            }}>
+              <img
+                src="/images/the-end.webp"
+                alt="Victory"
+                style={{ 
+                  width: '600px',
+                  maxWidth: '100%',
+                  opacity: 0.9
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

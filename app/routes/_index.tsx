@@ -23,71 +23,86 @@ export default function IndexRoute() {
 
   return (
     <main style={styles.wrapper}>
+      <div style={styles.overlay} />
+      
       <section style={styles.hero}>        
-        <h1 style={styles.h1}>Thor's 3Key</h1>
+        <h1 className="text-glow" style={styles.h1}>THOR'S 3KEY</h1>
         <p style={styles.tagline}>
-          Team-based card chaos with power-ups. Stream-friendly. Stupidly fun.
+          CHAOTIC TEAM CARD BATTLES // POWER-UPS // RNG GLORY
         </p>
+        
         <div style={styles.ctaRow}>
-          <a href={ctaHref} style={styles.ctaPrimary}>
-            Play Now
+          <a href={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
+            START GAME
           </a>          
         </div>
-        <div>
+
+        <div className="rpg-panel" style={styles.mediaFrame}>
           <img
             src="/images/the-end.webp"
             alt="Gameplay screenshot"
-            style={{ width: '50%', borderRadius: 12, marginTop: 18 }}
+            style={{ width: '100%', display: 'block', opacity: 0.8 }}
             loading="lazy"
           />
+          <div style={styles.scanline} />
         </div>
+
         <div style={styles.socialRow}>
-          <a href="https://twitter.com/intent/tweet?text=Playing%20Thor%27s%203Key%20now&url=" target="_blank" rel="noreferrer">
-            Post your run →
+          <a 
+            href="https://twitter.com/intent/tweet?text=Playing%20Thor%27s%203Key%20now&url=" 
+            target="_blank" 
+            rel="noreferrer"
+            style={{ color: 'var(--color-secondary)', textDecoration: 'none', fontWeight: 'bold' }}
+          >
+            [ POST YOUR RUN ]
           </a>
         </div>
       </section>
 
       <section id="how" style={styles.section}>
-        <h2 style={styles.h2}>How it works</h2>
-        <ul style={styles.featureList}>
-          <li>
-            <strong>1.</strong> Load players from Google Sheets or add them manually.
-          </li>
-          <li>
-            <strong>2.</strong> Draw, reveal, and slam power-ups (Second, Reveal, Shield, Lock).
-          </li>
-          <li>
-            <strong>3.</strong> Highest sum wins the duel. First team to clear wins the match.
-          </li>
-        </ul>
-      </section>
-
-      <section style={styles.section}>
-        <h2 style={styles.h2}>Why people stick</h2>
-        <div style={styles.grid3}>
-          <div style={styles.card}>
-            <h3 style={styles.h3}>Stream-ready</h3>
-            <p>Zero setup. Share link, press play, chaos ensues.</p>
+        <h2 className="text-glow" style={styles.h2}>SYSTEM GUIDE</h2>
+        <div style={styles.featureGrid}>
+          <div className="rpg-skewed" style={styles.featureCard}>
+            <strong style={{ color: 'var(--color-primary)', fontSize: '24px' }}>01</strong>
+            <p>LOAD PLAYERS FROM DATABASE</p>
           </div>
-          <div style={styles.card}>
-            <h3 style={styles.h3}>Party-friendly</h3>
-            <p>Quick rounds, loud reveals, instant drama. Great on TV.</p>
+          <div className="rpg-skewed" style={styles.featureCard}>
+            <strong style={{ color: 'var(--color-secondary)', fontSize: '24px' }}>02</strong>
+            <p>DRAW CARDS & ACTIVATE SKILLS</p>
           </div>
-          <div style={styles.card}>
-            <h3 style={styles.h3}>Skill + luck</h3>
-            <p>Bluff, allocate power-ups, and pray to RNGesus.</p>
+          <div className="rpg-skewed" style={styles.featureCard}>
+            <strong style={{ color: 'var(--color-accent)', fontSize: '24px' }}>03</strong>
+            <p>HIGHEST SUM DOMINATES</p>
           </div>
         </div>
       </section>
 
       <section style={styles.section}>
-        <h2 style={styles.h2}>For communities</h2>
-        <p>
-          Weekly seeds, challenge links, and simple leaderboards. Want a banner or
-          custom card backs for your org? Email
-          {' '}
-          <a href="mailto:mactrungkien2000@gmail.com">mactrungkien2000@gmail.com</a>.
+        <h2 className="text-glow" style={styles.h2}>WHY PLAY?</h2>
+        <div style={styles.grid3}>
+          <div className="rpg-panel" style={styles.card}>
+            <h3 style={styles.h3}>STREAM READY</h3>
+            <p>Zero setup. Share link. Chaos ensues.</p>
+          </div>
+          <div className="rpg-panel" style={styles.card}>
+            <h3 style={styles.h3}>PARTY FRIENDLY</h3>
+            <p>Quick rounds. Loud reveals. Instant drama.</p>
+          </div>
+          <div className="rpg-panel" style={styles.card}>
+            <h3 style={styles.h3}>SKILL + LUCK</h3>
+            <p>Bluff, allocate power-ups, pray to RNG.</p>
+          </div>
+        </div>
+      </section>
+
+      <section style={styles.section}>
+        <h2 className="text-glow" style={styles.h2}>COMMUNITY</h2>
+        <p style={{ color: '#ccc' }}>
+          Weekly seeds, challenge links, and simple leaderboards. 
+          <br />
+          <a href="mailto:mactrungkien2000@gmail.com" style={{ color: 'var(--color-secondary)' }}>
+            CONTACT ADMIN
+          </a>
         </p>
       </section>
       <ShareButtons siteUrl={typeof window !== 'undefined' ? window.location.origin : ''} />
@@ -97,100 +112,107 @@ export default function IndexRoute() {
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {
-    maxWidth: 980,
+    maxWidth: 1200,
     margin: '0 auto',
-    padding: '10px 16px 64px'
+    padding: '40px 20px 80px',
+    position: 'relative',
+    zIndex: 1
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'radial-gradient(circle at center, transparent 0%, #000 100%)',
+    pointerEvents: 'none',
+    zIndex: -1
   },
   hero: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 16,
-    textAlign: 'center'
-  },
-  badge: {
-    background: '#10b981',
-    color: 'white',
-    borderRadius: 9999,
-    padding: '6px 10px',
-    fontSize: 12,
-    fontWeight: 700,
-    letterSpacing: 0.5
+    gap: 24,
+    textAlign: 'center',
+    marginBottom: 80
   },
   h1: {
-    fontSize: 48,
-    margin: '8px 0 0'
+    fontSize: 72,
+    margin: '0',
+    color: '#fff',
+    textShadow: '0 0 20px var(--color-primary)',
+    letterSpacing: '4px'
   },
   tagline: {
-    color: '#94a3b8',
+    color: 'var(--color-secondary)',
+    fontSize: 18,
     maxWidth: 720,
-    margin: 0
+    margin: 0,
+    fontFamily: 'var(--font-body)',
+    letterSpacing: '2px'
   },
   ctaRow: {
     display: 'flex',
-    gap: 12,
-    marginTop: 8
+    gap: 20,
+    marginTop: 20
   },
   ctaPrimary: {
-    background: '#0ea5e9',
-    color: 'white',
     textDecoration: 'none',
-    padding: '12px 16px',
-    borderRadius: 10,
-    fontWeight: 700,
-    minWidth: 150
-  },
-  ctaSecondary: {
-    background: 'transparent',
-    color: '#0ea5e9',
-    border: '2px solid #0ea5e9',
-    textDecoration: 'none',
-    padding: '10px 14px',
-    borderRadius: 10,
-    fontWeight: 700,
-    minWidth: 150
+    display: 'inline-block',
+    textAlign: 'center',
+    minWidth: 200
   },
   mediaFrame: {
     width: '100%',
-    maxWidth: 960,
-    marginTop: 16,
-    border: '1px solid rgba(148,163,184,0.2)',
-    borderRadius: 12,
+    maxWidth: 800,
+    marginTop: 40,
     overflow: 'hidden',
-    boxShadow: '0 10px 30px rgba(2,6,23,0.2)'
+    position: 'relative'
+  },
+  scanline: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 51%)',
+    backgroundSize: '100% 4px',
+    pointerEvents: 'none'
   },
   socialRow: {
-    marginTop: 8,
+    marginTop: 20,
     color: '#94a3b8'
   },
   section: {
-    marginTop: 56
+    marginTop: 80,
+    textAlign: 'center'
   },
   h2: {
-    fontSize: 28,
-    marginBottom: 12
+    fontSize: 36,
+    marginBottom: 40,
+    color: '#fff'
   },
-  featureList: {
+  featureGrid: {
     display: 'grid',
-    gap: 8,
-    listStyle: 'none',
-    padding: 0,
-    margin: 0
+    gap: 20,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'
+  },
+  featureCard: {
+    background: 'rgba(255,255,255,0.05)',
+    padding: '20px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10
   },
   grid3: {
     display: 'grid',
-    gap: 16,
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'
+    gap: 30,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'
   },
   card: {
-    border: '1px solid rgba(148,163,184,0.2)',
-    borderRadius: 10,
-    padding: 16
+    padding: 30,
+    textAlign: 'left'
   },
   h3: {
     marginTop: 0,
-    marginBottom: 8
+    marginBottom: 15,
+    color: 'var(--color-accent)',
+    fontSize: 24
   }
 };
-
-
