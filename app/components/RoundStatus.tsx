@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import TeamData from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
+import { useLanguage } from '~/contexts/LanguageContext';
 
 interface RoundStatusProps {
   duelResult: string;
@@ -34,31 +35,23 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   nextRound,
   onChanceClick
 }) => {
-  const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
-
-  // Show winner announcement when duelResult changes
-  useEffect(() => {
-    if (duelResult && isFinishDuel) {
-      setShowWinnerAnnouncement(true);
-      
-      // Hide after 2 seconds
-      const timer = setTimeout(() => {
-        setShowWinnerAnnouncement(false);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [duelResult, isFinishDuel]);
+  const { t } = useLanguage();
 
   // Auto-advance logic (kept from original)
   React.useEffect(() => {
-    const noPlayersLeft = Math.min(team1Players.length, team2Players.length) === 0;
-    const bothSelected = !!duelData.player1SideSelected && !!duelData.player2SideSelected;
+    const noPlayersLeft =
+      Math.min(team1Players.length, team2Players.length) === 0;
+    const bothSelected =
+      !!duelData.player1SideSelected && !!duelData.player2SideSelected;
     const secondPlayerTeam = duelData.player2Team;
     const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
     const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
     const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
-    const canSecondChanceNow = bothSelected && !!secondPlayerTeam && secondTeamHasSecondChance && !secondTeamIsWinner;
+    const canSecondChanceNow =
+      bothSelected &&
+      !!secondPlayerTeam &&
+      secondTeamHasSecondChance &&
+      !secondTeamIsWinner;
 
     if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
       const timerId = setTimeout(() => {
@@ -66,39 +59,69 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }, 5000);
       return () => clearTimeout(timerId);
     }
-  }, [duelResult, isFinishDuel, team1Players, team2Players, nextRound, duelData, team1Data, team2Data]);
+  }, [
+    duelResult,
+    isFinishDuel,
+    team1Players,
+    team2Players,
+    nextRound,
+    duelData,
+    team1Data,
+    team2Data
+  ]);
 
-  const renderTeamChances = (teamData: TeamData, teamKey: 'team1' | 'team2') => {
+  const renderTeamChances = (
+    teamData: TeamData,
+    teamKey: 'team1' | 'team2'
+  ) => {
     const isTeam1 = teamKey === 'team1';
-    const teamColor = isTeam1 ? 'var(--color-secondary)' : 'var(--color-primary)';
-    
+    const teamColor = isTeam1
+      ? 'var(--color-secondary)'
+      : 'var(--color-primary)';
+
     // Helper logic for enabling buttons (simplified for brevity, logic matches original)
-    const getPlayerTeams = () => ({ firstPlayerTeam: duelData.player1Team, secondPlayerTeam: duelData.player2Team });
+    const getPlayerTeams = () => ({
+      firstPlayerTeam: duelData.player1Team,
+      secondPlayerTeam: duelData.player2Team
+    });
     const getCurrentTurnTeam = () => {
       if (!duelData.currentPlayerName) return null;
-      if (team1Data.players.includes(duelData.currentPlayerName)) return 'team1';
-      if (team2Data.players.includes(duelData.currentPlayerName)) return 'team2';
+      if (team1Data.players.includes(duelData.currentPlayerName))
+        return 'team1';
+      if (team2Data.players.includes(duelData.currentPlayerName))
+        return 'team2';
       return null;
     };
 
     const isSecondChanceEnabled = () => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
-      if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) return false;
-      
+      if ((duelData.secondChanceUsedByTeams || []).includes(teamKey))
+        return false;
+
       // Check available groups
       const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
-        !disabledByRemoveWorst.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-left') && !duelData.bottomLeftRevealed && duelData.bottomLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
+        !disabledByRemoveWorst.has('top-left') &&
+          !duelData.topLeftRevealed &&
+          duelData.topLeftPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('bottom-left') &&
+          !duelData.bottomLeftRevealed &&
+          duelData.bottomLeftPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('top-right') &&
+          !duelData.topRightRevealed &&
+          duelData.topRightPlayerData.cards.length === 0,
+        !disabledByRemoveWorst.has('bottom-right') &&
+          !duelData.bottomRightRevealed &&
+          duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       if (availableCount === 0) return false;
 
-      if (duelData.player1SideSelected && !duelData.player2SideSelected) return teamKey === firstPlayerTeam;
+      if (duelData.player1SideSelected && !duelData.player2SideSelected)
+        return teamKey === firstPlayerTeam;
       if (duelData.player1SideSelected && duelData.player2SideSelected) {
-        if (teamKey === secondPlayerTeam) return duelData.winningTeam !== secondPlayerTeam;
+        if (teamKey === secondPlayerTeam)
+          return duelData.winningTeam !== secondPlayerTeam;
         return false;
       }
       if (currentTurnTeam !== teamKey) return false;
@@ -110,13 +133,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey) return false;
       if (duelData.revealTwoUsedBy || isFinishDuel) return false;
-      
-      const isFirstPlayerTeamSelected = teamKey === firstPlayerTeam && duelData.player1SideSelected;
-      const isSecondPlayerTeamSelected = teamKey === secondPlayerTeam && duelData.player2SideSelected;
-      
-      if (isFirstPlayerTeamSelected && duelData.player1Name === '?') return true;
-      if (isSecondPlayerTeamSelected && duelData.player2Name === '?') return true;
-      
+
+      const isFirstPlayerTeamSelected =
+        teamKey === firstPlayerTeam && duelData.player1SideSelected;
+      const isSecondPlayerTeamSelected =
+        teamKey === secondPlayerTeam && duelData.player2SideSelected;
+
+      if (isFirstPlayerTeamSelected && duelData.player1Name === '?')
+        return true;
+      if (isSecondPlayerTeamSelected && duelData.player2Name === '?')
+        return true;
+
       return !(isFirstPlayerTeamSelected || isSecondPlayerTeamSelected);
     };
 
@@ -128,22 +155,33 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     const isRemoveWorstEnabled = () => {
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey || isFinishDuel) return false;
-      if ((duelData.removeWorstUsedByTeams || []).includes(teamKey)) return false;
+      if ((duelData.removeWorstUsedByTeams || []).includes(teamKey))
+        return false;
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-      const hasThisTeamSelected = (teamKey === firstPlayerTeam && !!duelData.player1SideSelected) || (teamKey === secondPlayerTeam && !!duelData.player2SideSelected);
+      const hasThisTeamSelected =
+        (teamKey === firstPlayerTeam && !!duelData.player1SideSelected) ||
+        (teamKey === secondPlayerTeam && !!duelData.player2SideSelected);
       if (hasThisTeamSelected) return false;
-      
+
       const disabled = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
-        !disabled.has('top-left') && !duelData.topLeftRevealed && duelData.topLeftPlayerData.cards.length === 0,
-        !disabled.has('bottom-left') && !duelData.bottomLeftRevealed && duelData.bottomLeftPlayerData.cards.length === 0,
-        !disabled.has('top-right') && !duelData.topRightRevealed && duelData.topRightPlayerData.cards.length === 0,
-        !disabled.has('bottom-right') && !duelData.bottomRightRevealed && duelData.bottomRightPlayerData.cards.length === 0
+        !disabled.has('top-left') &&
+          !duelData.topLeftRevealed &&
+          duelData.topLeftPlayerData.cards.length === 0,
+        !disabled.has('bottom-left') &&
+          !duelData.bottomLeftRevealed &&
+          duelData.bottomLeftPlayerData.cards.length === 0,
+        !disabled.has('top-right') &&
+          !duelData.topRightRevealed &&
+          duelData.topRightPlayerData.cards.length === 0,
+        !disabled.has('bottom-right') &&
+          !duelData.bottomRightRevealed &&
+          duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       return availableCount > 1;
     };
 
-    const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) => (
+    const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) =>
       count > 0 && (
         <div style={{ position: 'relative', margin: '0 8px' }}>
           <button
@@ -163,17 +201,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               boxShadow: enabled ? `0 0 15px ${color}` : 'none'
             }}
           >
-            <img 
-              src={icon} 
-              alt={label} 
-              style={{ 
-                width: '55px', 
-                height: '55px', 
+            <img
+              src={icon}
+              alt={label}
+              style={{
+                width: '55px',
+                height: '55px',
                 filter: enabled ? 'none' : 'grayscale(100%)',
                 transform: 'skewX(5deg)' // Counter skew
-              }} 
+              }}
             />
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 top: '-8px',
@@ -193,57 +231,70 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               {count}
             </div>
           </button>
-          <div style={{ 
-            fontSize: '11px', 
-            marginTop: '5px', 
-            color: enabled ? '#fff' : '#777',
-            textAlign: 'center',
-            textTransform: 'uppercase',
-            fontFamily: 'var(--font-body)',
-            letterSpacing: '0.5px'
-          }}>
+          <div
+            style={{
+              fontSize: '11px',
+              marginTop: '5px',
+              color: enabled ? '#fff' : '#777',
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              fontFamily: 'var(--font-body)',
+              letterSpacing: '0.5px'
+            }}
+          >
             {label}
           </div>
         </div>
-      )
-    );
+      );
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <h4 style={{ color: teamColor, marginBottom: '10px', textShadow: `0 0 5px ${teamColor}` }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <h4
+          style={{
+            color: teamColor,
+            marginBottom: '10px',
+            textShadow: `0 0 5px ${teamColor}`
+          }}
+        >
           {teamData.name}
         </h4>
         <div style={{ display: 'flex' }}>
-          <PowerUpButton 
-            type="secondChance" 
-            count={teamData.powerUps.secondChance} 
-            enabled={isSecondChanceEnabled()} 
-            icon="/images/chance_second.png" 
-            label="Retry"
+          <PowerUpButton
+            type="secondChance"
+            count={teamData.powerUps.secondChance}
+            enabled={isSecondChanceEnabled()}
+            icon="/images/chance_second.png"
+            label={t('game.secondChance')}
             color="#4CAF50"
           />
-          <PowerUpButton 
-            type="revealTwo" 
-            count={teamData.powerUps.revealTwo} 
-            enabled={isRevealTwoEnabled()} 
-            icon="/images/chance_reveal.png" 
-            label="Reveal"
+          <PowerUpButton
+            type="revealTwo"
+            count={teamData.powerUps.revealTwo}
+            enabled={isRevealTwoEnabled()}
+            icon="/images/chance_reveal.png"
+            label={t('game.revealTwo')}
             color="#2196F3"
           />
-          <PowerUpButton 
-            type="lifeShield" 
-            count={teamData.powerUps.lifeShield} 
-            enabled={isLifeShieldEnabled()} 
-            icon="/images/chance_shield.png" 
-            label="Shield"
+          <PowerUpButton
+            type="lifeShield"
+            count={teamData.powerUps.lifeShield}
+            enabled={isLifeShieldEnabled()}
+            icon="/images/chance_shield.png"
+            label={t('game.lifeShield')}
             color="#FFC107"
           />
-          <PowerUpButton 
-            type="removeWorst" 
-            count={teamData.powerUps.removeWorst} 
-            enabled={isRemoveWorstEnabled()} 
-            icon="/images/chance_remove.png" 
-            label="Remove"
+          <PowerUpButton
+            type="removeWorst"
+            count={teamData.powerUps.removeWorst}
+            enabled={isRemoveWorstEnabled()}
+            icon="/images/chance_remove.png"
+            label={t('game.removeWorst')}
             color="#F44336"
           />
         </div>
@@ -253,7 +304,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
   return (
     <div
-      className="rpg-panel"
       style={{
         position: 'fixed',
         bottom: '20px',
@@ -269,74 +319,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }}
     >
       {/* Team 1 Status */}
-      <div style={{ flex: 1 }}>
-        {renderTeamChances(team1Data, 'team1')}
-      </div>
+      <div style={{ flex: 1 }}>{renderTeamChances(team1Data, 'team1')}</div>
 
       {/* Center Status Display */}
       <div style={{ flex: 2, textAlign: 'center', position: 'relative' }}>
         {/* Round Winner Announcement */}
-        {showWinnerAnnouncement && (
-          <>
-            {/* Backdrop */}
-            <div 
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.7)',
-                zIndex: 9998,
-                pointerEvents: 'none',
-                animation: 'fade-in 0.3s ease-out'
-              }}
-            />
-            
-            {/* Winner Announcement */}
-            <div 
-              style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 9999,
-                animation: 'fade-in 0.3s ease-out',
-                pointerEvents: 'none'
-              }}
-            >
-              <div 
-                className="rpg-panel"
-                style={{
-                  background: 'rgba(15, 12, 41, 0.98)',
-                  border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
-                  padding: '40px 60px',
-                  boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
-                  minWidth: '500px'
-                }}
-              >
-                <div style={{ fontSize: '18px', color: '#aaa', letterSpacing: '3px', marginBottom: '10px' }}>
-                  ROUND RESULT
-                </div>
-                <div 
-                  className="text-glow"
-                  style={{ 
-                    fontSize: '48px', 
-                    fontWeight: 'bold',
-                    color: duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)',
-                    letterSpacing: '2px',
-                    animation: 'pulse-glow 1.5s infinite',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  {duelResult}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-        
-        <div 
+
+        <div
           className="rpg-skewed"
           style={{
             background: 'rgba(0,0,0,0.5)',
@@ -349,19 +338,46 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           <div style={{ transform: 'skewX(10deg)' }}>
             {isFirstTurn ? (
               <>
-                <div style={{ fontSize: '14px', color: '#aaa', letterSpacing: '2px' }}>CHALLENGER APPROACHING</div>
-                <div className="text-glow" style={{ fontSize: '32px', color: 'var(--color-accent)' }}>{currentPlayerName}</div>
+                <div
+                  style={{
+                    fontSize: '14px',
+                    color: '#aaa',
+                    letterSpacing: '2px'
+                  }}
+                >
+                  CHALLENGER APPROACHING
+                </div>
+                <div
+                  className="text-glow"
+                  style={{ fontSize: '32px', color: 'var(--color-accent)' }}
+                >
+                  {currentPlayerName}
+                </div>
               </>
             ) : (
               <>
-                {currentPlayerName && Math.min(team1Players.length, team2Players.length) > 0 && (
-                  <>
-                    <div style={{ fontSize: '14px', color: '#aaa', letterSpacing: '2px' }}>
-                      {duelIndex === 2 ? 'NEXT TURN' : 'CURRENT TURN'}
-                    </div>
-                    <div className="text-glow" style={{ fontSize: '32px', color: '#fff' }}>{currentPlayerName}</div>
-                  </>
-                )}
+                {currentPlayerName &&
+                  Math.min(team1Players.length, team2Players.length) > 0 && (
+                    <>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          color: '#aaa',
+                          letterSpacing: '2px'
+                        }}
+                      >
+                        {duelIndex === 2
+                          ? t('game.nextTurn')
+                          : t('game.currentTurn')}
+                      </div>
+                      <div
+                        className="text-glow"
+                        style={{ fontSize: '32px', color: '#fff' }}
+                      >
+                        {currentPlayerName}
+                      </div>
+                    </>
+                  )}
               </>
             )}
           </div>
@@ -373,13 +389,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               <button
                 onClick={() => nextRound(team1Players, team2Players)}
                 className="rpg-button"
-                style={{ 
+                style={{
                   fontSize: '18px',
                   padding: '10px 40px',
                   animation: 'pulse-glow 2s infinite'
                 }}
               >
-                NEXT ROUND
+                {t('game.nextRound')}
               </button>
             )}
           </div>
@@ -387,9 +403,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Team 2 Status */}
-      <div style={{ flex: 1 }}>
-        {renderTeamChances(team2Data, 'team2')}
-      </div>
+      <div style={{ flex: 1 }}>{renderTeamChances(team2Data, 'team2')}</div>
     </div>
   );
 };

@@ -8,6 +8,7 @@ import {
 } from '@remix-run/react';
 
 import { json, type MetaFunction, type LinksFunction } from '@remix-run/node';
+import { LanguageProvider } from '~/contexts/LanguageContext';
 // existing imports
 
 import appStylesHref from './app.css?url';
@@ -15,7 +16,11 @@ import appStylesHref from './app.css?url';
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: appStylesHref },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+  {
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous'
+  },
   {
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&display=swap'
@@ -35,7 +40,7 @@ export async function loader() {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const siteUrl = data?.SITE_URL ?? 'http://localhost:5173';
-  const title = 'Thor\'s 3Key — Chaotic team card showdown';
+  const title = "Thor's 3Key — Chaotic team card showdown";
   const description =
     'Fast, silly, team-based card chaos. Load players from Google Sheets, slam power-ups, and trash talk your way to victory.';
   const image = `${siteUrl}/images/star.png`;
@@ -119,7 +124,9 @@ export default function App() {
       </head>
       <body>
         <div id="detail">
-          <Outlet context={clientSecrets} />
+          <LanguageProvider>
+            <Outlet context={clientSecrets} />
+          </LanguageProvider>
         </div>
 
         <ScrollRestoration />

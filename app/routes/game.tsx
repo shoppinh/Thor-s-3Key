@@ -1,29 +1,30 @@
-import { useCallback, useState } from 'react';
 import { useOutletContext } from '@remix-run/react';
-import PlayerCardDrawer from '../components/PlayerCardDrawer';
-import RoundStatus from '../components/RoundStatus';
-import ChanceStar from '../components/ChanceStar';
-import ConfirmPopup from '../components/ConfirmPopup';
-import PowerupGuideModal from '../components/PowerupGuideModal';
-import Card from '../models/Card';
-import TeamData from '~/models/TeamData';
-import DuelData from '~/models/DuelData';
+import { useCallback, useEffect, useState } from 'react';
+import { useLanguage } from '~/contexts/LanguageContext';
 import ConfirmPopupData from '~/models/ConfirmPopupData';
+import DuelData from '~/models/DuelData';
 import PlayerData from '~/models/PlayerData';
+import TeamData from '~/models/TeamData';
 import {
+  calculateSum,
   CARDS_COVER,
   createDeck,
-  shuffleDeck,
-  shuffleArray,
-  drawCards,
-  getCardImage,
-  calculateSum,
   determineWinner,
-  preloadImages,
+  drawCards,
   getCardHighestSuitAndValue,
-  suitRank,
-  getStreakMessage
+  getCardImage,
+  getStreakMessage,
+  preloadImages,
+  shuffleArray,
+  shuffleDeck,
+  suitRank
 } from '~/utils/gameUtil';
+import ChanceStar from '../components/ChanceStar';
+import ConfirmPopup from '../components/ConfirmPopup';
+import PlayerCardDrawer from '../components/PlayerCardDrawer';
+import PowerupGuideModal from '../components/PowerupGuideModal';
+import RoundStatus from '../components/RoundStatus';
+import Card from '../models/Card';
 
 const DECKS = createDeck();
 
@@ -42,6 +43,7 @@ type PowerUpsAllocation = {
 };
 
 const CardGame = () => {
+  const { t, language, setLanguage } = useLanguage();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>({
     name: 'Team 1',
@@ -104,7 +106,21 @@ const CardGame = () => {
   const [gameState, setGameState] = useState('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
+  const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
 
+  // Show winner announcement when duelResult changes
+  useEffect(() => {
+    if (duelResult && duelData.isFinishDuel) {
+      setShowWinnerAnnouncement(true);
+
+      // // Hide after 2 seconds
+      const timer = setTimeout(() => {
+        setShowWinnerAnnouncement(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [duelResult, duelData.isFinishDuel]);
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
     secondChance: team1Data.powerUps.secondChance,
@@ -246,7 +262,9 @@ const CardGame = () => {
     (inputTeam1: string[], inputTeam2: string[]) => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
-          inputTeam1.length === 0 ? 'Team 2 Wins!' : 'Team 1 Wins!'
+          inputTeam1.length === 0
+            ? `Team 2 ${t('game.isWinner')}`
+            : `Team 1 ${t('game.isWinner')}`
         );
         setGameState('gameOver');
         return;
@@ -300,7 +318,7 @@ const CardGame = () => {
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
     },
-    [roundNumber]
+    [roundNumber, t]
   );
 
   const playerSelect = (
@@ -472,7 +490,8 @@ const CardGame = () => {
           firstPlayerData.cards,
           secondPlayerData.cards,
           firstPlayerData.name,
-          secondPlayerData.name
+          secondPlayerData.name,
+          t
         );
 
         // Determine which team just made the second selection
@@ -629,12 +648,12 @@ const CardGame = () => {
   ) => {
     const chanceItemName =
       chanceType === 'secondChance'
-        ? 'Second Chance'
+        ? t('game.secondChance')
         : chanceType === 'revealTwo'
-          ? 'Reveal Two'
+          ? t('game.revealTwo')
           : chanceType === 'lifeShield'
-            ? 'Life Shield'
-            : 'Remove Worst';
+            ? t('game.lifeShield')
+            : t('game.removeWorst');
 
     setConfirmPopup({
       isVisible: true,
@@ -1086,7 +1105,8 @@ const CardGame = () => {
         p1Cards,
         p2Cards,
         p1Name,
-        p2Name
+        p2Name,
+        t
       );
       const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
 
@@ -1156,12 +1176,27 @@ const CardGame = () => {
       // Set the duel result
       let resultMessage = winner;
       if (loserStreak >= 3) {
-        resultMessage = `${loserName} is shutdown by ${winnerName}`;
-        if (streakMessage) {
-          resultMessage += ` (${streakMessage})`;
-        }
+        resultMessage = `${loserName} ${t('game.isShutdownBy')} ${winnerName}`;
       } else if (streakMessage) {
-        resultMessage += ` (${streakMessage})`;
+        // Use an explicit lookup to avoid dynamic key concatenation and make keys
+        // easy to track. Add known streak translation keys here.
+        const streakTranslationMap: Record<string, string> = {
+          // examples - replace or extend with your actual translation keys
+          legendary: 'game.legendary',
+          godlike: 'game.godlike',
+          dominating: 'game.dominating',
+          unstoppable: 'game.unstoppable',
+          rampage: 'game.rampage',
+          killingSpree: 'game.killingSpree'
+        };
+
+        const explicitKey = streakTranslationMap[streakMessage];
+        if (explicitKey) {
+          resultMessage = t(explicitKey, { winner: winnerName });
+        } else {
+          // Fallback for unknown values (keeps previous behavior but makes explicit intent)
+          resultMessage = t(`game.${streakMessage}`, { winner: winnerName });
+        }
       }
 
       setDuelResult(resultMessage);
@@ -1203,7 +1238,8 @@ const CardGame = () => {
       duelData.player1Team,
       duelData.player2Team,
       duelData.lifeShieldUsedBy,
-      winStreaks
+      winStreaks,
+      t
     ]
   );
 
@@ -1461,7 +1497,7 @@ const CardGame = () => {
                       letterSpacing: '3px'
                     }}
                   >
-                    POWER-UPS SETUP
+                    {t('game.powerUpsSetup')}
                   </h2>
                   <div
                     className="rpg-panel"
@@ -1508,7 +1544,7 @@ const CardGame = () => {
                               : '#fff'
                         }}
                       >
-                        Each team setups their own power-ups
+                        {t('game.eachTeamSetup')}
                       </label>
                     </div>
                     <div
@@ -1544,7 +1580,7 @@ const CardGame = () => {
                               : '#fff'
                         }}
                       >
-                        Setup power-ups for both teams
+                        {t('game.setupBothTeams')}
                       </label>
                     </div>
                     <div
@@ -1579,7 +1615,7 @@ const CardGame = () => {
                               : '#fff'
                         }}
                       >
-                        Generate power-ups separately for each team
+                        {t('game.generateSeparate')}
                       </label>
                     </div>
                     <div
@@ -1614,7 +1650,7 @@ const CardGame = () => {
                               : '#fff'
                         }}
                       >
-                        Random power-ups for both teams
+                        {t('game.randomBoth')}
                       </label>
                     </div>
                   </div>
@@ -1630,7 +1666,7 @@ const CardGame = () => {
                       <div className="setup-card">
                         <div className="setup-row">
                           {renderLabelWithIcon(
-                            'Second Chance',
+                            t('game.secondChance'),
                             'chance_second.png',
                             'both-second'
                           )}
@@ -1664,7 +1700,7 @@ const CardGame = () => {
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon(
-                            'Reveal Two',
+                            t('game.revealTwo'),
                             'chance_reveal.png',
                             'both-reveal'
                           )}
@@ -1698,7 +1734,7 @@ const CardGame = () => {
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon(
-                            'Life Shield',
+                            t('game.lifeShield'),
                             'chance_shield.png',
                             'both-shield'
                           )}
@@ -1732,7 +1768,7 @@ const CardGame = () => {
                         </div>
                         <div className="setup-row">
                           {renderLabelWithIcon(
-                            'Remove Worst',
+                            t('game.removeWorst'),
                             'chance_remove.png',
                             'both-remove'
                           )}
@@ -1765,7 +1801,7 @@ const CardGame = () => {
                           )}
                         </div>
                         <div className="setup-row">
-                          <strong>Total</strong>
+                          <strong>{t('game.total')}</strong>
                           <strong
                             style={{
                               color:
@@ -1797,7 +1833,7 @@ const CardGame = () => {
                           </h3>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Second Chance',
+                              t('game.secondChance'),
                               'chance_second.png',
                               't1-second'
                             )}
@@ -1833,7 +1869,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Reveal Two',
+                              t('game.revealTwo'),
                               'chance_reveal.png',
                               't1-reveal'
                             )}
@@ -1869,7 +1905,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Life Shield',
+                              t('game.lifeShield'),
                               'chance_shield.png',
                               't1-shield'
                             )}
@@ -1905,7 +1941,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Remove Worst',
+                              t('game.removeWorst'),
                               'chance_remove.png',
                               't1-remove'
                             )}
@@ -1971,7 +2007,7 @@ const CardGame = () => {
                           </h3>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Second Chance',
+                              t('game.secondChance'),
                               'chance_second.png',
                               't2-second'
                             )}
@@ -2007,7 +2043,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Reveal Two',
+                              t('game.revealTwo'),
                               'chance_reveal.png',
                               't2-reveal'
                             )}
@@ -2043,7 +2079,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Life Shield',
+                              t('game.lifeShield'),
                               'chance_shield.png',
                               't2-shield'
                             )}
@@ -2079,7 +2115,7 @@ const CardGame = () => {
                           </div>
                           <div className="setup-row">
                             {renderLabelWithIcon(
-                              'Remove Worst',
+                              t('game.removeWorst'),
                               'chance_remove.png',
                               't2-remove'
                             )}
@@ -2149,8 +2185,7 @@ const CardGame = () => {
                       fontSize: '0.95rem'
                     }}
                   >
-                    Each team must have a total of 4 power-ups, with no more
-                    than 2 of the same type.
+                    {t('game.note')}
                   </p>
                   <div style={{ textAlign: 'center' }}>
                     <a
@@ -2179,7 +2214,7 @@ const CardGame = () => {
                         e.currentTarget.style.letterSpacing = '0px';
                       }}
                     >
-                      ⚡ POWER-UPS GUIDE ⚡
+                      {t('game.powerUpsGuide')}
                     </a>
                   </div>
                 </div>
@@ -2208,13 +2243,58 @@ const CardGame = () => {
                     className="text-gradient"
                     style={{
                       fontSize: '3rem',
-                      margin: '0 0 30px 0',
+                      margin: '0 0 10px 0',
                       textAlign: 'center',
                       letterSpacing: '2px'
                     }}
                   >
-                    THOR'S 3KEY
+                    THOR&apos;S 3KEY
                   </h1>
+
+                  {/* Language Switcher */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      marginBottom: '20px'
+                    }}
+                  >
+                    <button
+                      onClick={() => setLanguage('en')}
+                      style={{
+                        background:
+                          language === 'en'
+                            ? 'var(--color-primary)'
+                            : 'rgba(255,255,255,0.1)',
+                        border: '1px solid var(--color-primary)',
+                        color: '#fff',
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        fontWeight: language === 'en' ? 'bold' : 'normal'
+                      }}
+                    >
+                      EN
+                    </button>
+                    <button
+                      onClick={() => setLanguage('vi')}
+                      style={{
+                        background:
+                          language === 'vi'
+                            ? 'var(--color-primary)'
+                            : 'rgba(255,255,255,0.1)',
+                        border: '1px solid var(--color-primary)',
+                        color: '#fff',
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        fontWeight: language === 'vi' ? 'bold' : 'normal'
+                      }}
+                    >
+                      VI
+                    </button>
+                  </div>
 
                   <div
                     className="rpg-panel"
@@ -2237,7 +2317,7 @@ const CardGame = () => {
                         letterSpacing: '1px'
                       }}
                     >
-                      SHEET ID
+                      {t('game.sheetId')}
                     </label>
                     <input
                       className="rpg-input"
@@ -2281,7 +2361,7 @@ const CardGame = () => {
                         letterSpacing: '1px'
                       }}
                     >
-                      SHEET RANGE
+                      {t('game.sheetRange')}
                     </label>
                     <input
                       className="rpg-input"
@@ -2323,7 +2403,7 @@ const CardGame = () => {
                         opacity: isStartGameDisabled() ? 0.5 : 1
                       }}
                     >
-                      START GAME
+                      {t('common.startGame')}
                     </button>
                   </div>
                 </div>
@@ -2344,250 +2424,248 @@ const CardGame = () => {
       />
 
       {gameState == 'gamePlaying' && (
-        <>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '40px',
+            padding: '20px'
+          }}
+        >
+          {/* Team 1 Panel */}
           <div
+            className="rpg-panel"
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: '40px',
-              padding: '20px'
+              width: '200px',
+              padding: '20px',
+              background: 'rgba(15, 12, 41, 0.9)',
+              border: '2px solid var(--color-primary)'
             }}
           >
-            {/* Team 1 Panel */}
             <div
-              className="rpg-panel"
               style={{
-                width: '200px',
-                padding: '20px',
-                background: 'rgba(15, 12, 41, 0.9)',
-                border: '2px solid var(--color-primary)'
+                fontSize: '48px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: 'var(--color-accent)',
+                marginBottom: '10px',
+                textShadow: '0 0 10px var(--color-accent)'
               }}
             >
-              <div
-                style={{
-                  fontSize: '48px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: 'var(--color-accent)',
-                  marginBottom: '10px',
-                  textShadow: '0 0 10px var(--color-accent)'
-                }}
-              >
-                {team1Data.score}
-              </div>
-              <h2
-                className="text-glow"
-                style={{
-                  textAlign: 'center',
-                  color: 'var(--color-primary)',
-                  fontSize: '24px',
-                  margin: '10px 0',
-                  position: 'relative'
-                }}
-              >
-                TEAM 1
-                {team1Data.totalPowerUps > 0 && (
-                  <ChanceStar
-                    number={team1Data.totalPowerUps}
-                    style={{
-                      top: '50%',
-                      left: 'calc(100% + 10px)',
-                      transform: 'translateY(-50%)'
-                    }}
-                  />
-                )}
-              </h2>
-              <div
-                style={{
-                  borderTop: '1px solid rgba(255,255,255,0.2)',
-                  paddingTop: '15px'
-                }}
-              >
-                {team1Data.players.map((member, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '8px',
-                      marginBottom: '5px',
-                      background: 'rgba(255, 0, 85, 0.1)',
-                      border: '1px solid rgba(255, 0, 85, 0.3)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      fontFamily: 'var(--font-body)'
-                    }}
-                  >
-                    {member}
-                  </div>
-                ))}
-              </div>
+              {team1Data.score}
             </div>
-
-            {/* Battle Arena */}
-            <div
+            <h2
+              className="text-glow"
               style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
+                textAlign: 'center',
+                color: 'var(--color-primary)',
+                fontSize: '24px',
+                margin: '10px 0',
+                position: 'relative'
               }}
             >
-              <div
-                style={{ display: 'flex', flexDirection: 'row', gap: '100px' }}
-              >
-                <div
+              {t('common.team')} 1
+              {team1Data.totalPowerUps > 0 && (
+                <ChanceStar
+                  number={team1Data.totalPowerUps}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
+                    top: '50%',
+                    left: 'calc(100% + 10px)',
+                    transform: 'translateY(-50%)'
+                  }}
+                />
+              )}
+            </h2>
+            <div
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                paddingTop: '15px'
+              }}
+            >
+              {team1Data.players.map((member, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '8px',
+                    marginBottom: '5px',
+                    background: 'rgba(255, 0, 85, 0.1)',
+                    border: '1px solid rgba(255, 0, 85, 0.3)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-body)'
                   }}
                 >
-                  <PlayerCardDrawer
-                    className={'mb-1'}
-                    playerData={duelData.topLeftPlayerData}
-                    onSelect={() => playerSelect('top-left')}
-                    side="left"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.topLeftPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.topLeft.length > 0
-                        ? duelData.revealedCards.topLeft
-                        : CARDS_COVER
-                    }
-                  />
-                  <PlayerCardDrawer
-                    className={''}
-                    playerData={duelData.bottomLeftPlayerData}
-                    onSelect={() => playerSelect('bottom-left')}
-                    side="left"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.bottomLeftPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.bottomLeft.length > 0
-                        ? duelData.revealedCards.bottomLeft
-                        : CARDS_COVER
-                    }
-                  />
+                  {member}
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}
-                >
-                  <PlayerCardDrawer
-                    className={'mb-1'}
-                    playerData={duelData.topRightPlayerData}
-                    onSelect={() => playerSelect('top-right')}
-                    side="right"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.topRightPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.topRight.length > 0
-                        ? duelData.revealedCards.topRight
-                        : CARDS_COVER
-                    }
-                  />
-                  <PlayerCardDrawer
-                    className={''}
-                    playerData={duelData.bottomRightPlayerData}
-                    onSelect={() => playerSelect('bottom-right')}
-                    side="right"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.bottomRightPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.bottomRight.length > 0
-                        ? duelData.revealedCards.bottomRight
-                        : CARDS_COVER
-                    }
-                  />
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Team 2 Panel */}
+          {/* Battle Arena */}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
             <div
-              className="rpg-panel"
-              style={{
-                width: '200px',
-                padding: '20px',
-                background: 'rgba(15, 12, 41, 0.9)',
-                border: '2px solid var(--color-secondary)'
-              }}
+              style={{ display: 'flex', flexDirection: 'row', gap: '100px' }}
             >
               <div
                 style={{
-                  fontSize: '48px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  color: 'var(--color-accent)',
-                  marginBottom: '10px',
-                  textShadow: '0 0 10px var(--color-accent)'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
                 }}
               >
-                {team2Data.score}
+                <PlayerCardDrawer
+                  className={'mb-1'}
+                  playerData={duelData.topLeftPlayerData}
+                  onSelect={() => playerSelect('top-left')}
+                  side="left"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.topLeftPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.topLeft.length > 0
+                      ? duelData.revealedCards.topLeft
+                      : CARDS_COVER
+                  }
+                />
+                <PlayerCardDrawer
+                  className={''}
+                  playerData={duelData.bottomLeftPlayerData}
+                  onSelect={() => playerSelect('bottom-left')}
+                  side="left"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.bottomLeftPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.bottomLeft.length > 0
+                      ? duelData.revealedCards.bottomLeft
+                      : CARDS_COVER
+                  }
+                />
               </div>
-              <h2
-                className="text-glow"
-                style={{
-                  textAlign: 'center',
-                  color: 'var(--color-secondary)',
-                  fontSize: '24px',
-                  margin: '10px 0',
-                  position: 'relative'
-                }}
-              >
-                {team2Data.totalPowerUps > 0 && (
-                  <ChanceStar
-                    number={team2Data.totalPowerUps}
-                    style={{
-                      top: '50%',
-                      right: 'calc(100% + 10px)',
-                      transform: 'translateY(-50%)'
-                    }}
-                  />
-                )}
-                TEAM 2
-              </h2>
               <div
                 style={{
-                  borderTop: '1px solid rgba(255,255,255,0.2)',
-                  paddingTop: '15px'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
                 }}
               >
-                {team2Data.players.map((member, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '8px',
-                      marginBottom: '5px',
-                      background: 'rgba(0, 242, 255, 0.1)',
-                      border: '1px solid rgba(0, 242, 255, 0.3)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      fontFamily: 'var(--font-body)'
-                    }}
-                  >
-                    {member}
-                  </div>
-                ))}
+                <PlayerCardDrawer
+                  className={'mb-1'}
+                  playerData={duelData.topRightPlayerData}
+                  onSelect={() => playerSelect('top-right')}
+                  side="right"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.topRightPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.topRight.length > 0
+                      ? duelData.revealedCards.topRight
+                      : CARDS_COVER
+                  }
+                />
+                <PlayerCardDrawer
+                  className={''}
+                  playerData={duelData.bottomRightPlayerData}
+                  onSelect={() => playerSelect('bottom-right')}
+                  side="right"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.bottomRightPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.bottomRight.length > 0
+                      ? duelData.revealedCards.bottomRight
+                      : CARDS_COVER
+                  }
+                />
               </div>
             </div>
           </div>
-        </>
+
+          {/* Team 2 Panel */}
+          <div
+            className="rpg-panel"
+            style={{
+              width: '200px',
+              padding: '20px',
+              background: 'rgba(15, 12, 41, 0.9)',
+              border: '2px solid var(--color-secondary)'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '48px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: 'var(--color-accent)',
+                marginBottom: '10px',
+                textShadow: '0 0 10px var(--color-accent)'
+              }}
+            >
+              {team2Data.score}
+            </div>
+            <h2
+              className="text-glow"
+              style={{
+                textAlign: 'center',
+                color: 'var(--color-secondary)',
+                fontSize: '24px',
+                margin: '10px 0',
+                position: 'relative'
+              }}
+            >
+              {team2Data.totalPowerUps > 0 && (
+                <ChanceStar
+                  number={team2Data.totalPowerUps}
+                  style={{
+                    top: '50%',
+                    right: 'calc(100% + 10px)',
+                    transform: 'translateY(-50%)'
+                  }}
+                />
+              )}
+              {t('common.team')} 2
+            </h2>
+            <div
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                paddingTop: '15px'
+              }}
+            >
+              {team2Data.players.map((member, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '8px',
+                    marginBottom: '5px',
+                    background: 'rgba(0, 242, 255, 0.1)',
+                    border: '1px solid rgba(0, 242, 255, 0.3)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-body)'
+                  }}
+                >
+                  {member}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Add RoundStatus component at the bottom */}
@@ -2637,7 +2715,7 @@ const CardGame = () => {
                 letterSpacing: '3px'
               }}
             >
-              BATTLE COMPLETE
+              {t('game.battleComplete')}
             </h2>
             <h1
               className="text-gradient"
@@ -2672,6 +2750,66 @@ const CardGame = () => {
         </div>
       )}
 
+      {/* Round Winner Announcement */}
+      {showWinnerAnnouncement && (
+        <>
+          {/* Backdrop */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.7)',
+              zIndex: 9999,
+              animation: 'fade-in 0.3s ease-out'
+            }}
+          />
+
+          {/* Winner Announcement */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '25%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999,
+              animation: 'fade-in 0.3s ease-out'
+            }}
+          >
+            <div
+              className="rpg-panel"
+              style={{
+                background: 'rgba(15, 12, 41, 0.98)',
+                border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                padding: '40px 60px',
+                boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                minWidth: '500px'
+              }}
+            >
+              <div
+                className="text-glow"
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  padding: '20px',
+                  color: duelResult.includes(team1Data.name)
+                    ? 'var(--color-secondary)'
+                    : duelResult.includes(team2Data.name)
+                      ? 'var(--color-primary)'
+                      : 'var(--color-accent)',
+                  letterSpacing: '2px',
+                  animation: 'pulse-glow 1.5s infinite',
+                  textTransform: 'uppercase'
+                }}
+              >
+                {duelResult}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       {/* Confirmation Popup */}
       <ConfirmPopup
         isVisible={confirmPopup.isVisible}

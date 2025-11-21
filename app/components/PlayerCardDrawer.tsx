@@ -1,6 +1,7 @@
 import React from 'react';
 import PlayerData from '~/models/PlayerData';
 import DuelData from '~/models/DuelData';
+import { useLanguage } from '~/contexts/LanguageContext';
 
 interface Card {
   value: number;
@@ -38,6 +39,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   renderTheCards,
   CARDS_COVER
 }) => {
+  const { t } = useLanguage();
   // Helper function to determine if player can make a selection
   const disabledByRemoveWorst = (() => {
     const disabled = new Set(duelData.removedWorstGroups || []);
@@ -84,31 +86,40 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     >
       <div className={'playerContainer'} style={containerStyle}>
         {/* Player Name Header */}
-        <div 
+        <div
           className="rpg-skewed"
           style={{
-            background: 'linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent)',
+            background:
+              'linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent)',
             padding: '3px 15px',
             marginBottom: '8px',
             borderBottom: '1px solid var(--color-secondary)',
             textAlign: 'center'
           }}
         >
-          <h2 className={'m0 text-glow'} style={{ 
-            color: varColorForTeam(playerData.team),
-            fontSize: '1.5rem',
-            letterSpacing: '1px'
-          }}>
-            {playerData.name || 'UNKNOWN'}
+          <h2
+            className={'m0 text-glow'}
+            style={{
+              color: varColorForTeam(playerData.team),
+              fontSize: '1.5rem',
+              letterSpacing: '1px'
+            }}
+          >
+            {playerData.name || t('game.unknown')}
           </h2>
         </div>
 
-        <div className={'drawCardsContainer'} style={{ position: 'relative', minHeight: '60px', height: '60px' }}>
+        <div
+          className={'drawCardsContainer'}
+          style={{ position: 'relative', minHeight: '60px', height: '60px' }}
+        >
           {shouldShowDrawButton && (
             <>
               {/* Animated Hand Pointer */}
               <img
-                className={side === 'left' ? 'leftHandPointer' : 'rightHandPointer'}
+                className={
+                  side === 'left' ? 'leftHandPointer' : 'rightHandPointer'
+                }
                 style={{
                   position: 'absolute',
                   top: '50%',
@@ -121,12 +132,19 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                   width: '60px',
                   height: '60px',
                   objectFit: 'contain',
-                  animation: side === 'left' ? 'point-left 1s ease-in-out infinite' : 'point-right 1s ease-in-out infinite'
+                  animation:
+                    side === 'left'
+                      ? 'point-left 1s ease-in-out infinite'
+                      : 'point-right 1s ease-in-out infinite'
                 }}
-                src={side === 'left' ? "images/left-hand.png" : "images/right-hand.png"}
+                src={
+                  side === 'left'
+                    ? 'images/left-hand.png'
+                    : 'images/right-hand.png'
+                }
                 alt="cursor"
               />
-              
+
               <button
                 onClick={onSelect}
                 className={'rpg-button'}
@@ -140,18 +158,16 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                 }}
                 disabled={isDrawDisabled}
               >
-                {isDrawDisabled ? 'LOCKED' : 'DRAW CARDS'}
+                {isDrawDisabled ? t('game.locked') : t('game.drawCard')}
               </button>
             </>
           )}
 
           {!isBlankHand && (
-            <div 
+            <div
               className="rpg-skewed"
               onClick={
-                playerData.name === '?' &&
-                playerData.team === '' &&
-                !disabled
+                playerData.name === '?' && playerData.team === '' && !disabled
                   ? onSelect
                   : undefined
               }
@@ -162,7 +178,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                 height: '60px',
                 background: 'rgba(0, 0, 0, 0.5)',
                 border: `2px solid ${varColorForTeam(playerData.team)}`,
-                cursor: playerData.name === '?' && playerData.team === '' && !disabled ? 'pointer' : 'default'
+                cursor:
+                  playerData.name === '?' && playerData.team === '' && !disabled
+                    ? 'pointer'
+                    : 'default'
               }}
             >
               <span
@@ -180,7 +199,15 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           )}
         </div>
 
-        <div className={'cardContainer'} style={{display: 'flex', marginTop: '10px', gap: '8px', justifyContent: 'center' }}>
+        <div
+          className={'cardContainer'}
+          style={{
+            display: 'flex',
+            marginTop: '10px',
+            gap: '8px',
+            justifyContent: 'center'
+          }}
+        >
           {renderTheCards(
             playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
             canClickDraw ? onSelect : undefined,
@@ -195,7 +222,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
 // Helper to get color based on team
 const varColorForTeam = (team: string) => {
   if (team === 'team1') return 'var(--color-secondary)'; // Cyan
-  if (team === 'team2') return 'var(--color-primary)';   // Pink
+  if (team === 'team2') return 'var(--color-primary)'; // Pink
   return '#fff';
 };
 

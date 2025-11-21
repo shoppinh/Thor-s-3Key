@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '~/contexts/LanguageContext';
 
 interface ConfirmPopupProps {
   isVisible: boolean;
@@ -13,6 +14,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   onConfirm,
   onCancel
 }) => {
+  const { t } = useLanguage();
   if (!isVisible) return null;
 
   return (
@@ -51,7 +53,11 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
             letterSpacing: '1px'
           }}
         >
-          ACTIVATE <span style={{ color: 'var(--color-accent)' }}>{chanceItemName.toUpperCase()}</span>?
+          {t('powerups.confirmMessage')}{' '}
+          <span style={{ color: 'var(--color-accent)' }}>
+            {chanceItemName.toUpperCase()}
+          </span>
+          ?
         </h3>
 
         <div
@@ -70,7 +76,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
               fontSize: '18px'
             }}
           >
-            CONFIRM
+            {t('common.confirm')}
           </button>
 
           <button
@@ -81,7 +87,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
               fontSize: '18px'
             }}
           >
-            CANCEL
+            {t('common.cancel')}
           </button>
         </div>
       </div>

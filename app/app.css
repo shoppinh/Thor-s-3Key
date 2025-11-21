@@ -14,17 +14,20 @@
 
   /* Fonts */
   --font-header: 'Russo One', sans-serif;
-  --font-body: 'Rajdhani', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;  
 
   /* Effects */
   --glow-primary: 0 0 10px rgba(255, 0, 85, 0.6), 0 0 20px rgba(255, 0, 85, 0.4);
-  --glow-secondary: 0 0 10px rgba(0, 242, 255, 0.6), 0 0 20px rgba(0, 242, 255, 0.4);
-  --glow-accent: 0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4);
+  --glow-secondary: 0 0 10px rgba(0, 242, 255, 0.6),
+    0 0 20px rgba(0, 242, 255, 0.4);
+  --glow-accent: 0 0 10px rgba(255, 215, 0, 0.6),
+    0 0 20px rgba(255, 215, 0, 0.4);
   --skew-angle: -10deg;
   --border-width: 2px;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -36,7 +39,12 @@ html, body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-header);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -63,16 +71,20 @@ button {
 .rpg-panel::before {
   content: '';
   position: absolute;
-  top: -2px; left: -2px;
-  width: 10px; height: 10px;
+  top: -2px;
+  left: -2px;
+  width: 10px;
+  height: 10px;
   border-top: 2px solid var(--color-text);
   border-left: 2px solid var(--color-text);
 }
 .rpg-panel::after {
   content: '';
   position: absolute;
-  bottom: -2px; right: -2px;
-  width: 10px; height: 10px;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
   border-bottom: 2px solid var(--color-text);
   border-right: 2px solid var(--color-text);
 }
@@ -141,45 +153,87 @@ button {
 
 /* Animations */
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 5px var(--color-secondary); }
-  50% { box-shadow: 0 0 20px var(--color-secondary), 0 0 10px var(--color-secondary); }
-  100% { box-shadow: 0 0 5px var(--color-secondary); }
+  0% {
+    box-shadow: 0 0 5px var(--color-secondary);
+  }
+  50% {
+    box-shadow:
+      0 0 20px var(--color-secondary),
+      0 0 10px var(--color-secondary);
+  }
+  100% {
+    box-shadow: 0 0 5px var(--color-secondary);
+  }
 }
 
 @keyframes slide-in-left {
-  from { transform: translateX(-100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-in-right {
-  from { transform: translateX(100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slam-down {
-  0% { transform: translateY(-20px); opacity: 0; }
-  50% { transform: translateY(5px); }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes point-left {
-  0%, 100% { transform: translateY(-50%) translateX(0); }
-  50% { transform: translateY(-50%) translateX(-10px); }
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(-10px);
+  }
 }
 
 @keyframes point-right {
-  0%, 100% { transform: translateY(-50%) translateX(0); }
-  50% { transform: translateY(-50%) translateX(10px); }
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(10px);
+  }
 }
 
 /* Number Input Styling */
-input[type="number"].num-input,
-input[type="number"] {
+input[type='number'].num-input,
+input[type='number'] {
   background: rgba(15, 12, 41, 0.8);
   border: 2px solid var(--color-secondary);
   color: var(--color-accent);
@@ -194,35 +248,35 @@ input[type="number"] {
   transition: all 0.3s ease;
 }
 
-input[type="number"].num-input:focus,
-input[type="number"]:focus {
+input[type='number'].num-input:focus,
+input[type='number']:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 20px var(--color-primary);
   transform: scale(1.05);
 }
 
-input[type="number"].num-input:hover,
-input[type="number"]:hover {
+input[type='number'].num-input:hover,
+input[type='number']:hover {
   border-color: var(--color-accent);
   box-shadow: 0 0 15px var(--color-accent);
 }
 
 /* Remove spinner arrows */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
 /* Text Input Styling */
-input[type="text"].rpg-input,
-input[type="text"] {
+input[type='text'].rpg-input,
+input[type='text'] {
   background: rgba(0, 0, 0, 0.5);
   border: 2px solid var(--color-secondary);
   color: #fff;
@@ -234,20 +288,20 @@ input[type="text"] {
   transition: all 0.3s ease;
 }
 
-input[type="text"].rpg-input:focus,
-input[type="text"]:focus {
+input[type='text'].rpg-input:focus,
+input[type='text']:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 20px var(--color-primary);
 }
 
-input[type="text"].rpg-input:hover:not(:disabled),
-input[type="text"]:hover:not(:disabled) {
+input[type='text'].rpg-input:hover:not(:disabled),
+input[type='text']:hover:not(:disabled) {
   border-color: var(--color-accent);
   box-shadow: 0 0 15px var(--color-accent);
 }
 
-input[type="text"]:disabled {
+input[type='text']:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
