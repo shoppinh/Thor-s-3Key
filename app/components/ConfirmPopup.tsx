@@ -53,7 +53,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
             letterSpacing: '1px'
           }}
         >
-          {t('power-ups.title')}
+          {t('powerups.title')}
         </h3>
         <h4
           className="text-glow"
@@ -65,7 +65,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
             letterSpacing: '1px'
           }}
         >
-          {t('power-ups.confirmMessage')}{' '}
+          {t('powerups.confirmMessage')}{' '}
           <span style={{ color: 'var(--color-accent)' }}>
             {chanceItemName.toUpperCase()}
           </span>
