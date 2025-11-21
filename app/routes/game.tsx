@@ -2762,7 +2762,7 @@ const CardGame = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.7)',
+              background: 'rgba(0, 0, 0, 0.4)',
               zIndex: 9999,
               animation: 'fade-in 0.3s ease-out'
             }}
@@ -2772,9 +2772,9 @@ const CardGame = () => {
           <div
             style={{
               position: 'absolute',
-              top: '25%',
+              bottom: 0,
               left: '50%',
-              transform: 'translate(-50%, -50%)',
+              transform: 'translate(-50%, 0)',
               zIndex: 9999,
               animation: 'fade-in 0.3s ease-out'
             }}
@@ -2784,7 +2784,7 @@ const CardGame = () => {
               style={{
                 background: 'rgba(15, 12, 41, 0.98)',
                 border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
-                padding: '40px 60px',
+                padding: '20px 60px',
                 boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
                 minWidth: '500px'
               }}

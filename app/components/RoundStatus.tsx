@@ -56,7 +56,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
       const timerId = setTimeout(() => {
         nextRound(team1Players, team2Players);
-      }, 5000);
+      }, 3000);
       return () => clearTimeout(timerId);
     }
   }, [
