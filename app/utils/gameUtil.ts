@@ -182,29 +182,36 @@ export const determineWinner = (
   p1Cards: Card[],
   p2Cards: Card[],
   p1Name: string,
-  p2Name: string
+  p2Name: string,
+  t: (key: string, options?: Record<string, any>) => string
 ): { winner: string; isPlayer1Winner: boolean } => {
   let winner: string;
   let isPlayer1Winner: boolean;
-
-  if (p1Sum !== p2Sum) {
-    isPlayer1Winner = p1Sum > p2Sum;
-    winner = `${isPlayer1Winner ? p1Name : p2Name} Wins!`;
-  } else {
+  if (p1Sum === p2Sum) {
     const p1HighestCard = getCardHighestSuitAndValue(p1Cards);
     const p2HighestCard = getCardHighestSuitAndValue(p2Cards);
 
-    if (suitRank[p1HighestCard.suit] !== suitRank[p2HighestCard.suit]) {
-      isPlayer1Winner =
-        suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit];
-      winner = `${isPlayer1Winner ? p1Name : p2Name} Wins by Suit!`;
-    } else {
+    if (suitRank[p1HighestCard.suit] === suitRank[p2HighestCard.suit]) {
       isPlayer1Winner =
         p1HighestCard.value === 1 ||
         (p2HighestCard.value !== 1 &&
           p1HighestCard.value > p2HighestCard.value);
-      winner = `${isPlayer1Winner ? p1Name : p2Name} Wins By Highest Card in Suit!`;
+      winner = t('game.winsByHighestCard', {
+        name: isPlayer1Winner ? p1Name : p2Name
+      });
+    } else {
+      isPlayer1Winner =
+        suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit];
+      winner = t('game.winsBySuit', {
+        name: isPlayer1Winner ? p1Name : p2Name
+      });
     }
+  } else {
+    isPlayer1Winner = p1Sum > p2Sum;
+    winner = t('game.wins', {
+      winner: isPlayer1Winner ? p1Name : p2Name,
+      loser: isPlayer1Winner ? p2Name : p1Name
+    });
   }
 
   return { winner, isPlayer1Winner };
@@ -221,4 +228,19 @@ export const getTeamByPlayer = (
   team1Players: string[]
 ): 'team1' | 'team2' => {
   return team1Players.includes(player) ? 'team1' : 'team2';
+};
+
+/**
+ * Returns the League of Legends-inspired win streak message based on the streak count  
+ * @param streak - Number of consecutive wins
+ * @returns Streak message or empty string
+ */
+export const getStreakMessage = (streak: number): string => {
+  if (streak >= 8) return 'legendary';
+  if (streak === 7) return 'godlike';
+  if (streak === 6) return 'dominating';
+  if (streak === 5) return 'unstoppable';
+  if (streak === 4) return 'rampage';
+  if (streak === 3) return 'killingSpree';
+  return '';
 };

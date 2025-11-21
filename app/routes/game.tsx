@@ -1,28 +1,30 @@
-import { useCallback, useState } from 'react';
 import { useOutletContext } from '@remix-run/react';
-import PlayerCardDrawer from '../components/PlayerCardDrawer';
-import RoundStatus from '../components/RoundStatus';
-import ChanceStar from '../components/ChanceStar';
-import ConfirmPopup from '../components/ConfirmPopup';
-import PowerupGuideModal from '../components/PowerupGuideModal';
-import Card from '../models/Card';
-import TeamData from '~/models/TeamData';
-import DuelData from '~/models/DuelData';
+import { useCallback, useEffect, useState } from 'react';
+import { useLanguage } from '~/contexts/LanguageContext';
 import ConfirmPopupData from '~/models/ConfirmPopupData';
+import DuelData from '~/models/DuelData';
 import PlayerData from '~/models/PlayerData';
+import TeamData from '~/models/TeamData';
 import {
+  calculateSum,
   CARDS_COVER,
   createDeck,
-  shuffleDeck,
-  shuffleArray,
+  determineWinner,
   drawCards,
+  getCardHighestSuitAndValue,
   getCardImage,
-  calculateSum,
-    determineWinner,
-    preloadImages,
-    getCardHighestSuitAndValue,
-    suitRank
+  getStreakMessage,
+  preloadImages,
+  shuffleArray,
+  shuffleDeck,
+  suitRank
 } from '~/utils/gameUtil';
+import ChanceStar from '../components/ChanceStar';
+import ConfirmPopup from '../components/ConfirmPopup';
+import PlayerCardDrawer from '../components/PlayerCardDrawer';
+import PowerupGuideModal from '../components/PowerupGuideModal';
+import RoundStatus from '../components/RoundStatus';
+import Card from '../models/Card';
 
 const DECKS = createDeck();
 
@@ -41,6 +43,7 @@ type PowerUpsAllocation = {
 };
 
 const CardGame = () => {
+  const { t, language, setLanguage } = useLanguage();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>({
     name: 'Team 1',
@@ -102,7 +105,22 @@ const CardGame = () => {
   });
   const [gameState, setGameState] = useState('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
+  const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
+  const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
 
+  // Show winner announcement when duelResult changes
+  useEffect(() => {
+    if (duelResult && duelData.isFinishDuel) {
+      setShowWinnerAnnouncement(true);
+
+      // // Hide after 2 seconds
+      const timer = setTimeout(() => {
+        setShowWinnerAnnouncement(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [duelResult, duelData.isFinishDuel]);
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>({
     secondChance: team1Data.powerUps.secondChance,
@@ -125,7 +143,9 @@ const CardGame = () => {
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
-  const [setupMode, setSetupMode] = useState<'per-team' | 'both' | 'random' | 'random-each'>('per-team');
+  const [setupMode, setSetupMode] = useState<
+    'per-team' | 'both' | 'random' | 'random-each'
+  >('per-team');
 
   /**
    * Starts the game with the provided team data
@@ -138,6 +158,7 @@ const CardGame = () => {
       return;
     }
 
+    setWinStreaks({});
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
@@ -160,14 +181,13 @@ const CardGame = () => {
         '♠': 'spades',
         '♣': 'clubs'
       };
-      const extraImages = [
-        '/images/back_card.jpg'
-      ];
+      const extraImages = ['/images/back_card.jpg'];
       const urls: string[] = [];
       allValues.forEach((v) => {
         Object.keys(suitNames).forEach((s) => {
           const suit = suitNames[s];
-          const numToName = (num: number): string => (num === 1 ? 'ace' : num.toString());
+          const numToName = (num: number): string =>
+            num === 1 ? 'ace' : num.toString();
           urls.push(`/images/${numToName(v)}_of_${suit}.png`);
         });
       });
@@ -208,11 +228,27 @@ const CardGame = () => {
 
       // Respect setup mode at start: in both/random modes, apply shared allocation
       if (setupMode === 'both' || setupMode === 'random') {
-        setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
-        setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team1Alloc } }));
+        setTeam1Data((prev) => ({
+          ...prev,
+          players: shuffledTeam1,
+          powerUps: { ...team1Alloc }
+        }));
+        setTeam2Data((prev) => ({
+          ...prev,
+          players: shuffledTeam2,
+          powerUps: { ...team1Alloc }
+        }));
       } else {
-        setTeam1Data((prev) => ({ ...prev, players: shuffledTeam1, powerUps: { ...team1Alloc } }));
-        setTeam2Data((prev) => ({ ...prev, players: shuffledTeam2, powerUps: { ...team2Alloc } }));
+        setTeam1Data((prev) => ({
+          ...prev,
+          players: shuffledTeam1,
+          powerUps: { ...team1Alloc }
+        }));
+        setTeam2Data((prev) => ({
+          ...prev,
+          players: shuffledTeam2,
+          powerUps: { ...team2Alloc }
+        }));
       }
 
       startGameWithTeams(shuffledTeam1, shuffledTeam2);
@@ -226,7 +262,9 @@ const CardGame = () => {
     (inputTeam1: string[], inputTeam2: string[]) => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
-          inputTeam1.length === 0 ? 'Team 2 Wins!' : 'Team 1 Wins!'
+          inputTeam1.length === 0
+            ? `Team 2 ${t('game.isWinner')}`
+            : `Team 1 ${t('game.isWinner')}`
         );
         setGameState('gameOver');
         return;
@@ -280,7 +318,7 @@ const CardGame = () => {
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
     },
-    [roundNumber]
+    [roundNumber, t]
   );
 
   const playerSelect = (
@@ -452,7 +490,8 @@ const CardGame = () => {
           firstPlayerData.cards,
           secondPlayerData.cards,
           firstPlayerData.name,
-          secondPlayerData.name
+          secondPlayerData.name,
+          t
         );
 
         // Determine which team just made the second selection
@@ -471,22 +510,31 @@ const CardGame = () => {
           (secondPlayerTeam === newData.player2Team && !isPlayer1Winner);
 
         const secondTeamHasSecondChance =
-          !secondTeamAlreadyUsedSecondChance &&
-          !secondTeamIsWinning;
+          !secondTeamAlreadyUsedSecondChance && !secondTeamIsWinning;
 
         // Additional constraints: must have at least one selectable group remaining (not removed, not revealed, not already drawn)
         const disabledGroups = new Set(newData.removedWorstGroups || []);
         const availableCount = [
-          !disabledGroups.has('top-left') && !newData.topLeftRevealed && newData.topLeftPlayerData.cards.length === 0,
-          !disabledGroups.has('bottom-left') && !newData.bottomLeftRevealed && newData.bottomLeftPlayerData.cards.length === 0,
-          !disabledGroups.has('top-right') && !newData.topRightRevealed && newData.topRightPlayerData.cards.length === 0,
-          !disabledGroups.has('bottom-right') && !newData.bottomRightRevealed && newData.bottomRightPlayerData.cards.length === 0
+          !disabledGroups.has('top-left') &&
+            !newData.topLeftRevealed &&
+            newData.topLeftPlayerData.cards.length === 0,
+          !disabledGroups.has('bottom-left') &&
+            !newData.bottomLeftRevealed &&
+            newData.bottomLeftPlayerData.cards.length === 0,
+          !disabledGroups.has('top-right') &&
+            !newData.topRightRevealed &&
+            newData.topRightPlayerData.cards.length === 0,
+          !disabledGroups.has('bottom-right') &&
+            !newData.bottomRightRevealed &&
+            newData.bottomRightPlayerData.cards.length === 0
         ].filter(Boolean).length;
-        const secondChanceUsedThisDuel = (newData.secondChanceUsedByTeams || []).includes(
-          (secondPlayerTeam as 'team1' | 'team2')
-        );
+        const secondChanceUsedThisDuel = (
+          newData.secondChanceUsedByTeams || []
+        ).includes(secondPlayerTeam as 'team1' | 'team2');
         const canSecondTeamUseSecondChance =
-          secondTeamHasSecondChance && availableCount > 0 && !secondChanceUsedThisDuel;
+          secondTeamHasSecondChance &&
+          availableCount > 0 &&
+          !secondChanceUsedThisDuel;
 
         // Reveal all cards if the second team doesn't have Second Chance available OR usable
         const shouldRevealAllCards = !canSecondTeamUseSecondChance;
@@ -496,42 +544,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topLeftPlayerData,
-                cards: newData.topLeftCards,
-                sum: calculateSum(newData.topLeftCards)
-              }
+                  ...newData.topLeftPlayerData,
+                  cards: newData.topLeftCards,
+                  sum: calculateSum(newData.topLeftCards)
+                }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomLeftPlayerData,
-                cards: newData.bottomLeftCards,
-                sum: calculateSum(newData.bottomLeftCards)
-              }
+                  ...newData.bottomLeftPlayerData,
+                  cards: newData.bottomLeftCards,
+                  sum: calculateSum(newData.bottomLeftCards)
+                }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topRightPlayerData,
-                cards: newData.topRightCards,
-                sum: calculateSum(newData.topRightCards)
-              }
+                  ...newData.topRightPlayerData,
+                  cards: newData.topRightCards,
+                  sum: calculateSum(newData.topRightCards)
+                }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomRightPlayerData,
-                cards: newData.bottomRightCards,
-                sum: calculateSum(newData.bottomRightCards)
-              }
+                  ...newData.bottomRightPlayerData,
+                  cards: newData.bottomRightCards,
+                  sum: calculateSum(newData.bottomRightCards)
+                }
               : newData.bottomRightPlayerData
         };
 
@@ -600,12 +648,12 @@ const CardGame = () => {
   ) => {
     const chanceItemName =
       chanceType === 'secondChance'
-        ? 'Second Chance'
+        ? t('game.secondChance')
         : chanceType === 'revealTwo'
-          ? 'Reveal Two'
+          ? t('game.revealTwo')
           : chanceType === 'lifeShield'
-            ? 'Life Shield'
-            : 'Remove Worst';
+            ? t('game.lifeShield')
+            : t('game.removeWorst');
 
     setConfirmPopup({
       isVisible: true,
@@ -731,14 +779,14 @@ const CardGame = () => {
           if (losingTeam === 'team1') {
             setTeam1Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer,...prev.players ] };
+                return { ...prev, players: [losingPlayer, ...prev.players] };
               }
               return prev;
             });
           } else {
             setTeam2Data((prev) => {
               if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer,...prev.players ] };
+                return { ...prev, players: [losingPlayer, ...prev.players] };
               }
               return prev;
             });
@@ -853,13 +901,19 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              secondChance: prev.powerUps.secondChance - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, secondChance: prev.powerUps.secondChance - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              secondChance: prev.powerUps.secondChance - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -869,20 +923,29 @@ const CardGame = () => {
         // Mark team has used Second Chance this duel (single-use per team per duel)
         setDuelData((prev) => ({
           ...prev,
-          secondChanceUsedByTeams: [ ...(prev.secondChanceUsedByTeams || []), teamName ]
+          secondChanceUsedByTeams: [
+            ...(prev.secondChanceUsedByTeams || []),
+            teamName
+          ]
         }));
       } else if (chanceType === 'revealTwo') {
         // Handle Reveal Two logic
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              revealTwo: prev.powerUps.revealTwo - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, revealTwo: prev.powerUps.revealTwo - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              revealTwo: prev.powerUps.revealTwo - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -897,13 +960,19 @@ const CardGame = () => {
         if (teamName === 'team1') {
           setTeam1Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              lifeShield: prev.powerUps.lifeShield - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         } else {
           setTeam2Data((prev) => ({
             ...prev,
-            powerUps: { ...prev.powerUps, lifeShield: prev.powerUps.lifeShield - 1 },
+            powerUps: {
+              ...prev.powerUps,
+              lifeShield: prev.powerUps.lifeShield - 1
+            },
             totalPowerUps: prev.totalPowerUps - 1
           }));
         }
@@ -911,11 +980,30 @@ const CardGame = () => {
       } else if (chanceType === 'removeWorst') {
         // Remove Worst: disable the worst available card group
         const disabled = new Set(duelData.removedWorstGroups || []);
-        const availableGroups: { key: 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right'; cards: Card[] }[] = [];
-        if (!duelData.topLeftRevealed && !disabled.has('top-left')) availableGroups.push({ key: 'top-left', cards: duelData.topLeftCards });
-        if (!duelData.bottomLeftRevealed && !disabled.has('bottom-left')) availableGroups.push({ key: 'bottom-left', cards: duelData.bottomLeftCards });
-        if (!duelData.topRightRevealed && !disabled.has('top-right')) availableGroups.push({ key: 'top-right', cards: duelData.topRightCards });
-        if (!duelData.bottomRightRevealed && !disabled.has('bottom-right')) availableGroups.push({ key: 'bottom-right', cards: duelData.bottomRightCards });
+        const availableGroups: {
+          key: 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
+          cards: Card[];
+        }[] = [];
+        if (!duelData.topLeftRevealed && !disabled.has('top-left'))
+          availableGroups.push({
+            key: 'top-left',
+            cards: duelData.topLeftCards
+          });
+        if (!duelData.bottomLeftRevealed && !disabled.has('bottom-left'))
+          availableGroups.push({
+            key: 'bottom-left',
+            cards: duelData.bottomLeftCards
+          });
+        if (!duelData.topRightRevealed && !disabled.has('top-right'))
+          availableGroups.push({
+            key: 'top-right',
+            cards: duelData.topRightCards
+          });
+        if (!duelData.bottomRightRevealed && !disabled.has('bottom-right'))
+          availableGroups.push({
+            key: 'bottom-right',
+            cards: duelData.bottomRightCards
+          });
 
         if (availableGroups.length > 1) {
           // Find worst by sum, then by highest-card suit/value ascending
@@ -949,21 +1037,30 @@ const CardGame = () => {
           if (teamName === 'team1') {
             setTeam1Data((prev) => ({
               ...prev,
-              powerUps: { ...prev.powerUps, removeWorst: prev.powerUps.removeWorst - 1 },
+              powerUps: {
+                ...prev.powerUps,
+                removeWorst: prev.powerUps.removeWorst - 1
+              },
               totalPowerUps: prev.totalPowerUps - 1
             }));
           } else {
             setTeam2Data((prev) => ({
               ...prev,
-              powerUps: { ...prev.powerUps, removeWorst: prev.powerUps.removeWorst - 1 },
+              powerUps: {
+                ...prev.powerUps,
+                removeWorst: prev.powerUps.removeWorst - 1
+              },
               totalPowerUps: prev.totalPowerUps - 1
             }));
           }
           // Store disabled group for this duel and mark team has used it (one use per team per duel)
           setDuelData((prev) => ({
             ...prev,
-            removedWorstGroups: [ ...(prev.removedWorstGroups || []), worstKey ],
-            removeWorstUsedByTeams: [ ...(prev.removeWorstUsedByTeams || []), teamName ]
+            removedWorstGroups: [...(prev.removedWorstGroups || []), worstKey],
+            removeWorstUsedByTeams: [
+              ...(prev.removeWorstUsedByTeams || []),
+              teamName
+            ]
           }));
         }
       }
@@ -1008,7 +1105,8 @@ const CardGame = () => {
         p1Cards,
         p2Cards,
         p1Name,
-        p2Name
+        p2Name,
+        t
       );
       const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
 
@@ -1054,13 +1152,54 @@ const CardGame = () => {
           }
         }
 
-      // Store the winning team in duelData (only if no shield is active)
-        const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
+        // Store the winning team in duelData (only if no shield is active)
+        const winningTeam = isPlayer1Winner
+          ? firstPlayerTeam
+          : secondPlayerTeam;
         setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
+      // Calculate streak
+      const winnerName = isPlayer1Winner ? p1Name : p2Name;
+      const loserName = isPlayer1Winner ? p2Name : p1Name;
+      const prevStreak = winStreaks[winnerName] || 0;
+      const loserStreak = winStreaks[loserName] || 0;
+      const newStreak = prevStreak + 1;
+      const streakMessage = getStreakMessage(newStreak);
+
+      setWinStreaks((prev) => ({
+        ...prev,
+        [loserName]: 0,
+        [winnerName]: newStreak
+      }));
+
       // Set the duel result
-      setDuelResult(winner);
+      let resultMessage = winner;
+      if (loserStreak >= 3) {
+        resultMessage = `${loserName} ${t('game.isShutdownBy')} ${winnerName}`;
+      } else if (streakMessage) {
+        // Use an explicit lookup to avoid dynamic key concatenation and make keys
+        // easy to track. Add known streak translation keys here.
+        const streakTranslationMap: Record<string, string> = {
+          // examples - replace or extend with your actual translation keys
+          legendary: 'game.legendary',
+          godlike: 'game.godlike',
+          dominating: 'game.dominating',
+          unstoppable: 'game.unstoppable',
+          rampage: 'game.rampage',
+          killingSpree: 'game.killingSpree'
+        };
+
+        const explicitKey = streakTranslationMap[streakMessage];
+        if (explicitKey) {
+          resultMessage = t(explicitKey, { winner: winnerName });
+        } else {
+          // Fallback for unknown values (keeps previous behavior but makes explicit intent)
+          resultMessage = t(`game.${streakMessage}`, { winner: winnerName });
+        }
+      }
+
+      setDuelResult(resultMessage);
 
       // Get the current team arrays
       const currentTeam1Players = team1Data.players;
@@ -1098,7 +1237,9 @@ const CardGame = () => {
       team2Data.players,
       duelData.player1Team,
       duelData.player2Team,
-      duelData.lifeShieldUsedBy
+      duelData.lifeShieldUsedBy,
+      winStreaks,
+      t
     ]
   );
 
@@ -1129,17 +1270,16 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onCardClick();
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onCardClick();
+                }
               }
-            }
             : undefined
         }
       />
     ));
   };
-
 
   /**
    * Determines whether the "Start Game" button should be disabled.
@@ -1169,7 +1309,10 @@ const CardGame = () => {
       total: number
     ): boolean => {
       const sum =
-        alloc.secondChance + alloc.revealTwo + alloc.lifeShield + alloc.removeWorst;
+        alloc.secondChance +
+        alloc.revealTwo +
+        alloc.lifeShield +
+        alloc.removeWorst;
       const perTypeValid =
         alloc.secondChance <= 2 &&
         alloc.revealTwo <= 2 &&
@@ -1181,7 +1324,10 @@ const CardGame = () => {
     // Validation should depend on current setup mode
     if (setupMode === 'both' || setupMode === 'random') {
       // In combined/random mode we treat both teams as sharing the same allocation
-      const isAllocValid = isAllocationValid(team1Alloc, team1Data.totalPowerUps);
+      const isAllocValid = isAllocationValid(
+        team1Alloc,
+        team1Data.totalPowerUps
+      );
       return !isAllocValid;
     }
 
@@ -1290,7 +1436,10 @@ const CardGame = () => {
     htmlFor: string
   ) => {
     return (
-      <label htmlFor={htmlFor} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <label
+        htmlFor={htmlFor}
+        style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+      >
         <img
           src={`/images/${imageFileName}`}
           alt=""
@@ -1337,15 +1486,18 @@ const CardGame = () => {
                     margin: '0 0 0 auto'
                   }}
                 >
-                  <h2 className="text-glow" style={{ 
-                    textAlign: 'center', 
-                    marginTop: 0, 
-                    marginBottom: '20px',
-                    fontSize: '2.5rem',
-                    color: 'var(--color-primary)',
-                    letterSpacing: '3px'
-                  }}>
-                    POWER-UPS SETUP
+                  <h2
+                    className="text-glow"
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 0,
+                      marginBottom: '20px',
+                      fontSize: '2.5rem',
+                      color: 'var(--color-primary)',
+                      letterSpacing: '3px'
+                    }}
+                  >
+                    {t('game.powerUpsSetup')}
                   </h2>
                   <div
                     className="rpg-panel"
@@ -1361,7 +1513,9 @@ const CardGame = () => {
                       border: '2px solid var(--color-secondary)'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    >
                       <input
                         id="mode-per-team"
                         name="setup-mode"
@@ -1378,14 +1532,24 @@ const CardGame = () => {
                           cursor: 'pointer'
                         }}
                       />
-                      <label htmlFor="mode-per-team" style={{ 
-                        fontFamily: 'var(--font-body)', 
-                        fontSize: '1.1rem',
-                        cursor: 'pointer',
-                        color: setupMode === 'per-team' ? 'var(--color-primary)' : '#fff'
-                      }}>Each team setups their own power-ups</label>
+                      <label
+                        htmlFor="mode-per-team"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          color:
+                            setupMode === 'per-team'
+                              ? 'var(--color-primary)'
+                              : '#fff'
+                        }}
+                      >
+                        {t('game.eachTeamSetup')}
+                      </label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    >
                       <input
                         id="mode-both"
                         name="setup-mode"
@@ -1404,14 +1568,24 @@ const CardGame = () => {
                           cursor: 'pointer'
                         }}
                       />
-                      <label htmlFor="mode-both" style={{ 
-                        fontFamily: 'var(--font-body)', 
-                        fontSize: '1.1rem',
-                        cursor: 'pointer',
-                        color: setupMode === 'both' ? 'var(--color-primary)' : '#fff'
-                      }}>Setup power-ups for both teams</label>
+                      <label
+                        htmlFor="mode-both"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          color:
+                            setupMode === 'both'
+                              ? 'var(--color-primary)'
+                              : '#fff'
+                        }}
+                      >
+                        {t('game.setupBothTeams')}
+                      </label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    >
                       <input
                         id="mode-random-each"
                         name="setup-mode"
@@ -1429,14 +1603,24 @@ const CardGame = () => {
                           cursor: 'pointer'
                         }}
                       />
-                      <label htmlFor="mode-random-each" style={{ 
-                        fontFamily: 'var(--font-body)', 
-                        fontSize: '1.1rem',
-                        cursor: 'pointer',
-                        color: setupMode === 'random-each' ? 'var(--color-primary)' : '#fff'
-                      }}>Generate power-ups separately for each team</label>
+                      <label
+                        htmlFor="mode-random-each"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          color:
+                            setupMode === 'random-each'
+                              ? 'var(--color-primary)'
+                              : '#fff'
+                        }}
+                      >
+                        {t('game.generateSeparate')}
+                      </label>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    >
                       <input
                         id="mode-random"
                         name="setup-mode"
@@ -1454,28 +1638,48 @@ const CardGame = () => {
                           cursor: 'pointer'
                         }}
                       />
-                      <label htmlFor="mode-random" style={{ 
-                        fontFamily: 'var(--font-body)', 
-                        fontSize: '1.1rem',
-                        cursor: 'pointer',
-                        color: setupMode === 'random' ? 'var(--color-primary)' : '#fff'
-                      }}>Random power-ups for both teams</label>
+                      <label
+                        htmlFor="mode-random"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          color:
+                            setupMode === 'random'
+                              ? 'var(--color-primary)'
+                              : '#fff'
+                        }}
+                      >
+                        {t('game.randomBoth')}
+                      </label>
                     </div>
                   </div>
                   <div
                     className="setup-grid"
-                    style={setupForBothTeams ? { gridTemplateColumns: '1fr', justifyItems: 'center' } : undefined}
+                    style={
+                      setupForBothTeams
+                        ? { gridTemplateColumns: '1fr', justifyItems: 'center' }
+                        : undefined
+                    }
                   >
                     {setupForBothTeams ? (
                       <div className="setup-card">
                         <div className="setup-row">
-                          {renderLabelWithIcon('Second Chance', 'chance_second.png', 'both-second')}
+                          {renderLabelWithIcon(
+                            t('game.secondChance'),
+                            'chance_second.png',
+                            'both-second'
+                          )}
                           {setupMode === 'random' ? (
                             <strong>?</strong>
                           ) : (
                             <input
                               className="num-input"
-                              style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.secondChance > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1484,7 +1688,10 @@ const CardGame = () => {
                               onChange={(e) => {
                                 const v = Math.max(
                                   0,
-                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                  Math.min(
+                                    team1Data.totalPowerUps,
+                                    Number(e.target.value)
+                                  )
                                 );
                                 setBothTeamsAlloc('secondChance', v);
                               }}
@@ -1492,13 +1699,21 @@ const CardGame = () => {
                           )}
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 'both-reveal')}
+                          {renderLabelWithIcon(
+                            t('game.revealTwo'),
+                            'chance_reveal.png',
+                            'both-reveal'
+                          )}
                           {setupMode === 'random' ? (
                             <strong>?</strong>
                           ) : (
                             <input
                               className="num-input"
-                              style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.revealTwo > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1507,7 +1722,10 @@ const CardGame = () => {
                               onChange={(e) => {
                                 const v = Math.max(
                                   0,
-                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                  Math.min(
+                                    team1Data.totalPowerUps,
+                                    Number(e.target.value)
+                                  )
                                 );
                                 setBothTeamsAlloc('revealTwo', v);
                               }}
@@ -1515,13 +1733,21 @@ const CardGame = () => {
                           )}
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Life Shield', 'chance_shield.png', 'both-shield')}
+                          {renderLabelWithIcon(
+                            t('game.lifeShield'),
+                            'chance_shield.png',
+                            'both-shield'
+                          )}
                           {setupMode === 'random' ? (
                             <strong>?</strong>
                           ) : (
                             <input
                               className="num-input"
-                              style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.lifeShield > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1530,7 +1756,10 @@ const CardGame = () => {
                               onChange={(e) => {
                                 const v = Math.max(
                                   0,
-                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                  Math.min(
+                                    team1Data.totalPowerUps,
+                                    Number(e.target.value)
+                                  )
                                 );
                                 setBothTeamsAlloc('lifeShield', v);
                               }}
@@ -1538,13 +1767,21 @@ const CardGame = () => {
                           )}
                         </div>
                         <div className="setup-row">
-                          {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 'both-remove')}
+                          {renderLabelWithIcon(
+                            t('game.removeWorst'),
+                            'chance_remove.png',
+                            'both-remove'
+                          )}
                           {setupMode === 'random' ? (
                             <strong>?</strong>
                           ) : (
                             <input
                               className="num-input"
-                              style={team1Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                              style={
+                                team1Alloc.removeWorst > 2
+                                  ? { borderColor: 'red' }
+                                  : undefined
+                              }
                               type="number"
                               min={0}
                               max={2}
@@ -1553,7 +1790,10 @@ const CardGame = () => {
                               onChange={(e) => {
                                 const v = Math.max(
                                   0,
-                                  Math.min(team1Data.totalPowerUps, Number(e.target.value))
+                                  Math.min(
+                                    team1Data.totalPowerUps,
+                                    Number(e.target.value)
+                                  )
                                 );
                                 setBothTeamsAlloc('removeWorst', v);
                               }}
@@ -1561,7 +1801,7 @@ const CardGame = () => {
                           )}
                         </div>
                         <div className="setup-row">
-                          <strong>Total</strong>
+                          <strong>{t('game.total')}</strong>
                           <strong
                             style={{
                               color:
@@ -1569,7 +1809,7 @@ const CardGame = () => {
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
                                   team1Alloc.removeWorst !==
-                                  team1Data.totalPowerUps
+                                team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
                             }}
@@ -1585,17 +1825,28 @@ const CardGame = () => {
                     ) : (
                       <>
                         <div className="setup-card">
-                          <h3 className={'teamName team1'} style={{ marginTop: 0 }}>
+                          <h3
+                            className={'teamName team1'}
+                            style={{ marginTop: 0 }}
+                          >
                             {team1Data.name}
                           </h3>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Second Chance', 'chance_second.png', 't1-second')}
+                            {renderLabelWithIcon(
+                              t('game.secondChance'),
+                              'chance_second.png',
+                              't1-second'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team1Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team1Alloc.secondChance > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1617,13 +1868,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't1-reveal')}
+                            {renderLabelWithIcon(
+                              t('game.revealTwo'),
+                              'chance_reveal.png',
+                              't1-reveal'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team1Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team1Alloc.revealTwo > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1645,13 +1904,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't1-shield')}
+                            {renderLabelWithIcon(
+                              t('game.lifeShield'),
+                              'chance_shield.png',
+                              't1-shield'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team1Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team1Alloc.lifeShield > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1673,13 +1940,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 't1-remove')}
+                            {renderLabelWithIcon(
+                              t('game.removeWorst'),
+                              'chance_remove.png',
+                              't1-remove'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team1Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team1Alloc.removeWorst > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1709,7 +1984,7 @@ const CardGame = () => {
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
                                     team1Alloc.removeWorst !==
-                                    team1Data.totalPowerUps
+                                  team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -1724,17 +1999,28 @@ const CardGame = () => {
                         </div>
 
                         <div className="setup-card">
-                          <h3 className={'teamName team2'} style={{ marginTop: 0 }}>
+                          <h3
+                            className={'teamName team2'}
+                            style={{ marginTop: 0 }}
+                          >
                             {team2Data.name}
                           </h3>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Second Chance', 'chance_second.png', 't2-second')}
+                            {renderLabelWithIcon(
+                              t('game.secondChance'),
+                              'chance_second.png',
+                              't2-second'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team2Alloc.secondChance > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team2Alloc.secondChance > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1756,13 +2042,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Reveal Two', 'chance_reveal.png', 't2-reveal')}
+                            {renderLabelWithIcon(
+                              t('game.revealTwo'),
+                              'chance_reveal.png',
+                              't2-reveal'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team2Alloc.revealTwo > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team2Alloc.revealTwo > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1784,13 +2078,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Life Shield', 'chance_shield.png', 't2-shield')}
+                            {renderLabelWithIcon(
+                              t('game.lifeShield'),
+                              'chance_shield.png',
+                              't2-shield'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team2Alloc.lifeShield > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team2Alloc.lifeShield > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1812,13 +2114,21 @@ const CardGame = () => {
                             )}
                           </div>
                           <div className="setup-row">
-                            {renderLabelWithIcon('Remove Worst', 'chance_remove.png', 't2-remove')}
+                            {renderLabelWithIcon(
+                              t('game.removeWorst'),
+                              'chance_remove.png',
+                              't2-remove'
+                            )}
                             {setupMode === 'random-each' ? (
                               <strong>?</strong>
                             ) : (
                               <input
                                 className="num-input"
-                                style={team2Alloc.removeWorst > 2 ? { borderColor: 'red' } : undefined}
+                                style={
+                                  team2Alloc.removeWorst > 2
+                                    ? { borderColor: 'red' }
+                                    : undefined
+                                }
                                 type="number"
                                 min={0}
                                 max={2}
@@ -1848,7 +2158,7 @@ const CardGame = () => {
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
                                     team2Alloc.removeWorst !==
-                                    team2Data.totalPowerUps
+                                  team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -1864,15 +2174,18 @@ const CardGame = () => {
                       </>
                     )}
                   </div>
-                  <p className="note" style={{ 
-                    textAlign: 'center', 
-                    marginTop: 10, 
-                    marginBottom: 10,
-                    color: 'var(--color-secondary)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '0.95rem'
-                  }}>
-                    Each team must have a total of 4 power-ups, with no more than 2 of the same type.
+                  <p
+                    className="note"
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 10,
+                      marginBottom: 10,
+                      color: 'var(--color-secondary)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    {t('game.note')}
                   </p>
                   <div style={{ textAlign: 'center' }}>
                     <a
@@ -1891,49 +2204,120 @@ const CardGame = () => {
                         cursor: 'pointer'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.textShadow = '0 0 15px var(--color-accent)';
+                        e.currentTarget.style.textShadow =
+                          '0 0 15px var(--color-accent)';
                         e.currentTarget.style.letterSpacing = '1px';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.textShadow = '0 0 5px var(--color-accent)';
+                        e.currentTarget.style.textShadow =
+                          '0 0 5px var(--color-accent)';
                         e.currentTarget.style.letterSpacing = '0px';
                       }}
                     >
-                      ⚡ POWER-UPS GUIDE ⚡
+                      {t('game.powerUpsGuide')}
                     </a>
                   </div>
-
                 </div>
               </div>
 
               {/* Divider */}
-              <div style={{ width: 2, background: 'linear-gradient(180deg, transparent, var(--color-secondary), transparent)' }} />
+              <div
+                style={{
+                  width: 2,
+                  background:
+                    'linear-gradient(180deg, transparent, var(--color-secondary), transparent)'
+                }}
+              />
 
               {/* Right: Welcome UI */}
-              <div style={{ display: 'flex', alignItems: '', justifyContent: 'flex-start', padding: '0 20px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: '',
+                  justifyContent: 'flex-start',
+                  padding: '0 20px'
+                }}
+              >
                 <div style={{ width: '100%', maxWidth: '400px' }}>
-                  <h1 className="text-gradient" style={{ 
-                    fontSize: '3rem',
-                    margin: '0 0 30px 0',
-                    textAlign: 'center',
-                    letterSpacing: '2px'
-                  }}>THOR'S 3KEY</h1>
-                  
-                  <div className="rpg-panel" style={{
-                    padding: '20px',
-                    background: 'rgba(15, 12, 41, 0.8)',
-                    border: '2px solid var(--color-secondary)',
-                    marginBottom: '20px'
-                  }}>
-                    <label className="text-glow" htmlFor="sheetId" style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      color: 'var(--color-secondary)',
-                      fontSize: '1.1rem',
-                      fontFamily: 'var(--font-body)',
-                      letterSpacing: '1px'
-                    }}>
-                      SHEET ID
+                  <h1
+                    className="text-gradient"
+                    style={{
+                      fontSize: '3rem',
+                      margin: '0 0 10px 0',
+                      textAlign: 'center',
+                      letterSpacing: '2px'
+                    }}
+                  >
+                    THOR&apos;S 3KEY
+                  </h1>
+
+                  {/* Language Switcher */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      marginBottom: '20px'
+                    }}
+                  >
+                    <button
+                      onClick={() => setLanguage('en')}
+                      style={{
+                        background:
+                          language === 'en'
+                            ? 'var(--color-primary)'
+                            : 'rgba(255,255,255,0.1)',
+                        border: '1px solid var(--color-primary)',
+                        color: '#fff',
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        fontWeight: language === 'en' ? 'bold' : 'normal'
+                      }}
+                    >
+                      EN
+                    </button>
+                    <button
+                      onClick={() => setLanguage('vi')}
+                      style={{
+                        background:
+                          language === 'vi'
+                            ? 'var(--color-primary)'
+                            : 'rgba(255,255,255,0.1)',
+                        border: '1px solid var(--color-primary)',
+                        color: '#fff',
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        fontWeight: language === 'vi' ? 'bold' : 'normal'
+                      }}
+                    >
+                      VI
+                    </button>
+                  </div>
+
+                  <div
+                    className="rpg-panel"
+                    style={{
+                      padding: '20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid var(--color-secondary)',
+                      marginBottom: '20px'
+                    }}
+                  >
+                    <label
+                      className="text-glow"
+                      htmlFor="sheetId"
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        color: 'var(--color-secondary)',
+                        fontSize: '1.1rem',
+                        fontFamily: 'var(--font-body)',
+                        letterSpacing: '1px'
+                      }}
+                    >
+                      {t('game.sheetId')}
                     </label>
                     <input
                       className="rpg-input"
@@ -1955,22 +2339,29 @@ const CardGame = () => {
                       }}
                     />
                   </div>
-                  
-                  <div className="rpg-panel" style={{
-                    padding: '20px',
-                    background: 'rgba(15, 12, 41, 0.8)',
-                    border: '2px solid var(--color-secondary)',
-                    marginBottom: '30px'
-                  }}>
-                    <label className="text-glow" htmlFor="sheetRange" style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      color: 'var(--color-secondary)',
-                      fontSize: '1.1rem',
-                      fontFamily: 'var(--font-body)',
-                      letterSpacing: '1px'
-                    }}>
-                      SHEET RANGE
+
+                  <div
+                    className="rpg-panel"
+                    style={{
+                      padding: '20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid var(--color-secondary)',
+                      marginBottom: '30px'
+                    }}
+                  >
+                    <label
+                      className="text-glow"
+                      htmlFor="sheetRange"
+                      style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        color: 'var(--color-secondary)',
+                        fontSize: '1.1rem',
+                        fontFamily: 'var(--font-body)',
+                        letterSpacing: '1px'
+                      }}
+                    >
+                      {t('game.sheetRange')}
                     </label>
                     <input
                       className="rpg-input"
@@ -1992,7 +2383,7 @@ const CardGame = () => {
                       }}
                     />
                   </div>
-                  
+
                   <div style={{ textAlign: 'center' }}>
                     <button
                       onClick={() => startGame()}
@@ -2003,12 +2394,16 @@ const CardGame = () => {
                         padding: '15px 30px',
                         fontSize: '1.5rem',
                         letterSpacing: '2px',
-                        background: isStartGameDisabled() ? '#333' : 'var(--color-primary)',
-                        cursor: isStartGameDisabled() ? 'not-allowed' : 'pointer',
+                        background: isStartGameDisabled()
+                          ? '#333'
+                          : 'var(--color-primary)',
+                        cursor: isStartGameDisabled()
+                          ? 'not-allowed'
+                          : 'pointer',
                         opacity: isStartGameDisabled() ? 0.5 : 1
                       }}
                     >
-                      START GAME
+                      {t('common.startGame')}
                     </button>
                   </div>
                 </div>
@@ -2029,50 +2424,69 @@ const CardGame = () => {
       />
 
       {gameState == 'gamePlaying' && (
-        <>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '40px',
+            padding: '20px'
+          }}
+        >
+          {/* Team 1 Panel */}
           <div
+            className="rpg-panel"
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: '40px',
-              padding: '20px'
+              width: '200px',
+              padding: '20px',
+              background: 'rgba(15, 12, 41, 0.9)',
+              border: '2px solid var(--color-primary)'
             }}
           >
-            {/* Team 1 Panel */}
-            <div className="rpg-panel" style={{ width: '200px', padding: '20px', background: 'rgba(15, 12, 41, 0.9)', border: '2px solid var(--color-primary)' }}>
-              <div style={{ 
-                fontSize: '48px', 
-                fontWeight: 'bold', 
+            <div
+              style={{
+                fontSize: '48px',
+                fontWeight: 'bold',
                 textAlign: 'center',
                 color: 'var(--color-accent)',
                 marginBottom: '10px',
                 textShadow: '0 0 10px var(--color-accent)'
-              }}>
-                {team1Data.score}
-              </div>
-              <h2 className="text-glow" style={{ 
+              }}
+            >
+              {team1Data.score}
+            </div>
+            <h2
+              className="text-glow"
+              style={{
                 textAlign: 'center',
                 color: 'var(--color-primary)',
                 fontSize: '24px',
                 margin: '10px 0',
                 position: 'relative'
-              }}>
-                TEAM 1
-                {team1Data.totalPowerUps > 0 && (
-                  <ChanceStar
-                    number={team1Data.totalPowerUps}
-                    style={{
-                      top: '50%',
-                      left: 'calc(100% + 10px)',
-                      transform: 'translateY(-50%)'
-                    }}
-                  />
-                )}
-              </h2>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '15px' }}>
-                {team1Data.players.map((member, index) => (
-                  <div key={index} style={{
+              }}
+            >
+              {t('common.team')} 1
+              {team1Data.totalPowerUps > 0 && (
+                <ChanceStar
+                  number={team1Data.totalPowerUps}
+                  style={{
+                    top: '50%',
+                    left: 'calc(100% + 10px)',
+                    transform: 'translateY(-50%)'
+                  }}
+                />
+              )}
+            </h2>
+            <div
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                paddingTop: '15px'
+              }}
+            >
+              {team1Data.players.map((member, index) => (
+                <div
+                  key={index}
+                  style={{
                     padding: '8px',
                     marginBottom: '5px',
                     background: 'rgba(255, 0, 85, 0.1)',
@@ -2080,121 +2494,163 @@ const CardGame = () => {
                     color: '#fff',
                     fontSize: '14px',
                     fontFamily: 'var(--font-body)'
-                  }}>
-                    {member}
-                  </div>
-                ))}
+                  }}
+                >
+                  {member}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Battle Arena */}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{ display: 'flex', flexDirection: 'row', gap: '100px' }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                <PlayerCardDrawer
+                  className={'mb-1'}
+                  playerData={duelData.topLeftPlayerData}
+                  onSelect={() => playerSelect('top-left')}
+                  side="left"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.topLeftPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.topLeft.length > 0
+                      ? duelData.revealedCards.topLeft
+                      : CARDS_COVER
+                  }
+                />
+                <PlayerCardDrawer
+                  className={''}
+                  playerData={duelData.bottomLeftPlayerData}
+                  onSelect={() => playerSelect('bottom-left')}
+                  side="left"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.bottomLeftPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.bottomLeft.length > 0
+                      ? duelData.revealedCards.bottomLeft
+                      : CARDS_COVER
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                <PlayerCardDrawer
+                  className={'mb-1'}
+                  playerData={duelData.topRightPlayerData}
+                  onSelect={() => playerSelect('top-right')}
+                  side="right"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.topRightPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.topRight.length > 0
+                      ? duelData.revealedCards.topRight
+                      : CARDS_COVER
+                  }
+                />
+                <PlayerCardDrawer
+                  className={''}
+                  playerData={duelData.bottomRightPlayerData}
+                  onSelect={() => playerSelect('bottom-right')}
+                  side="right"
+                  duelData={duelData}
+                  disabled={isPlayerCardDrawerDisabled(
+                    duelData.bottomRightPlayerData
+                  )}
+                  renderTheCards={renderTheCards}
+                  CARDS_COVER={
+                    duelData.revealedCards.bottomRight.length > 0
+                      ? duelData.revealedCards.bottomRight
+                      : CARDS_COVER
+                  }
+                />
               </div>
             </div>
+          </div>
 
-            {/* Battle Arena */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '100px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <PlayerCardDrawer
-                    className={'mb-1'}
-                    playerData={duelData.topLeftPlayerData}
-                    onSelect={() => playerSelect('top-left')}
-                    side="left"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.topLeftPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.topLeft.length > 0
-                        ? duelData.revealedCards.topLeft
-                        : CARDS_COVER
-                    }
-                  />
-                  <PlayerCardDrawer
-                    className={''}
-                    playerData={duelData.bottomLeftPlayerData}
-                    onSelect={() => playerSelect('bottom-left')}
-                    side="left"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.bottomLeftPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.bottomLeft.length > 0
-                        ? duelData.revealedCards.bottomLeft
-                        : CARDS_COVER
-                    }
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <PlayerCardDrawer
-                    className={'mb-1'}
-                    playerData={duelData.topRightPlayerData}
-                    onSelect={() => playerSelect('top-right')}
-                    side="right"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.topRightPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.topRight.length > 0
-                        ? duelData.revealedCards.topRight
-                        : CARDS_COVER
-                    }
-                  />
-                  <PlayerCardDrawer
-                    className={''}
-                    playerData={duelData.bottomRightPlayerData}
-                    onSelect={() => playerSelect('bottom-right')}
-                    side="right"
-                    duelData={duelData}
-                    disabled={isPlayerCardDrawerDisabled(
-                      duelData.bottomRightPlayerData
-                    )}
-                    renderTheCards={renderTheCards}
-                    CARDS_COVER={
-                      duelData.revealedCards.bottomRight.length > 0
-                        ? duelData.revealedCards.bottomRight
-                        : CARDS_COVER
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Team 2 Panel */}
-            <div className="rpg-panel" style={{ width: '200px', padding: '20px', background: 'rgba(15, 12, 41, 0.9)', border: '2px solid var(--color-secondary)' }}>
-              <div style={{ 
-                fontSize: '48px', 
-                fontWeight: 'bold', 
+          {/* Team 2 Panel */}
+          <div
+            className="rpg-panel"
+            style={{
+              width: '200px',
+              padding: '20px',
+              background: 'rgba(15, 12, 41, 0.9)',
+              border: '2px solid var(--color-secondary)'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '48px',
+                fontWeight: 'bold',
                 textAlign: 'center',
                 color: 'var(--color-accent)',
                 marginBottom: '10px',
                 textShadow: '0 0 10px var(--color-accent)'
-              }}>
-                {team2Data.score}
-              </div>
-              <h2 className="text-glow" style={{ 
+              }}
+            >
+              {team2Data.score}
+            </div>
+            <h2
+              className="text-glow"
+              style={{
                 textAlign: 'center',
                 color: 'var(--color-secondary)',
                 fontSize: '24px',
                 margin: '10px 0',
                 position: 'relative'
-              }}>
-                {team2Data.totalPowerUps > 0 && (
-                  <ChanceStar
-                    number={team2Data.totalPowerUps}
-                    style={{
-                      top: '50%',
-                      right: 'calc(100% + 10px)',
-                      transform: 'translateY(-50%)'
-                    }}
-                  />
-                )}
-                TEAM 2
-              </h2>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '15px' }}>
-                {team2Data.players.map((member, index) => (
-                  <div key={index} style={{
+              }}
+            >
+              {team2Data.totalPowerUps > 0 && (
+                <ChanceStar
+                  number={team2Data.totalPowerUps}
+                  style={{
+                    top: '50%',
+                    right: 'calc(100% + 10px)',
+                    transform: 'translateY(-50%)'
+                  }}
+                />
+              )}
+              {t('common.team')} 2
+            </h2>
+            <div
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                paddingTop: '15px'
+              }}
+            >
+              {team2Data.players.map((member, index) => (
+                <div
+                  key={index}
+                  style={{
                     padding: '8px',
                     marginBottom: '5px',
                     background: 'rgba(0, 242, 255, 0.1)',
@@ -2202,14 +2658,14 @@ const CardGame = () => {
                     color: '#fff',
                     fontSize: '14px',
                     fontFamily: 'var(--font-body)'
-                  }}>
-                    {member}
-                  </div>
-                ))}
-              </div>
+                  }}
+                >
+                  {member}
+                </div>
+              ))}
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Add RoundStatus component at the bottom */}
@@ -2241,37 +2697,49 @@ const CardGame = () => {
             gap: '30px'
           }}
         >
-          <div className="rpg-panel" style={{ 
-            padding: '40px 60px',
-            textAlign: 'center',
-            background: 'rgba(15, 12, 41, 0.95)',
-            border: '3px solid var(--color-accent)'
-          }}>
-            <h2 className="text-glow" style={{ 
-              color: 'var(--color-primary)', 
-              margin: '0 0 20px 0',
-              fontSize: '32px',
-              letterSpacing: '3px'
-            }}>
-              BATTLE COMPLETE
+          <div
+            className="rpg-panel"
+            style={{
+              padding: '40px 60px',
+              textAlign: 'center',
+              background: 'rgba(15, 12, 41, 0.95)',
+              border: '3px solid var(--color-accent)'
+            }}
+          >
+            <h2
+              className="text-glow"
+              style={{
+                color: 'var(--color-primary)',
+                margin: '0 0 20px 0',
+                fontSize: '32px',
+                letterSpacing: '3px'
+              }}
+            >
+              {t('game.battleComplete')}
             </h2>
-            <h1 className="text-gradient" style={{ 
-              fontSize: '64px', 
-              fontWeight: 'bold', 
-              margin: '20px 0',
-              textShadow: '0 0 20px var(--color-accent)'
-            }}>
+            <h1
+              className="text-gradient"
+              style={{
+                fontSize: '64px',
+                fontWeight: 'bold',
+                margin: '20px 0',
+                textShadow: '0 0 20px var(--color-accent)'
+              }}
+            >
               {teamWinner}
             </h1>
-            <div className="rpg-panel" style={{ 
-              marginTop: '30px',
-              padding: '20px',
-              background: 'rgba(0,0,0,0.3)'
-            }}>
+            <div
+              className="rpg-panel"
+              style={{
+                marginTop: '30px',
+                padding: '20px',
+                background: 'rgba(0,0,0,0.3)'
+              }}
+            >
               <img
                 src="/images/the-end.webp"
                 alt="Victory"
-                style={{ 
+                style={{
                   width: '600px',
                   maxWidth: '100%',
                   opacity: 0.9
@@ -2282,6 +2750,66 @@ const CardGame = () => {
         </div>
       )}
 
+      {/* Round Winner Announcement */}
+      {showWinnerAnnouncement && (
+        <>
+          {/* Backdrop */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.7)',
+              zIndex: 9999,
+              animation: 'fade-in 0.3s ease-out'
+            }}
+          />
+
+          {/* Winner Announcement */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '25%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999,
+              animation: 'fade-in 0.3s ease-out'
+            }}
+          >
+            <div
+              className="rpg-panel"
+              style={{
+                background: 'rgba(15, 12, 41, 0.98)',
+                border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                padding: '40px 60px',
+                boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
+                minWidth: '500px'
+              }}
+            >
+              <div
+                className="text-glow"
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  padding: '20px',
+                  color: duelResult.includes(team1Data.name)
+                    ? 'var(--color-secondary)'
+                    : duelResult.includes(team2Data.name)
+                      ? 'var(--color-primary)'
+                      : 'var(--color-accent)',
+                  letterSpacing: '2px',
+                  animation: 'pulse-glow 1.5s infinite',
+                  textTransform: 'uppercase'
+                }}
+              >
+                {duelResult}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       {/* Confirmation Popup */}
       <ConfirmPopup
         isVisible={confirmPopup.isVisible}
