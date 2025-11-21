@@ -222,3 +222,18 @@ export const getTeamByPlayer = (
 ): 'team1' | 'team2' => {
   return team1Players.includes(player) ? 'team1' : 'team2';
 };
+
+/**
+ * Returns the LOL win streak message based on the streak count
+ * @param streak - Number of consecutive wins
+ * @returns Streak message or empty string
+ */
+export const getStreakMessage = (streak: number): string => {
+  if (streak >= 8) return 'Legendary!';
+  if (streak === 7) return 'Godlike!';
+  if (streak === 6) return 'Dominating!';
+  if (streak === 5) return 'Unstoppable!';
+  if (streak === 4) return 'Rampage!';
+  if (streak === 3) return 'Killing Spree!';
+  return '';
+};
