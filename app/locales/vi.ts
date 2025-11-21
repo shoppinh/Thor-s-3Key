@@ -26,8 +26,8 @@ export default {
     sheetRange: 'VÙNG DỮ LIỆU',
     battleComplete: 'TRẬN ĐẤU KẾT THÚC',
     wins: '{{winner}} đã hạ gục {{loser}}!',
-    winsBySuit: '{{name}} Thắng vì chất cao hơn',
-    winsByHighestCard: '{{name}} Thắng vì bài cao nhất trong chất',
+    winsBySuit: '{{name}} chất hơn hẹ hẹ hẹ!',
+    winsByHighestCard: 'Cùng chất đấy nhưng {{name}} to hơn!',
     isShutdownBy: 'bị chấm dứt bởi',
     draw: 'Hòa trên ghế tắm!',
     round: 'VÒNG',
@@ -38,7 +38,7 @@ export default {
     drawCard: 'Rút Đi Chờ Chi',
     reveal: 'Lật Bài',
     usePowerUp: 'Dùng Quyền Năng',
-    challengerApproaching: 'Người chơi hiện tại',
+    challengerApproaching: 'Múc đê mấy má ơi!!!',
     nextRound: 'Vòng tiếp theo',
     nextTurn: 'Lượt tiếp theo',
     roundResult: 'Kết quả vòng',
@@ -51,7 +51,8 @@ export default {
     killingSpree: '{{winner}} đang liên tục lập công!',
     unknown: 'Đoán xem',
     locked: 'Đã khoá',
-    isWinner: 'là đội chiến thắng'
+    isWinner: 'là đội chiến thắng',
+    anonymous: 'Kẻ thế thân'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
@@ -63,6 +64,7 @@ export default {
     removeWorstTitle: 'Bài xấu vào hang',
     removeWorstDesc: 'Loại bỏ tụ bài xấu nhất đang có trên bàn.',
     confirmTitle: 'Xác Nhận Dùng',
-    confirmMessage: 'Bạn có chắc muốn sử dụng'
+    confirmMessage: 'Bạn có chắc muốn sử dụng',
+    title: "Sợ à mà dùng?"
   }
 };

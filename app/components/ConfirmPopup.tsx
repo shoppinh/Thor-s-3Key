@@ -47,18 +47,30 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
           className="text-glow"
           style={{
             margin: '0 0 30px 0',
+            fontSize: '28px',
+            color: '#fff',
+            fontFamily: 'var(--font-header)',
+            letterSpacing: '1px'
+          }}
+        >
+          {t('power-ups.title')}
+        </h3>
+        <h4
+          className="text-glow"
+          style={{
+            margin: '0 0 30px 0',
             fontSize: '24px',
             color: '#fff',
             fontFamily: 'var(--font-header)',
             letterSpacing: '1px'
           }}
         >
-          {t('powerups.confirmMessage')}{' '}
+          {t('power-ups.confirmMessage')}{' '}
           <span style={{ color: 'var(--color-accent)' }}>
             {chanceItemName.toUpperCase()}
           </span>
           ?
-        </h3>
+        </h4>
 
         <div
           style={{

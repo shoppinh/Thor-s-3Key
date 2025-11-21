@@ -51,7 +51,8 @@ export default {
     killingSpree: '{{winner}} is on killing spree!',
     unknown: 'Unknown',
     locked: 'Locked',
-    isWinner: 'is winner'
+    isWinner: 'is winner',
+    anonymous: 'ANONYMOUS'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
@@ -66,6 +67,7 @@ export default {
     removeWorstTitle: 'Remove Worst',
     removeWorstDesc: 'Removes the worst available card group from the board.',
     confirmTitle: 'Confirm Power-Up',
-    confirmMessage: 'Are you sure you want to use'
+    confirmMessage: 'Are you sure you want to use',
+    title: 'You scared to use it?'
   }
 };

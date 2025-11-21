@@ -46,7 +46,7 @@ const CardGame = () => {
   const { t, language, setLanguage } = useLanguage();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>({
-    name: 'Team 1',
+    name: `${t('common.team')} 1`,
     score: 0,
     scoreClass: '',
     totalPowerUps: 4,
@@ -54,7 +54,7 @@ const CardGame = () => {
     players: []
   });
   const [team2Data, setTeam2Data] = useState<TeamData>({
-    name: 'Team 2',
+    name: `${t('common.team')} 2`,
     score: 0,
     scoreClass: '',
     totalPowerUps: 4,
@@ -206,20 +206,21 @@ const CardGame = () => {
 
       const team1Temp: string[] = [];
       const team2Temp: string[] = [];
-      let index = 1;
+      let index1 = 1;
+      let index2 = 1;
       data.values.slice(1).forEach((item: string[]) => {
         if (item[0]) {
           team1Temp.push(item[0]);
         } else {
-          team1Temp.push(`ANONYMOUS #${index}`);
-          index++;
+          team1Temp.push(`${t('game.anonymous')} #${index1}`);
+          index1++;
         }
 
         if (item[1]) {
           team2Temp.push(item[1]);
         } else {
-          team2Temp.push(`ANONYMOUS #${index}`);
-          index++;
+          team2Temp.push(`${t('game.anonymous')} #${index2}`);
+          index2++;
         }
       });
 
@@ -263,8 +264,8 @@ const CardGame = () => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
           inputTeam1.length === 0
-            ? `Team 2 ${t('game.isWinner')}`
-            : `Team 1 ${t('game.isWinner')}`
+            ? `${t('common.team')} 2 ${t('game.isWinner')}`
+            : `${t('common.team')} 1 ${t('game.isWinner')}`
         );
         setGameState('gameOver');
         return;
@@ -2492,7 +2493,7 @@ const CardGame = () => {
                     background: 'rgba(255, 0, 85, 0.1)',
                     border: '1px solid rgba(255, 0, 85, 0.3)',
                     color: '#fff',
-                    fontSize: '14px',
+                    fontSize: '18px',
                     fontFamily: 'var(--font-body)'
                   }}
                 >
@@ -2656,7 +2657,7 @@ const CardGame = () => {
                     background: 'rgba(0, 242, 255, 0.1)',
                     border: '1px solid rgba(0, 242, 255, 0.3)',
                     color: '#fff',
-                    fontSize: '14px',
+                    fontSize: '18px',
                     fontFamily: 'var(--font-body)'
                   }}
                 >

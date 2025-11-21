@@ -345,7 +345,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                     letterSpacing: '2px'
                   }}
                 >
-                  CHALLENGER APPROACHING
+                {t('game.challengerApproaching')} 
                 </div>
                 <div
                   className="text-glow"
