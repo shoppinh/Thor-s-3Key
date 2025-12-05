@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from '@remix-run/react';
 import ShareButtons from '~/components/ShareButtons';
 import type { MetaFunction } from '@remix-run/node';
 
@@ -6,10 +7,7 @@ export const meta: MetaFunction = () => {
   const title = "Thor's 3Key — Chaotic team card showdown";
   const description =
     'Fast, silly, team-based card chaos. Load players from Google Sheets, slam power-ups, and trash talk your way to victory.';
-  return [
-    { title },
-    { name: 'description', content: description }
-  ];
+  return [{ title }, { name: 'description', content: description }];
 };
 
 export default function IndexRoute() {
@@ -24,17 +22,19 @@ export default function IndexRoute() {
   return (
     <main style={styles.wrapper}>
       <div style={styles.overlay} />
-      
-      <section style={styles.hero}>        
-        <h1 className="text-glow" style={styles.h1}>THOR'S 3KEY</h1>
+
+      <section style={styles.hero}>
+        <h1 className="text-glow" style={styles.h1}>
+          THOR&apos;S 3KEY
+        </h1>
         <p style={styles.tagline}>
           CHAOTIC TEAM CARD BATTLES // POWER-UPS // RNG GLORY
         </p>
-        
+
         <div style={styles.ctaRow}>
-          <a href={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
+          <Link to={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
             START GAME
-          </a>          
+          </Link>
         </div>
 
         <div className="rpg-panel" style={styles.mediaFrame}>
@@ -48,11 +48,15 @@ export default function IndexRoute() {
         </div>
 
         <div style={styles.socialRow}>
-          <a 
-            href="https://twitter.com/intent/tweet?text=Playing%20Thor%27s%203Key%20now&url=" 
-            target="_blank" 
+          <a
+            href="https://twitter.com/intent/tweet?text=Playing%20Thor%27s%203Key%20now&url="
+            target="_blank"
             rel="noreferrer"
-            style={{ color: 'var(--color-secondary)', textDecoration: 'none', fontWeight: 'bold' }}
+            style={{
+              color: 'var(--color-secondary)',
+              textDecoration: 'none',
+              fontWeight: 'bold'
+            }}
           >
             [ POST YOUR RUN ]
           </a>
@@ -60,25 +64,37 @@ export default function IndexRoute() {
       </section>
 
       <section id="how" style={styles.section}>
-        <h2 className="text-glow" style={styles.h2}>SYSTEM GUIDE</h2>
+        <h2 className="text-glow" style={styles.h2}>
+          SYSTEM GUIDE
+        </h2>
         <div style={styles.featureGrid}>
           <div className="rpg-skewed" style={styles.featureCard}>
-            <strong style={{ color: 'var(--color-primary)', fontSize: '24px' }}>01</strong>
+            <strong style={{ color: 'var(--color-primary)', fontSize: '24px' }}>
+              01
+            </strong>
             <p>LOAD PLAYERS FROM DATABASE</p>
           </div>
           <div className="rpg-skewed" style={styles.featureCard}>
-            <strong style={{ color: 'var(--color-secondary)', fontSize: '24px' }}>02</strong>
+            <strong
+              style={{ color: 'var(--color-secondary)', fontSize: '24px' }}
+            >
+              02
+            </strong>
             <p>DRAW CARDS & ACTIVATE SKILLS</p>
           </div>
           <div className="rpg-skewed" style={styles.featureCard}>
-            <strong style={{ color: 'var(--color-accent)', fontSize: '24px' }}>03</strong>
+            <strong style={{ color: 'var(--color-accent)', fontSize: '24px' }}>
+              03
+            </strong>
             <p>HIGHEST SUM DOMINATES</p>
           </div>
         </div>
       </section>
 
       <section style={styles.section}>
-        <h2 className="text-glow" style={styles.h2}>WHY PLAY?</h2>
+        <h2 className="text-glow" style={styles.h2}>
+          WHY PLAY?
+        </h2>
         <div style={styles.grid3}>
           <div className="rpg-panel" style={styles.card}>
             <h3 style={styles.h3}>STREAM READY</h3>
@@ -96,16 +112,23 @@ export default function IndexRoute() {
       </section>
 
       <section style={styles.section}>
-        <h2 className="text-glow" style={styles.h2}>COMMUNITY</h2>
+        <h2 className="text-glow" style={styles.h2}>
+          COMMUNITY
+        </h2>
         <p style={{ color: '#ccc' }}>
-          Weekly seeds, challenge links, and simple leaderboards. 
+          Weekly seeds, challenge links, and simple leaderboards.
           <br />
-          <a href="mailto:mactrungkien2000@gmail.com" style={{ color: 'var(--color-secondary)' }}>
+          <a
+            href="mailto:mactrungkien2000@gmail.com"
+            style={{ color: 'var(--color-secondary)' }}
+          >
             CONTACT ADMIN
           </a>
         </p>
       </section>
-      <ShareButtons siteUrl={typeof window !== 'undefined' ? window.location.origin : ''} />
+      <ShareButtons
+        siteUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+      />
     </main>
   );
 }
@@ -120,7 +143,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overlay: {
     position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     background: 'radial-gradient(circle at center, transparent 0%, #000 100%)',
     pointerEvents: 'none',
     zIndex: -1
@@ -168,8 +194,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scanline: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 51%)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background:
+      'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 51%)',
     backgroundSize: '100% 4px',
     pointerEvents: 'none'
   },

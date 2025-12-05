@@ -183,14 +183,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
     const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) =>
       count > 0 && (
-        <div style={{ position: 'relative', margin: '0 8px' }}>
+        <div style={{ position: 'relative', margin: '0 8px', width: '100px' }}>
           <button
             onClick={() => enabled && onChanceClick(teamKey, type)}
             disabled={!enabled}
             className="rpg-skewed"
             style={{
-              width: '80px',
-              height: '80px',
+              width: '100px',
+              height: '100px',
               background: enabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
               border: `3px solid ${enabled ? color : '#555'}`,
               display: 'flex',
@@ -205,8 +205,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               src={icon}
               alt={label}
               style={{
-                width: '55px',
-                height: '55px',
+                width: '75px',
+                height: '75px',
                 filter: enabled ? 'none' : 'grayscale(100%)',
                 transform: 'skewX(5deg)' // Counter skew
               }}
@@ -233,7 +233,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </button>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '16px',
               marginTop: '5px',
               color: enabled ? '#fff' : '#777',
               textAlign: 'center',
@@ -259,12 +259,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           style={{
             color: teamColor,
             marginBottom: '10px',
-            textShadow: `0 0 5px ${teamColor}`
+            textShadow: `0 0 5px ${teamColor}`,
+            fontSize: '22px'
           }}
         >
           {teamData.name}
         </h4>
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', gap: '30px' }}>
           <PowerUpButton
             type="secondChance"
             count={teamData.powerUps.secondChance}
@@ -319,10 +320,10 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       }}
     >
       {/* Team 1 Status */}
-      <div style={{ flex: 1 }}>{renderTeamChances(team1Data, 'team1')}</div>
+      <div style={{ flex: 2 }}>{renderTeamChances(team1Data, 'team1')}</div>
 
       {/* Center Status Display */}
-      <div style={{ flex: 2, textAlign: 'center', position: 'relative' }}>
+      <div style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
         {/* Round Winner Announcement */}
 
         <div
@@ -340,12 +341,12 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               <>
                 <div
                   style={{
-                    fontSize: '14px',
+                    fontSize: '16px',
                     color: '#aaa',
                     letterSpacing: '2px'
                   }}
                 >
-                {t('game.challengerApproaching')} 
+                  {t('game.challengerApproaching')}
                 </div>
                 <div
                   className="text-glow"
@@ -403,7 +404,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       </div>
 
       {/* Team 2 Status */}
-      <div style={{ flex: 1 }}>{renderTeamChances(team2Data, 'team2')}</div>
+      <div style={{ flex: 2 }}>{renderTeamChances(team2Data, 'team2')}</div>
     </div>
   );
 };
