@@ -1,3 +1,4 @@
+import { Theme } from '~/contexts/ThemeContext';
 import Card from '~/models/Card';
 
 // Card values (1-9) and suits
@@ -95,19 +96,46 @@ export const mapNumToCardValues = (num: number): string => {
  * Gets the image path for a card based on its value and suit
  * @param value - Card value
  * @param suit - Card suit
+ * @param theme - App theme
  * @returns Image file path for the card
  */
-export const getCardImage = (value: number, suit: string): string => {
+const CARD_THEME_CONFIG: Record<
+  string,
+  { backImage: string; facePath: string }
+> = {
+  christmas: {
+    backImage: '/images/back_card_christmas.png',
+    facePath: '/images'
+  },
+  jrpg: {
+    backImage: '/images/back_card_cyber.jpg',
+    facePath: '/images'
+  },
+  default: {
+    backImage: '/images/back_card.png',
+    facePath: '/images'
+  }
+};
+
+export const getCardImage = (
+  value: number,
+  suit: string,
+  theme: Theme
+): string => {
   const suitNames: { [key: string]: string } = {
     '♦': 'diamonds',
     '♥': 'hearts',
     '♠': 'spades',
     '♣': 'clubs'
   };
-  if (mapNumToCardValues(value) === 'back') {
-    return '/images/back_card.jpg';
+
+  const config = CARD_THEME_CONFIG[theme] || CARD_THEME_CONFIG.default;
+  const cardValue = mapNumToCardValues(value);
+
+  if (cardValue === 'back') {
+    return config.backImage;
   }
-  return `/images/${mapNumToCardValues(value)}_of_${suitNames[suit]}.png`;
+  return `${config.facePath}/${cardValue}_of_${suitNames[suit]}.png`;
 };
 
 /**
@@ -231,7 +259,7 @@ export const getTeamByPlayer = (
 };
 
 /**
- * Returns the League of Legends-inspired win streak message based on the streak count  
+ * Returns the League of Legends-inspired win streak message based on the streak count
  * @param streak - Number of consecutive wins
  * @returns Streak message or empty string
  */

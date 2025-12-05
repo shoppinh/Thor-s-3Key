@@ -6,7 +6,7 @@ import {
   type ReactNode
 } from 'react';
 
-type Theme = 'jrpg' | 'christmas';
+export type Theme = 'jrpg' | 'christmas';
 
 interface ThemeContextType {
   theme: Theme;
@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (storedTheme && storedTheme !== theme) {
       setThemeState(storedTheme);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
