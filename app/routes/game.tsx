@@ -1,5 +1,5 @@
 import { useOutletContext } from '@remix-run/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
 import ConfirmPopupData from '~/models/ConfirmPopupData';
 import DuelData from '~/models/DuelData';
@@ -25,6 +25,7 @@ import PlayerCardDrawer from '../components/PlayerCardDrawer';
 import PowerupGuideModal from '../components/PowerupGuideModal';
 import RoundStatus from '../components/RoundStatus';
 import Card from '../models/Card';
+import { useTheme } from '~/contexts/ThemeContext';
 
 const DECKS = createDeck();
 
@@ -44,6 +45,7 @@ type PowerUpsAllocation = {
 
 const CardGame = () => {
   const { t, language, setLanguage } = useLanguage();
+  const { theme } = useTheme();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>({
     name: `${t('common.team')} 1`,
@@ -191,6 +193,17 @@ const CardGame = () => {
    * Loads team player names from Google Sheets and populates `team1Data` and `team2Data`.
    * Keeps the app in the 'setup' state where setup and welcome UIs are combined.
    */
+
+  const extraImages = useMemo(() => {
+    switch (theme) {
+      case 'christmas':
+        return ['/images/back_card_christmas.png'];
+      case 'jrpg':
+        return ['/images/back_card_cyber.jpg'];
+      default:
+        return ['/images/back_card.png'];
+    }
+  }, [theme]);
   const startGame = async () => {
     setGameState('gameLoading');
     // Preload all card images to avoid flicker during gameplay
@@ -203,7 +216,6 @@ const CardGame = () => {
         '♠': 'spades',
         '♣': 'clubs'
       };
-      const extraImages = ['/images/back_card.jpg'];
       const urls: string[] = [];
       allValues.forEach((v) => {
         Object.keys(suitNames).forEach((s) => {
@@ -1281,7 +1293,7 @@ const CardGame = () => {
     return cards.map((card, index) => (
       <img
         key={index}
-        src={getCardImage(card.value, card.suit)}
+        src={getCardImage(card.value, card.suit, theme)}
         alt={`${card.value}${card.suit}`}
         style={{
           width: '150px',
@@ -2800,7 +2812,7 @@ const CardGame = () => {
           <div
             style={{
               position: 'absolute',
-              bottom: "60px",
+              bottom: '60px',
               left: '50%',
               transform: 'translate(-50%, 0)',
               zIndex: 9999,
