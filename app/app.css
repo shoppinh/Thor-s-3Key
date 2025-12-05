@@ -1,5 +1,5 @@
 :root {
-  /* Theme Colors */
+  /* Theme Colors - Default (JRPG) */
   --color-bg: #0f0c29;
   --color-bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
   --color-primary: #ff0055; /* Hot Pink - Attack/Action */
@@ -14,7 +14,7 @@
 
   /* Fonts */
   --font-header: 'Russo One', sans-serif;
-  --font-body: 'Rajdhani', sans-serif;  
+  --font-body: 'Rajdhani', sans-serif;
 
   /* Effects */
   --glow-primary: 0 0 10px rgba(255, 0, 85, 0.6), 0 0 20px rgba(255, 0, 85, 0.4);
@@ -24,6 +24,90 @@
     0 0 20px rgba(255, 215, 0, 0.4);
   --skew-angle: -10deg;
   --border-width: 2px;
+}
+
+[data-theme='christmas'] {
+  /* Theme Colors - Christmas */
+  --color-bg: #1a0f0f;
+  --color-bg-gradient: linear-gradient(135deg, #2c0a0a, #1a472a, #0f2b1d);
+  --color-primary: #d42426; /* Christmas Red */
+  --color-primary-dark: #a01214;
+  --color-secondary: #2f9e44; /* Bright Evergreen */
+  --color-secondary-dark: #165b33;
+  --color-accent: #f8b229; /* Gold */
+  --color-text: #f0f0f0; /* Snow White */
+  --color-text-muted: #e0e0e0;
+  --color-panel-bg: rgba(40, 10, 10, 0.9);
+  --color-border: rgba(248, 178, 41, 0.5);
+
+  /* Fonts */
+  --font-header: 'Mountains of Christmas', cursive;
+  --font-body: 'Rajdhani', sans-serif;
+
+  /* Effects */
+  --glow-primary: 0 0 15px rgba(212, 36, 38, 0.8),
+    0 0 30px rgba(212, 36, 38, 0.4);
+  --glow-secondary: 0 0 15px rgba(47, 158, 68, 0.8),
+    0 0 30px rgba(47, 158, 68, 0.4);
+  --glow-accent: 0 0 15px rgba(248, 178, 41, 0.8),
+    0 0 30px rgba(248, 178, 41, 0.4);
+  --skew-angle: 0deg; /* No skew for cozy feel */
+  --border-width: 4px;
+}
+
+/* Christmas Theme Overrides */
+[data-theme='christmas'] .rpg-panel {
+  border-radius: 12px;
+  border: 4px solid var(--color-accent);
+  box-shadow:
+    0 0 20px rgba(212, 36, 38, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='christmas'] .rpg-panel::before,
+[data-theme='christmas'] .rpg-panel::after {
+  content: none; /* Remove tech corners */
+}
+
+[data-theme='christmas'] .rpg-button {
+  border-radius: 25px;
+  border: 2px solid #fff;
+  background: linear-gradient(
+    to bottom,
+    var(--color-primary),
+    var(--color-primary-dark)
+  );
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='christmas'] .rpg-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.3),
+    0 0 15px var(--color-primary);
+}
+
+[data-theme='christmas'] .rpg-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='christmas'] .rpg-skewed {
+  transform: none;
+}
+
+[data-theme='christmas'] .rpg-skewed > * {
+  transform: none;
+}
+
+[data-theme='christmas'] h1,
+[data-theme='christmas'] h2,
+[data-theme='christmas'] h3 {
+  letter-spacing: 2px;
+  text-shadow:
+    2px 2px 0 #000,
+    0 0 10px var(--color-accent);
 }
 
 html,
@@ -368,4 +452,49 @@ input[type='text']:disabled {
   color: var(--color-accent);
   min-width: 80px;
   text-align: center;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+  }
+  14% {
+    color: #ff7f00;
+    text-shadow: 0 0 10px #ff7f00;
+  }
+  28% {
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00;
+  }
+  42% {
+    opacity: 0.8;
+    transform: scale(2);
+    color: #00ff00;
+    text-shadow: 0 0 20px #00ff00;
+  }
+  57% {
+    color: #0000ff;
+    text-shadow: 0 0 10px #0000ff;
+  }
+  71% {
+    color: #4b0082;
+    text-shadow: 0 0 10px #4b0082;
+  }
+  85% {
+    color: #9400d3;
+    text-shadow: 0 0 10px #9400d3;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+  }
+}
+
+.blink-score {
+  animation: blink 0.5s linear 3;
 }

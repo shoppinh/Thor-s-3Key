@@ -108,6 +108,28 @@ const CardGame = () => {
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
 
+  // Effect to handle score blinking for Team 1
+  useEffect(() => {
+    if (team1Data.score > 0) {
+      setTeam1Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+      const timer = setTimeout(() => {
+        setTeam1Data((prev) => ({ ...prev, scoreClass: '' }));
+      }, 1500); // 0.5s * 3 iterations
+      return () => clearTimeout(timer);
+    }
+  }, [team1Data.score]);
+
+  // Effect to handle score blinking for Team 2
+  useEffect(() => {
+    if (team2Data.score > 0) {
+      setTeam2Data((prev) => ({ ...prev, scoreClass: 'blink-score' }));
+      const timer = setTimeout(() => {
+        setTeam2Data((prev) => ({ ...prev, scoreClass: '' }));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [team2Data.score]);
+
   // Show winner announcement when duelResult changes
   useEffect(() => {
     if (duelResult && duelData.isFinishDuel) {
@@ -2301,7 +2323,7 @@ const CardGame = () => {
                     className="rpg-panel"
                     style={{
                       padding: '20px',
-                      background: 'rgba(15, 12, 41, 0.8)',
+                      background: 'var(--color-panel-bg)',
                       border: '2px solid var(--color-secondary)',
                       marginBottom: '20px'
                     }}
@@ -2345,7 +2367,7 @@ const CardGame = () => {
                     className="rpg-panel"
                     style={{
                       padding: '20px',
-                      background: 'rgba(15, 12, 41, 0.8)',
+                      background: 'var(--color-panel-bg)',
                       border: '2px solid var(--color-secondary)',
                       marginBottom: '30px'
                     }}
@@ -2440,11 +2462,14 @@ const CardGame = () => {
             style={{
               width: '200px',
               padding: '20px',
-              background: 'rgba(15, 12, 41, 0.9)',
-              border: '2px solid var(--color-primary)'
+              background: 'var(--color-panel-bg)',
+              border: '2px solid var(--color-primary)',
+              position: 'relative',
+              zIndex: 10
             }}
           >
             <div
+              className={team1Data.scoreClass}
               style={{
                 fontSize: '48px',
                 fontWeight: 'bold',
@@ -2466,7 +2491,6 @@ const CardGame = () => {
                 position: 'relative'
               }}
             >
-              {t('common.team')} 1
               {team1Data.totalPowerUps > 0 && (
                 <ChanceStar
                   number={team1Data.totalPowerUps}
@@ -2477,6 +2501,7 @@ const CardGame = () => {
                   }}
                 />
               )}
+              {t('common.team')} 1
             </h2>
             <div
               style={{
@@ -2604,11 +2629,14 @@ const CardGame = () => {
             style={{
               width: '200px',
               padding: '20px',
-              background: 'rgba(15, 12, 41, 0.9)',
-              border: '2px solid var(--color-secondary)'
+              background: 'var(--color-panel-bg)',
+              border: '2px solid var(--color-secondary)',
+              position: 'relative',
+              zIndex: 10
             }}
           >
             <div
+              className={team2Data.scoreClass}
               style={{
                 fontSize: '48px',
                 fontWeight: 'bold',
@@ -2703,7 +2731,7 @@ const CardGame = () => {
             style={{
               padding: '40px 60px',
               textAlign: 'center',
-              background: 'rgba(15, 12, 41, 0.95)',
+              background: 'var(--color-panel-bg)',
               border: '3px solid var(--color-accent)'
             }}
           >
@@ -2762,7 +2790,7 @@ const CardGame = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.4)',
+              background: 'rgba(0, 0, 0, 0.2)',
               zIndex: 9999,
               animation: 'fade-in 0.3s ease-out'
             }}
@@ -2772,7 +2800,7 @@ const CardGame = () => {
           <div
             style={{
               position: 'absolute',
-              bottom: 0,
+              bottom: "60px",
               left: '50%',
               transform: 'translate(-50%, 0)',
               zIndex: 9999,
@@ -2782,7 +2810,7 @@ const CardGame = () => {
             <div
               className="rpg-panel"
               style={{
-                background: 'rgba(15, 12, 41, 0.98)',
+                background: 'var(--color-panel-bg)',
                 border: `4px solid ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,
                 padding: '20px 60px',
                 boxShadow: `0 0 50px ${duelResult.includes(team1Data.name) ? 'var(--color-secondary)' : duelResult.includes(team2Data.name) ? 'var(--color-primary)' : 'var(--color-accent)'}`,

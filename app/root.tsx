@@ -9,6 +9,9 @@ import {
 
 import { json, type MetaFunction, type LinksFunction } from '@remix-run/node';
 import { LanguageProvider } from '~/contexts/LanguageContext';
+import { ThemeProvider } from '~/contexts/ThemeContext';
+import ThemeSwitcher from '~/components/ThemeSwitcher';
+import Snowfall from '~/components/Snowfall';
 // existing imports
 
 import appStylesHref from './app.css?url';
@@ -23,7 +26,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&display=swap'
+    href: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&family=Mountains+of+Christmas:wght@400;700&display=swap'
   }
 ];
 
@@ -121,11 +124,26 @@ export default function App() {
             })
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var localTheme = localStorage.getItem('thor3key-theme');
+                var theme = localTheme || 'jrpg';
+                document.documentElement.setAttribute('data-theme', theme);
+              } catch (e) {}
+            })();`
+          }}
+        />
       </head>
       <body>
         <div id="detail">
           <LanguageProvider>
-            <Outlet context={clientSecrets} />
+            <ThemeProvider>
+              <Snowfall />
+              <Outlet context={clientSecrets} />
+              <ThemeSwitcher />
+            </ThemeProvider>
           </LanguageProvider>
         </div>
 
