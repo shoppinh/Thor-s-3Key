@@ -233,13 +233,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </button>
           <div
             style={{
-              fontSize: '16px',
+              fontSize: '20px',
               marginTop: '5px',
               color: enabled ? '#fff' : '#777',
               textAlign: 'center',
               textTransform: 'uppercase',
               fontFamily: 'var(--font-body)',
-              letterSpacing: '0.5px'
+              letterSpacing: '0.5px',
+              fontWeight: 'bold'
             }}
           >
             {label}
