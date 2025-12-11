@@ -2506,6 +2506,7 @@ const CardGame = () => {
               {team1Data.totalPowerUps > 0 && (
                 <ChanceStar
                   number={team1Data.totalPowerUps}
+                  theme={theme}
                   style={{
                     top: '50%',
                     left: 'calc(100% + 10px)',
@@ -2673,6 +2674,7 @@ const CardGame = () => {
               {team2Data.totalPowerUps > 0 && (
                 <ChanceStar
                   number={team2Data.totalPowerUps}
+                  theme={theme}
                   style={{
                     top: '50%',
                     right: 'calc(100% + 10px)',
