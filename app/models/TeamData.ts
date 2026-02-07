@@ -1,4 +1,4 @@
-export default interface TeamData {
+export interface TeamData {
   name: string;
   score: number;
   scoreClass: string;
