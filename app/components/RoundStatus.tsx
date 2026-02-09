@@ -1,7 +1,8 @@
 import React from 'react';
-import TeamData from '~/models/TeamData';
+import { ChanceType, TeamData } from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { TeamName } from '~/features/game/types/gameTypes';
 
 interface RoundStatusProps {
   duelResult: string;
@@ -16,8 +17,8 @@ interface RoundStatusProps {
   duelData: DuelData;
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
-    teamName: 'team1' | 'team2',
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'removeWorst'
+    teamName: TeamName,
+    chanceType: ChanceType
   ) => void;
 }
 
@@ -72,7 +73,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
 
   const renderTeamChances = (
     teamData: TeamData,
-    teamKey: 'team1' | 'team2'
+    teamKey: TeamName
   ) => {
     const isTeam1 = teamKey === 'team1';
     const teamColor = isTeam1

@@ -1,4 +1,4 @@
-export default interface TeamData {
+export interface TeamData {
   name: string;
   score: number;
   scoreClass: string;
@@ -11,3 +11,9 @@ export default interface TeamData {
   };
   players: string[];
 }
+
+export type ChanceType =
+  | 'secondChance'
+  | 'revealTwo'
+  | 'lifeShield'
+  | 'removeWorst';

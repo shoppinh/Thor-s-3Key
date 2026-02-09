@@ -1,6 +1,6 @@
 import Card from '~/models/Card';
 
-export default interface PlayerData {
+export interface PlayerData {
   name: string;
   team: string;
   sum: number;

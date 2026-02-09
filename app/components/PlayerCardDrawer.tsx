@@ -1,5 +1,5 @@
 import React from 'react';
-import PlayerData from '~/models/PlayerData';
+import { PlayerData } from '~/models/PlayerData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
 
@@ -164,13 +164,11 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           )}
 
           {!isBlankHand && (
-            <div
+            <button
               className="rpg-skewed"
-              onClick={
-                playerData.name === '?' && playerData.team === '' && !disabled
-                  ? onSelect
-                  : undefined
-              }
+              type="button"
+              onClick={onSelect}
+              disabled={playerData.name !== '?' || playerData.team !== '' || disabled}
               style={{
                 display: 'flex',
                 justifyContent: 'center',
@@ -195,7 +193,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
               >
                 {playerData.sum}
               </span>
-            </div>
+            </button>
           )}
         </div>
 
