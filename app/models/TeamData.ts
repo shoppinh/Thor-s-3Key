@@ -11,3 +11,9 @@ export interface TeamData {
   };
   players: string[];
 }
+
+export type ChanceType =
+  | 'secondChance'
+  | 'revealTwo'
+  | 'lifeShield'
+  | 'removeWorst';

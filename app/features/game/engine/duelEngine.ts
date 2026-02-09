@@ -1,6 +1,6 @@
 import Card from '~/models/Card';
 import DuelData from '~/models/DuelData';
-import {PlayerData} from '~/models/PlayerData';
+import { PlayerData } from '~/models/PlayerData';
 import { Side, TeamName } from '~/features/game/types/gameTypes';
 
 export const getCardsBySide = (duelData: DuelData, side: Side): Card[] => {
@@ -52,23 +52,45 @@ export const applyPlayerSelectionToDuel = ({
   }
 
   if (side === 'top-left') {
-    updates.topLeftPlayerData = { name: currentPlayer, team: teamName, sum, cards };
+    updates.topLeftPlayerData = {
+      name: currentPlayer,
+      team: teamName,
+      sum,
+      cards
+    };
     updates.topLeftRevealed = true;
   } else if (side === 'bottom-left') {
-    updates.bottomLeftPlayerData = { name: currentPlayer, team: teamName, sum, cards };
+    updates.bottomLeftPlayerData = {
+      name: currentPlayer,
+      team: teamName,
+      sum,
+      cards
+    };
     updates.bottomLeftRevealed = true;
   } else if (side === 'top-right') {
-    updates.topRightPlayerData = { name: currentPlayer, team: teamName, sum, cards };
+    updates.topRightPlayerData = {
+      name: currentPlayer,
+      team: teamName,
+      sum,
+      cards
+    };
     updates.topRightRevealed = true;
   } else {
-    updates.bottomRightPlayerData = { name: currentPlayer, team: teamName, sum, cards };
+    updates.bottomRightPlayerData = {
+      name: currentPlayer,
+      team: teamName,
+      sum,
+      cards
+    };
     updates.bottomRightRevealed = true;
   }
 
   return updates;
 };
 
-export const getAvailableSelectableGroupCount = (duelData: DuelData): number => {
+export const getAvailableSelectableGroupCount = (
+  duelData: DuelData
+): number => {
   const disabledGroups = new Set(duelData.removedWorstGroups || []);
   return [
     !disabledGroups.has('top-left') &&

@@ -4,9 +4,10 @@ import RoundStatus from '~/components/RoundStatus';
 import Card from '~/models/Card';
 import DuelData from '~/models/DuelData';
 import { PlayerData } from '~/models/PlayerData';
-import { TeamData } from '~/models/TeamData';
+import { ChanceType, TeamData } from '~/models/TeamData';
 import { CARDS_COVER } from '~/utils/gameUtil';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { Side, TeamName } from '../types/gameTypes';
 
 type GameArenaScreenProps = {
   duelResult: string;
@@ -16,7 +17,7 @@ type GameArenaScreenProps = {
   team2Data: TeamData;
   theme: string;
   onSelect: (
-    side: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+    side: Side 
   ) => void;
   isPlayerCardDrawerDisabled: (playerData: PlayerData) => boolean;
   renderTheCards: (
@@ -26,8 +27,8 @@ type GameArenaScreenProps = {
   ) => JSX.Element[];
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
-    teamName: 'team1' | 'team2',
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'removeWorst'
+    teamName: TeamName,
+    chanceType: ChanceType
   ) => void;
 };
 

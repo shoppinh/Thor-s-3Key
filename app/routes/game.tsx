@@ -40,7 +40,7 @@ import {
 import ConfirmPopupData from '~/models/ConfirmPopupData';
 import DuelData from '~/models/DuelData';
 import { PlayerData } from '~/models/PlayerData';
-import { TeamData } from '~/models/TeamData';
+import { ChanceType, TeamData } from '~/models/TeamData';
 import {
   calculateSum,
   createDeck,
@@ -80,8 +80,8 @@ const CardGame = () => {
   const [isFirstTurn, setIsFirstTurn] = useState(true); // first turn of the entire game
   const [confirmPopup, setConfirmPopup] = useState<ConfirmPopupData>({
     isVisible: false,
-    teamName: null,
-    chanceType: null,
+    teamName: undefined,
+    chanceType: undefined,
     chanceItemName: ''
   });
   const [gameState, setGameState] = useState<GameState>('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
@@ -172,6 +172,7 @@ const CardGame = () => {
     } catch (error) {
       setGameState('setup');
       console.error('Error preloading images:', error);
+      return;
     }
 
     try {
@@ -466,10 +467,7 @@ const CardGame = () => {
    * @param teamName - Which team clicked the chance
    * @param chanceType - Type of chance (secondChance or revealTwo)
    */
-  const handleChanceClick = (
-    teamName: TeamName,
-    chanceType: 'secondChance' | 'revealTwo' | 'lifeShield' | 'removeWorst'
-  ) => {
+  const handleChanceClick = (teamName: TeamName, chanceType: ChanceType) => {
     const chanceItemName =
       chanceType === 'secondChance'
         ? t('game.secondChance')
@@ -796,32 +794,32 @@ const CardGame = () => {
         }
 
         case 'removeWorst': {
-          const worstKey = pickWorstGroup(duelData);
-          if (worstKey) {
-            if (teamName === 'team1') {
-              setTeam1Data((prev) => ({
-                ...prev,
-                powerUps: {
-                  ...prev.powerUps,
-                  removeWorst: prev.powerUps.removeWorst - 1
-                },
-                totalPowerUps: prev.totalPowerUps - 1
-              }));
-            } else {
-              setTeam2Data((prev) => ({
-                ...prev,
-                powerUps: {
-                  ...prev.powerUps,
-                  removeWorst: prev.powerUps.removeWorst - 1
-                },
-                totalPowerUps: prev.totalPowerUps - 1
-              }));
+          setDuelData((prev) => {
+            const worstKey = pickWorstGroup(prev);
+            if (worstKey) {
+              if (teamName === 'team1') {
+                setTeam1Data((prev) => ({
+                  ...prev,
+                  powerUps: {
+                    ...prev.powerUps,
+                    removeWorst: prev.powerUps.removeWorst - 1
+                  },
+                  totalPowerUps: prev.totalPowerUps - 1
+                }));
+              } else {
+                setTeam2Data((prev) => ({
+                  ...prev,
+                  powerUps: {
+                    ...prev.powerUps,
+                    removeWorst: prev.powerUps.removeWorst - 1
+                  },
+                  totalPowerUps: prev.totalPowerUps - 1
+                }));
+              }
+              return withRemoveWorstUsage(prev, teamName, worstKey);
             }
-
-            setDuelData((prev) =>
-              withRemoveWorstUsage(prev, teamName, worstKey)
-            );
-          }
+            return prev;
+          });
           break;
         }
 
@@ -833,8 +831,8 @@ const CardGame = () => {
     // Hide popup
     setConfirmPopup({
       isVisible: false,
-      teamName: null,
-      chanceType: null,
+      teamName: undefined,
+      chanceType: undefined,
       chanceItemName: ''
     });
   };
@@ -845,8 +843,8 @@ const CardGame = () => {
   const handleCancelChance = () => {
     setConfirmPopup({
       isVisible: false,
-      teamName: null,
-      chanceType: null,
+      teamName: undefined,
+      chanceType: undefined,
       chanceItemName: ''
     });
   };
