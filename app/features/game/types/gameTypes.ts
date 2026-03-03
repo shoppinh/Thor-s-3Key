@@ -1,4 +1,6 @@
-export type TeamName = 'team1' | 'team2';
+export type TeamId = string;
+export const LEGACY_TEAM_IDS = ['team1', 'team2'] as const;
+export type TeamName = (typeof LEGACY_TEAM_IDS)[number];
 
 export type Side = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 

@@ -609,6 +609,20 @@ function WelcomePanel({
           />
         </div>
 
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: '20px',
+            color: 'var(--color-secondary)',
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.9rem',
+            textAlign: 'left'
+          }}
+        >
+          Team columns are loaded from the selected sheet range (A=Team 1, B=Team
+          2, C+=queued challengers).
+        </p>
+
         <div style={{ textAlign: 'center' }}>
           <button
             onClick={onStartGame}

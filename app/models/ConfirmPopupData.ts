@@ -1,9 +1,9 @@
-import { TeamName } from '~/features/game/types/gameTypes';
+import { TeamId } from '~/features/game/types/gameTypes';
 import { ChanceType } from './TeamData';
 
 export default interface ConfirmPopupData {
   isVisible: boolean;
-  teamName?: TeamName;
+  teamName?: TeamId;
   chanceType?: ChanceType;
   chanceItemName: string;
 }

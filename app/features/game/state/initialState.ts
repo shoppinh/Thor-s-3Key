@@ -1,11 +1,13 @@
 import DuelData from '~/models/DuelData';
 import { TeamData } from '~/models/TeamData';
-import { PowerUpsAllocation } from '~/features/game/types/gameTypes';
+import { PowerUpsAllocation, TeamId } from '~/features/game/types/gameTypes';
 
 export const createInitialTeamData = (
-  teamNumber: 1 | 2,
-  teamLabel: string
+  teamNumber: number,
+  teamLabel: string,
+  teamId?: TeamId
 ): TeamData => ({
+  id: teamId,
   name: `${teamLabel} ${teamNumber}`,
   score: 0,
   scoreClass: '',

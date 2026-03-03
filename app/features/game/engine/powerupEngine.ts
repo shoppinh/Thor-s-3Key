@@ -1,6 +1,6 @@
 import Card from '~/models/Card';
 import DuelData from '~/models/DuelData';
-import { Side, TeamName } from '~/features/game/types/gameTypes';
+import { Side, TeamId } from '~/features/game/types/gameTypes';
 import {
   calculateSum,
   getCardHighestSuitAndValue,
@@ -85,7 +85,7 @@ export const pickWorstGroup = (duelData: DuelData): Side | null => {
 
 export const withRemoveWorstUsage = (
   duelData: DuelData,
-  teamName: TeamName,
+  teamName: TeamId,
   worstGroup: Side
 ): DuelData => ({
   ...duelData,

@@ -1,4 +1,7 @@
+import { TeamId } from '~/features/game/types/gameTypes';
+
 export interface TeamData {
+  id?: TeamId;
   name: string;
   score: number;
   scoreClass: string;

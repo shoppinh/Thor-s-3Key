@@ -1,7 +1,7 @@
 import Card from '~/models/Card';
 import DuelData from '~/models/DuelData';
 import { PlayerData } from '~/models/PlayerData';
-import { Side, TeamName } from '~/features/game/types/gameTypes';
+import { Side, TeamId } from '~/features/game/types/gameTypes';
 
 export const getCardsBySide = (duelData: DuelData, side: Side): Card[] => {
   if (side === 'top-left') return duelData.topLeftCards;
@@ -32,7 +32,7 @@ export const applyPlayerSelectionToDuel = ({
   duelData: DuelData;
   side: Side;
   currentPlayer: string;
-  teamName: TeamName;
+  teamName: TeamId;
   sum: number;
   cards: Card[];
   duelIndex: number;

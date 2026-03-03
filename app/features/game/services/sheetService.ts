@@ -12,7 +12,7 @@ export const loadPlayersFromSheet = async ({
   sheetId,
   sheetRange,
   anonymousLabel
-}: LoadPlayersParams): Promise<{ team1: string[]; team2: string[] }> => {
+}: LoadPlayersParams): Promise<{ teams: string[][] }> => {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
   const response = await fetch(url);
   
@@ -28,29 +28,26 @@ export const loadPlayersFromSheet = async ({
   
   const rows = data.values;
 
-  const team1Temp: string[] = [];
-  const team2Temp: string[] = [];
-  let index1 = 1;
-  let index2 = 1;
+  const teamCount = Math.max(...rows.map((row) => row.length), 0);
+  if (teamCount < 2) {
+    throw new Error('Sheet must contain at least 2 team columns');
+  }
+
+  const teams: string[][] = Array.from({ length: teamCount }, () => []);
+  const anonymousIndexes = Array.from({ length: teamCount }, () => 1);
 
   rows.slice(1).forEach((item) => {
-    if (item[0]) {
-      team1Temp.push(item[0]);
-    } else {
-      team1Temp.push(`${anonymousLabel} #${index1}`);
-      index1 += 1;
-    }
-
-    if (item[1]) {
-      team2Temp.push(item[1]);
-    } else {
-      team2Temp.push(`${anonymousLabel} #${index2}`);
-      index2 += 1;
+    for (let columnIndex = 0; columnIndex < teamCount; columnIndex += 1) {
+      if (item[columnIndex]) {
+        teams[columnIndex].push(item[columnIndex]);
+      } else {
+        teams[columnIndex].push(
+          `${anonymousLabel} #${anonymousIndexes[columnIndex]}`
+        );
+        anonymousIndexes[columnIndex] += 1;
+      }
     }
   });
 
-  return {
-    team1: shuffleArray(team1Temp),
-    team2: shuffleArray(team2Temp)
-  };
+  return { teams: teams.map((team) => shuffleArray(team)) };
 };

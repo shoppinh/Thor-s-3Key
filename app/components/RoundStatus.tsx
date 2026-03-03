@@ -2,7 +2,7 @@ import React from 'react';
 import { ChanceType, TeamData } from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
-import { TeamName } from '~/features/game/types/gameTypes';
+import { TeamId, TeamName } from '~/features/game/types/gameTypes';
 
 interface RoundStatusProps {
   duelResult: string;
@@ -17,7 +17,7 @@ interface RoundStatusProps {
   duelData: DuelData;
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
-    teamName: TeamName,
+    teamName: TeamId,
     chanceType: ChanceType
   ) => void;
 }

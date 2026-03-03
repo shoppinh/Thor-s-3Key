@@ -1,3 +1,4 @@
+import { TeamId } from '~/features/game/types/gameTypes';
 import { Theme } from '~/contexts/ThemeContext';
 import Card from '~/models/Card';
 
@@ -254,7 +255,7 @@ export const determineWinner = (
 export const getTeamByPlayer = (
   player: string,
   team1Players: string[]
-): 'team1' | 'team2' => {
+): TeamId => {
   return team1Players.includes(player) ? 'team1' : 'team2';
 };
 

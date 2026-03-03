@@ -7,7 +7,7 @@ import { PlayerData } from '~/models/PlayerData';
 import { ChanceType, TeamData } from '~/models/TeamData';
 import { CARDS_COVER } from '~/utils/gameUtil';
 import { useLanguage } from '~/contexts/LanguageContext';
-import { Side, TeamName } from '../types/gameTypes';
+import { Side, TeamId } from '../types/gameTypes';
 
 type GameArenaScreenProps = {
   duelResult: string;
@@ -15,6 +15,7 @@ type GameArenaScreenProps = {
   duelData: DuelData;
   team1Data: TeamData;
   team2Data: TeamData;
+  queuedTeamsCount: number;
   theme: string;
   onSelect: (
     side: Side 
@@ -27,7 +28,7 @@ type GameArenaScreenProps = {
   ) => JSX.Element[];
   nextRound: (team1: string[], team2: string[]) => void;
   onChanceClick: (
-    teamName: TeamName,
+    teamName: TeamId,
     chanceType: ChanceType
   ) => void;
 };
@@ -38,6 +39,7 @@ const GameArenaScreen = ({
   duelData,
   team1Data,
   team2Data,
+  queuedTeamsCount,
   theme,
   onSelect,
   isPlayerCardDrawerDisabled,
@@ -286,6 +288,21 @@ const GameArenaScreen = ({
           </div>
         </div>
       </div>
+
+      {queuedTeamsCount > 0 && (
+        <div
+          className="rpg-panel"
+          style={{
+            margin: '0 20px 20px',
+            padding: '10px 16px',
+            border: '1px solid var(--color-secondary)',
+            color: 'var(--color-secondary)',
+            fontFamily: 'var(--font-body)'
+          }}
+        >
+          {t('common.team')} queue: {queuedTeamsCount}
+        </div>
+      )}
 
       <RoundStatus
         duelResult={duelResult}
