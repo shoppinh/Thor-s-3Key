@@ -111,7 +111,13 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
 
         <div
           className={'drawCardsContainer'}
-          style={{ position: 'relative', minHeight: '60px', height: '60px' }}
+          style={{
+            position: 'relative',
+            minHeight: '60px',
+            height: '60px',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
         >
           {shouldShowDrawButton && (
             <>
@@ -168,7 +174,9 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
               className="rpg-skewed"
               type="button"
               onClick={onSelect}
-              disabled={playerData.name !== '?' || playerData.team !== '' || disabled}
+              disabled={
+                playerData.name !== '?' || playerData.team !== '' || disabled
+              }
               style={{
                 display: 'flex',
                 justifyContent: 'center',
