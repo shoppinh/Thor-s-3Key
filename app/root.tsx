@@ -12,6 +12,7 @@ import { LanguageProvider } from '~/contexts/LanguageContext';
 import { ThemeProvider } from '~/contexts/ThemeContext';
 import ThemeSwitcher from '~/components/ThemeSwitcher';
 import Snowfall from '~/components/Snowfall';
+import SummerScene from '~/components/SummerScene';
 // existing imports
 
 import appStylesHref from './app.css?url';
@@ -26,7 +27,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&family=Mountains+of+Christmas:wght@400;700&display=swap'
+    href: 'https://fonts.googleapis.com/css2?family=Pacifico&family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&family=Mountains+of+Christmas:wght@400;700&display=swap'
   }
 ];
 
@@ -141,6 +142,7 @@ export default function App() {
           <LanguageProvider>
             <ThemeProvider>
               <Snowfall />
+              <SummerScene />
               <Outlet context={clientSecrets} />
               <ThemeSwitcher />
             </ThemeProvider>

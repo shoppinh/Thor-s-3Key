@@ -6,7 +6,7 @@ import {
   type ReactNode
 } from 'react';
 
-export type Theme = 'jrpg' | 'christmas';
+export type Theme = 'jrpg' | 'christmas' | 'summer';
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,7 +17,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('jrpg');
+  const [theme, setThemeState] = useState<Theme>('summer');
 
   // On mount, sync theme from localStorage if available
   useEffect(() => {
@@ -34,7 +34,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'jrpg' ? 'christmas' : 'jrpg'));
+    setThemeState((prev) => {
+      if (prev === 'jrpg') return 'christmas';
+      if (prev === 'christmas') return 'summer';
+      return 'jrpg';
+    });
   };
 
   const setTheme = (newTheme: Theme) => {
