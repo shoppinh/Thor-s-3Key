@@ -6,7 +6,7 @@ import {
   type ReactNode
 } from 'react';
 
-export type Theme = 'jrpg' | 'christmas';
+export type Theme = 'jrpg' | 'christmas' | 'summer';
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,16 +17,13 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('jrpg');
-
-  // On mount, sync theme from localStorage if available
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('thor3key-theme') as Theme | null;
-    if (storedTheme && storedTheme !== theme) {
-      setThemeState(storedTheme);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('thor3key-theme') as Theme | null;
+      return storedTheme || 'summer';
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return 'summer';
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -34,7 +31,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'jrpg' ? 'christmas' : 'jrpg'));
+    setThemeState((prev) => {
+      if (prev === 'jrpg') return 'christmas';
+      if (prev === 'christmas') return 'summer';
+      return 'jrpg';
+    });
   };
 
   const setTheme = (newTheme: Theme) => {

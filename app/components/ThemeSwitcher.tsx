@@ -1,5 +1,5 @@
 import { useLocation } from '@remix-run/react';
-import { useTheme } from '~/contexts/ThemeContext';
+import { useTheme, type Theme } from '~/contexts/ThemeContext';
 
 export default function ThemeSwitcher() {
   const { theme, toggleTheme } = useTheme();
@@ -7,15 +7,23 @@ export default function ThemeSwitcher() {
 
   if (location.pathname !== '/') return null;
 
+  const nextThemeMap: Record<Theme, { name: string; icon: string }> = {
+    jrpg: { name: 'Christmas', icon: '🎄' },
+    christmas: { name: 'Summer', icon: '☀️' },
+    summer: { name: 'JRPG', icon: '⚔️' }
+  };
+
+  const nextThemeInfo = nextThemeMap[theme];
+
   return (
     <button
       onClick={toggleTheme}
       style={styles.button}
       className="theme-switcher"
       aria-label="Toggle Theme"
-      title={`Switch to ${theme === 'jrpg' ? 'Christmas' : 'JRPG'} Theme`}
+      title={`Switch to ${nextThemeInfo.name} Theme`}
     >
-      <span aria-hidden="true">{theme === 'jrpg' ? '🎄' : '⚔️'}</span>
+      <span aria-hidden="true">{nextThemeInfo.icon}</span>
     </button>
   );
 }

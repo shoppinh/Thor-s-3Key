@@ -110,6 +110,83 @@
     0 0 10px var(--color-accent);
 }
 
+[data-theme='summer'] {
+  /* Theme Colors - Summer */
+  --color-bg: #ffe4b5;
+  --color-bg-gradient: linear-gradient(135deg, #ff7e5f, #feb47b, #ff9966);
+  --color-primary: #ff5e62; /* Hot Coral */
+  --color-primary-dark: #e04a4e;
+  --color-secondary: #00f2ff; /* Bright Ocean Cyan */
+  --color-secondary-dark: #00c2cc;
+  --color-accent: #ffdd00; /* Sunny Yellow */
+  --color-text: #ffffff;
+  --color-text-muted: #fff5e6;
+  --color-panel-bg: rgba(255, 126, 95, 0.85);
+  --color-border: rgba(255, 221, 0, 0.6);
+
+  /* Fonts */
+  --font-header: 'Pacifico', cursive;
+  --font-body: 'Rajdhani', sans-serif;
+
+  /* Effects */
+  --glow-primary: 0 0 15px rgba(255, 94, 98, 0.8),
+    0 0 30px rgba(255, 94, 98, 0.4);
+  --glow-secondary: 0 0 15px rgba(0, 242, 255, 0.8),
+    0 0 30px rgba(0, 242, 255, 0.4);
+  --glow-accent: 0 0 15px rgba(255, 221, 0, 0.8),
+    0 0 30px rgba(255, 221, 0, 0.4);
+  --skew-angle: -5deg;
+  --border-width: 3px;
+}
+
+/* Summer Theme Overrides */
+[data-theme='summer'] .rpg-panel {
+  border-radius: 16px;
+  border: 3px solid var(--color-accent);
+  box-shadow:
+    0 0 25px rgba(255, 221, 0, 0.4),
+    inset 0 0 15px rgba(255, 94, 98, 0.3);
+}
+
+[data-theme='summer'] .rpg-panel::before,
+[data-theme='summer'] .rpg-panel::after {
+  content: none; /* Remove tech corners for softer look */
+}
+
+[data-theme='summer'] .rpg-button {
+  border-radius: 30px;
+  border: 2px solid #fff;
+  background: linear-gradient(
+    to bottom,
+    var(--color-primary),
+    var(--color-primary-dark)
+  );
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='summer'] .rpg-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px var(--color-accent);
+}
+
+[data-theme='summer'] .rpg-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='summer'] h1,
+[data-theme='summer'] h2,
+[data-theme='summer'] h3 {
+  letter-spacing: 1px;
+  text-transform: none; /* Pacifico looks better with natural casing */
+  text-shadow:
+    2px 2px 0 #ff5e62,
+    0 0 15px var(--color-accent);
+}
+
 html,
 body {
   height: 100%;
