@@ -130,7 +130,7 @@ export default function App() {
             __html: `(function() {
               try {
                 var localTheme = localStorage.getItem('thor3key-theme');
-                var theme = localTheme || 'jrpg';
+                var theme = localTheme || 'summer';
                 document.documentElement.setAttribute('data-theme', theme);
               } catch (e) {}
             })();`

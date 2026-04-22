@@ -71,7 +71,7 @@ export default function SummerScene() {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
       for (let i = 0; i < 4; i++) {
         ctx.beginPath();
-        let waveY = horizonY + i * 35 + Math.sin(time * 0.04 + i) * 15;
+        const waveY = horizonY + i * 35 + Math.sin(time * 0.04 + i) * 15;
         ctx.moveTo(0, waveY);
         for (let x = 0; x <= width; x += 20) {
           ctx.lineTo(x, waveY + Math.sin(x * 0.02 + time * 0.04 + i) * 10);
