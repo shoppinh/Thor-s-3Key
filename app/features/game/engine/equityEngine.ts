@@ -14,12 +14,22 @@ export type DuelEquity = {
   player2: DuelEquitySide;
 };
 
+const SIDES: Side[] = ['top-left', 'bottom-left', 'top-right', 'bottom-right'];
+
 const hasCompleteHand = (cards: Card[]): boolean => {
   return cards.length === 3 && cards.every((card) => card.value > 0 && card.suit);
 };
 
+const hasPublicCard = (card: Card): boolean => {
+  return card.value > 0 && Boolean(card.suit);
+};
+
 const isSameCard = (left: Card, right: Card): boolean => {
   return left.value === right.value && left.suit === right.suit;
+};
+
+const containsCard = (cards: Card[], target: Card): boolean => {
+  return cards.some((card) => isSameCard(card, target));
 };
 
 const createEquity = (player1WinRate: number): DuelEquity => {
@@ -50,6 +60,23 @@ const createThreeCardCombinations = (cards: Card[]): Card[][] => {
   return combinations;
 };
 
+const getRevealedCardsBySide = (
+  duelData: DuelData,
+  side: Side
+): Card[] => {
+  if (side === 'top-left') return duelData.revealedCards.topLeft;
+  if (side === 'bottom-left') return duelData.revealedCards.bottomLeft;
+  if (side === 'top-right') return duelData.revealedCards.topRight;
+  return duelData.revealedCards.bottomRight;
+};
+
+const getLegalOpponentSides = (duelData: DuelData): Side[] => {
+  const removedSides = new Set(duelData.removedWorstGroups || []);
+  return SIDES.filter((side) => {
+    return side !== duelData.player1SideSelected && !removedSides.has(side);
+  });
+};
+
 const getSelectedCards = (
   duelData: DuelData,
   selectedSide?: Side
@@ -64,15 +91,68 @@ const getSelectedCards = (
 
 const calculatePlayer1PublicWinRate = (player1Cards: Card[]): number => {
   const possibleOpponentCards = createDeck().filter(
-    (card) => !player1Cards.some((selected) => isSameCard(card, selected))
+    (card) => !containsCard(player1Cards, card)
   );
   const possibleOpponentHands =
     createThreeCardCombinations(possibleOpponentCards);
-  const player1Wins = possibleOpponentHands.filter(
+
+  return (
+    calculatePlayer1WinRateAgainstHands(player1Cards, possibleOpponentHands) ??
+    0
+  );
+};
+
+const createRevealTwoOpponentHands = (
+  duelData: DuelData,
+  player1Cards: Card[]
+): Card[][] => {
+  const publicCards = getLegalOpponentSides(duelData).flatMap((side) =>
+    getRevealedCardsBySide(duelData, side).filter(hasPublicCard)
+  );
+
+  const knownCards = [...player1Cards, ...publicCards];
+  const unknownThirdCards = createDeck().filter(
+    (candidate) => !containsCard(knownCards, candidate)
+  );
+
+  return getLegalOpponentSides(duelData).flatMap((side) => {
+    const visibleCards = getRevealedCardsBySide(duelData, side).filter(
+      hasPublicCard
+    );
+
+    if (visibleCards.length !== 2) {
+      return [];
+    }
+
+    return unknownThirdCards.map((thirdCard) => [...visibleCards, thirdCard]);
+  });
+};
+
+const calculatePlayer1WinRateAgainstHands = (
+  player1Cards: Card[],
+  opponentHands: Card[][]
+): number | null => {
+  if (opponentHands.length === 0) {
+    return null;
+  }
+
+  const player1Wins = opponentHands.filter(
     (opponentCards) => compareHands(player1Cards, opponentCards) === 'player1'
   ).length;
 
-  return Math.round((player1Wins / possibleOpponentHands.length) * 100);
+  return Math.round((player1Wins / opponentHands.length) * 100);
+};
+
+const calculatePlayer1PreSelectionWinRate = (
+  duelData: DuelData,
+  player1Cards: Card[]
+): number => {
+  const revealTwoWinRate = calculatePlayer1WinRateAgainstHands(
+    player1Cards,
+    createRevealTwoOpponentHands(duelData, player1Cards)
+  );
+
+  return revealTwoWinRate ?? calculatePlayer1PublicWinRate(player1Cards);
 };
 
 export const calculateDuelEquity = (
@@ -98,5 +178,7 @@ export const calculateDuelEquity = (
     );
   }
 
-  return createEquity(calculatePlayer1PublicWinRate(player1Cards));
+  return createEquity(
+    calculatePlayer1PreSelectionWinRate(duelData, player1Cards)
+  );
 };
