@@ -25,6 +25,25 @@ Use an anti-spoiler equity model based on public information:
 
 This mirrors poker equity: percentages are based on known cards and possible unknown outcomes, not on hidden cards already known internally by the app.
 
+## Power-Up Aware Equity
+
+Power-ups may refine equity only through public information and legal choices. The equity engine must never use face-down generated cards before player 2 selects a hand.
+
+When `Reveal Two` is active, the pre-player-2 equity should become board-aware while staying hidden-card safe:
+
+- For each still-selectable opponent slot, use the two publicly revealed cards in `duelData.revealedCards`.
+- Treat the third card in that slot as unknown.
+- Build possible opponent hands as the two visible cards plus every legal unknown third card from the deck.
+- Exclude player 1's selected cards and all other publicly visible cards from the unknown-third-card pool.
+- Exclude slots listed in `duelData.removedWorstGroups`.
+- If no legal revealed-two opponent hands can be generated, fall back to the generic public-information calculation rather than showing a misleading exact value.
+
+Other power-up behavior:
+
+- `Remove Worst` changes equity only by removing disabled slots from the legal opponent range.
+- `Second Chance` follows the reset duel state. If player 1's selection is reset, equity returns to `null`; if player 2's selection is reset, equity returns to the current public-information estimate.
+- `Life Shield` does not affect duel equity because it changes elimination consequences, not the duel winner.
+
 ## Architecture
 
 Add a pure game engine module:
@@ -61,6 +80,8 @@ If the current winner comparison is difficult to reuse without translation strin
 
 The equity calculation should be deterministic for the same input. Prefer enumerating all possible 3-card combinations over random simulation because the deck is small.
 
+When `Reveal Two` is active, `duelData.revealedCards` is the public source of truth for visible slot cards. The equity engine should derive opponent ranges from those public arrays and `duelData.removedWorstGroups`, not from the hidden `topLeftCards`, `bottomLeftCards`, `topRightCards`, or `bottomRightCards` third cards.
+
 ## UI
 
 Add a compact equity display in the active duel area, likely near `RoundStatus`.
@@ -85,7 +106,9 @@ The display should use player names when available. It should avoid showing a mi
 - If player 1 selected cards are incomplete or invalid, return no equity.
 - If player 2 has selected a side, calculate exact equity from the two selected hands.
 - Ties should follow the existing game tie-break rules, including suit hierarchy and ace handling.
-- Power-up effects that change selectable groups should not affect the anti-spoiler pre-reveal equity unless they change public selected cards.
+- Power-up effects should not affect anti-spoiler pre-reveal equity unless they change public information or legal choices.
+- Reveal Two should constrain the opponent range to still-selectable slots with two public cards and one unknown third card.
+- Remove Worst should exclude disabled slots from the Reveal Two opponent range.
 - Life Shield affects elimination, not duel win probability, so it should not change equity.
 
 ## Testing
@@ -99,6 +122,10 @@ Required cases:
 - Player 2 selected: winner receives `100%` and loser receives `0%`.
 - Equal sums use the same highest-card and suit tie-break behavior as the game.
 - Player 1 choosing a weak hand does not force `0%` unless every possible unknown opponent hand beats it.
+- Reveal Two changes pre-player-2 equity by using visible two-card slot prefixes.
+- Reveal Two does not leak hidden third cards: changing only the hidden third cards in the generated groups does not change pre-player-2 equity.
+- Remove Worst excludes the removed slot from Reveal Two equity.
+- Second Chance reset behavior returns equity to `null` or to the current public estimate according to the reset selection state.
 
 ## Non-Goals
 
