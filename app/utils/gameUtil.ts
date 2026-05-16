@@ -194,6 +194,39 @@ export const getCardHighestSuitAndValue = (cards: Card[]): Card => {
   });
 };
 
+export type HandWinner = 'player1' | 'player2';
+
+const getTieBreakCardValue = (card: Card): number => {
+  return card.value === 1 ? 14 : card.value;
+};
+
+export const compareHands = (
+  player1Cards: Card[],
+  player2Cards: Card[]
+): HandWinner => {
+  const player1Sum = calculateSum(player1Cards);
+  const player2Sum = calculateSum(player2Cards);
+
+  if (player1Sum !== player2Sum) {
+    return player1Sum > player2Sum ? 'player1' : 'player2';
+  }
+
+  const player1HighestCard = getCardHighestSuitAndValue(player1Cards);
+  const player2HighestCard = getCardHighestSuitAndValue(player2Cards);
+
+  if (suitRank[player1HighestCard.suit] !== suitRank[player2HighestCard.suit]) {
+    return suitRank[player1HighestCard.suit] >
+      suitRank[player2HighestCard.suit]
+      ? 'player1'
+      : 'player2';
+  }
+
+  return getTieBreakCardValue(player1HighestCard) >
+    getTieBreakCardValue(player2HighestCard)
+    ? 'player1'
+    : 'player2';
+};
+
 /**
  * Determines the winner between two players and returns game result
  * @param p1Sum - Player 1's card sum
@@ -214,28 +247,22 @@ export const determineWinner = (
   t: (key: string, options?: Record<string, any>) => string
 ): { winner: string; isPlayer1Winner: boolean } => {
   let winner: string;
-  let isPlayer1Winner: boolean;
+  const isPlayer1Winner = compareHands(p1Cards, p2Cards) === 'player1';
+
   if (p1Sum === p2Sum) {
     const p1HighestCard = getCardHighestSuitAndValue(p1Cards);
     const p2HighestCard = getCardHighestSuitAndValue(p2Cards);
 
     if (suitRank[p1HighestCard.suit] === suitRank[p2HighestCard.suit]) {
-      isPlayer1Winner =
-        p1HighestCard.value === 1 ||
-        (p2HighestCard.value !== 1 &&
-          p1HighestCard.value > p2HighestCard.value);
       winner = t('game.winsByHighestCard', {
         name: isPlayer1Winner ? p1Name : p2Name
       });
     } else {
-      isPlayer1Winner =
-        suitRank[p1HighestCard.suit] > suitRank[p2HighestCard.suit];
       winner = t('game.winsBySuit', {
         name: isPlayer1Winner ? p1Name : p2Name
       });
     }
   } else {
-    isPlayer1Winner = p1Sum > p2Sum;
     winner = t('game.wins', {
       winner: isPlayer1Winner ? p1Name : p2Name,
       loser: isPlayer1Winner ? p2Name : p1Name
