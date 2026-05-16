@@ -61,14 +61,18 @@ const GameArenaScreen = ({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '16px',
-            padding: '10px 16px',
-            margin: '0 auto 12px',
+            gap: '32px',
+            padding: '20px 40px',
+            margin: '0 auto 20px',
             background: 'var(--color-panel-bg)',
-            border: '1px solid var(--color-accent)',
+            border: '2px solid var(--color-accent)',
+            borderRadius: '12px',
             color: '#fff',
             fontFamily: 'var(--font-body)',
-            fontSize: '16px',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            letterSpacing: '1px',
+            textShadow: '0 0 8px rgba(255,255,255,0.3)',
             position: 'relative',
             zIndex: 10
           }}
@@ -76,7 +80,7 @@ const GameArenaScreen = ({
           <span style={{ color: 'var(--color-primary)' }}>
             {player1EquityName}: {duelEquity.player1.winRate}%
           </span>
-          <span style={{ color: 'var(--color-accent)' }}>|</span>
+          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>|</span>
           <span style={{ color: 'var(--color-secondary)' }}>
             {player2EquityName}: {duelEquity.player2.winRate}%
           </span>
@@ -88,14 +92,18 @@ const GameArenaScreen = ({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '16px',
-            padding: '10px 16px',
-            margin: '0 auto 12px',
+            gap: '32px',
+            padding: '20px 40px',
+            margin: '0 auto 20px',
             background: 'var(--color-panel-bg)',
-            border: '1px solid var(--color-accent)',
+            border: '2px solid var(--color-accent)',
+            borderRadius: '12px',
             color: '#fff',
             fontFamily: 'var(--font-body)',
-            fontSize: '16px',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            letterSpacing: '1px',
+            textShadow: '0 0 8px rgba(255,255,255,0.3)',
             position: 'relative',
             zIndex: 10,
             visibility: 'hidden'
@@ -104,7 +112,7 @@ const GameArenaScreen = ({
           <span style={{ color: 'var(--color-primary)' }}>
             {player1EquityName}: 0%
           </span>
-          <span style={{ color: 'var(--color-accent)' }}>|</span>
+          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>|</span>
           <span style={{ color: 'var(--color-secondary)' }}>
             {player2EquityName}: 0%
           </span>
@@ -206,6 +214,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={'mb-1'}
                 playerData={duelData.topLeftPlayerData}
+                fullCards={duelData.topLeftCards}
                 onSelect={() => onSelect('top-left')}
                 side="left"
                 duelData={duelData}
@@ -222,6 +231,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={''}
                 playerData={duelData.bottomLeftPlayerData}
+                fullCards={duelData.bottomLeftCards}
                 onSelect={() => onSelect('bottom-left')}
                 side="left"
                 duelData={duelData}
@@ -242,6 +252,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={'mb-1'}
                 playerData={duelData.topRightPlayerData}
+                fullCards={duelData.topRightCards}
                 onSelect={() => onSelect('top-right')}
                 side="right"
                 duelData={duelData}
@@ -258,6 +269,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={''}
                 playerData={duelData.bottomRightPlayerData}
+                fullCards={duelData.bottomRightCards}
                 onSelect={() => onSelect('bottom-right')}
                 side="right"
                 duelData={duelData}
