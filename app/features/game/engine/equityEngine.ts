@@ -102,32 +102,6 @@ const calculatePlayer1PublicWinRate = (player1Cards: Card[]): number => {
   );
 };
 
-const createRevealTwoOpponentHands = (
-  duelData: DuelData,
-  player1Cards: Card[]
-): Card[][] => {
-  const publicCards = getLegalOpponentSides(duelData).flatMap((side) =>
-    getRevealedCardsBySide(duelData, side).filter(hasPublicCard)
-  );
-
-  const knownCards = [...player1Cards, ...publicCards];
-  const unknownThirdCards = createDeck().filter(
-    (candidate) => !containsCard(knownCards, candidate)
-  );
-
-  return getLegalOpponentSides(duelData).flatMap((side) => {
-    const visibleCards = getRevealedCardsBySide(duelData, side).filter(
-      hasPublicCard
-    );
-
-    if (visibleCards.length !== 2) {
-      return [];
-    }
-
-    return unknownThirdCards.map((thirdCard) => [...visibleCards, thirdCard]);
-  });
-};
-
 const calculatePlayer1WinRateAgainstHands = (
   player1Cards: Card[],
   opponentHands: Card[][]
@@ -143,17 +117,6 @@ const calculatePlayer1WinRateAgainstHands = (
   return Math.round((player1Wins / opponentHands.length) * 100);
 };
 
-const calculatePlayer1PreSelectionWinRate = (
-  duelData: DuelData,
-  player1Cards: Card[]
-): number => {
-  const revealTwoWinRate = calculatePlayer1WinRateAgainstHands(
-    player1Cards,
-    createRevealTwoOpponentHands(duelData, player1Cards)
-  );
-
-  return revealTwoWinRate ?? calculatePlayer1PublicWinRate(player1Cards);
-};
 
 export const calculateDuelEquity = (
   duelData: DuelData
@@ -179,6 +142,6 @@ export const calculateDuelEquity = (
   }
 
   return createEquity(
-    calculatePlayer1PreSelectionWinRate(duelData, player1Cards)
+    calculatePlayer1PublicWinRate(player1Cards)
   );
 };

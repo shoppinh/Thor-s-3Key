@@ -205,24 +205,16 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           )}
 
           {!isBlankHand && (
-            <button
+            <div
               className="rpg-skewed"
-              type="button"
-              onClick={onSelect}
-              disabled={
-                playerData.name !== '?' || playerData.team !== '' || disabled
-              }
               style={{
                 display: 'flex',
+                padding: '4px 12px',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '60px',
                 background: 'rgba(0, 0, 0, 0.5)',
                 border: `2px solid ${varColorForTeam(playerData.team)}`,
-                cursor:
-                  playerData.name === '?' && playerData.team === '' && !disabled
-                    ? 'pointer'
-                    : 'default'
               }}
             >
               <span
@@ -236,7 +228,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
               >
                 {playerData.sum}
               </span>
-            </button>
+            </div>
           )}
         </div>
 
