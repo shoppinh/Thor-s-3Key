@@ -1,5 +1,5 @@
 import { useOutletContext } from '@remix-run/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
 import { useTheme } from '~/contexts/ThemeContext';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
@@ -2101,7 +2101,7 @@ const CardGame = () => {
     );
   }
 
-  const duelEquity = calculateDuelEquity(duelData);
+  const duelEquity = useMemo(() => calculateDuelEquity(duelData), [duelData]);
 
   return (
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>

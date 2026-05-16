@@ -81,8 +81,35 @@ const GameArenaScreen = ({
             {player2EquityName}: {duelEquity.player2.winRate}%
           </span>
         </div>
-      ): <div className='placeholder' style={{height: '54px'}}>
-        </div>}
+      ) : (
+        <div
+          className="rpg-panel"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            padding: '10px 16px',
+            margin: '0 auto 12px',
+            background: 'var(--color-panel-bg)',
+            border: '1px solid var(--color-accent)',
+            color: '#fff',
+            fontFamily: 'var(--font-body)',
+            fontSize: '16px',
+            position: 'relative',
+            zIndex: 10,
+            visibility: 'hidden'
+          }}
+        >
+          <span style={{ color: 'var(--color-primary)' }}>
+            {player1EquityName}: 0%
+          </span>
+          <span style={{ color: 'var(--color-accent)' }}>|</span>
+          <span style={{ color: 'var(--color-secondary)' }}>
+            {player2EquityName}: 0%
+          </span>
+        </div>
+      )}
       <div
         style={{
           display: 'flex',

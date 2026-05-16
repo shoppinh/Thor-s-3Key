@@ -41,13 +41,13 @@ describe('compareHands', () => {
       compareHands(
         [
           { value: 1, suit: '♠' },
-          { value: 5, suit: '♣' },
+          { value: 8, suit: '♣' },
           { value: 3, suit: '♣' }
         ],
         [
           { value: 9, suit: '♠' },
-          { value: 5, suit: '♣' },
-          { value: 3, suit: '♣' }
+          { value: 1, suit: '♣' },
+          { value: 2, suit: '♣' }
         ]
       )
     ).toBe('player1');
