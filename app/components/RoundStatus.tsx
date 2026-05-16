@@ -182,7 +182,21 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       return availableCount > 1;
     };
 
-    const PowerUpButton = ({ type, count, enabled, icon, label, color }: any) =>
+    const PowerUpButton = ({
+      type,
+      count,
+      enabled,
+      icon,
+      label,
+      color
+    }: {
+      type: ChanceType;
+      count: number;
+      enabled: boolean;
+      icon: string;
+      label: string;
+      color: string;
+    }) =>
       count > 0 && (
         <div style={{ position: 'relative', margin: '0 8px', width: '100px' }}>
           <button
