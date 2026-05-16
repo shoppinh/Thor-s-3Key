@@ -62,8 +62,7 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
+      role="presentation"
       style={{
         position: 'fixed',
         top: 0,
@@ -77,17 +76,34 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({
         justifyContent: 'center',
         zIndex: 1000
       }}
-      onClick={onClose}
     >
+      <button
+        type="button"
+        aria-label="Close power-up guide"
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          padding: 0,
+          border: 0,
+          background: 'transparent',
+          cursor: 'default'
+        }}
+      />
       <div
+        role="dialog"
+        aria-modal="true"
         className="rpg-panel"
         style={{
           padding: '30px',
           width: 'min(600px, 90%)',
           background: 'rgba(15, 12, 41, 0.95)',
-          border: '2px solid var(--color-secondary)'
+          border: '2px solid var(--color-secondary)',
+          position: 'relative',
+          zIndex: 1
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <h2
           className="text-glow"

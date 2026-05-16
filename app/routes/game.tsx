@@ -233,16 +233,16 @@ const CardGame = () => {
       setIsFirstTurn(roundNumber == 0);
 
       const deck = shuffleDeck([...DECKS]);
+      const firstRandomizedTeam = Math.random() >= 0.5 ? inputTeam1 : inputTeam2;
 
       setDuelData((prev) => ({
         ...prev,
         duelIndex: 0,
         currentPlayerName:
           roundNumber === 0
-            ? Math.random() >= 0.5
-              ? inputTeam1[0]
-              : inputTeam2[0]
+            ? firstRandomizedTeam[0]
             : prev.currentPlayerName,
+
         player1Name: '',
         player1Team: undefined,
         player2Name: '',
@@ -372,42 +372,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topLeftPlayerData,
-                  cards: newData.topLeftCards,
-                  sum: calculateSum(newData.topLeftCards)
-                }
+                ...newData.topLeftPlayerData,
+                cards: newData.topLeftCards,
+                sum: calculateSum(newData.topLeftCards)
+              }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomLeftPlayerData,
-                  cards: newData.bottomLeftCards,
-                  sum: calculateSum(newData.bottomLeftCards)
-                }
+                ...newData.bottomLeftPlayerData,
+                cards: newData.bottomLeftCards,
+                sum: calculateSum(newData.bottomLeftCards)
+              }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.topRightPlayerData,
-                  cards: newData.topRightCards,
-                  sum: calculateSum(newData.topRightCards)
-                }
+                ...newData.topRightPlayerData,
+                cards: newData.topRightCards,
+                sum: calculateSum(newData.topRightCards)
+              }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-            shouldRevealAllCards
+              shouldRevealAllCards
               ? {
-                  ...newData.bottomRightPlayerData,
-                  cards: newData.bottomRightCards,
-                  sum: calculateSum(newData.bottomRightCards)
-                }
+                ...newData.bottomRightPlayerData,
+                cards: newData.bottomRightCards,
+                sum: calculateSum(newData.bottomRightCards)
+              }
               : newData.bottomRightPlayerData
         };
 
@@ -1033,11 +1033,11 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onCardClick();
-                }
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onCardClick();
               }
+            }
             : undefined
         }
       />
@@ -1495,7 +1495,7 @@ const CardGame = () => {
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
                                   team1Alloc.removeWorst !==
-                                team1Data.totalPowerUps
+                                  team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
                             }}
@@ -1670,7 +1670,7 @@ const CardGame = () => {
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
                                     team1Alloc.removeWorst !==
-                                  team1Data.totalPowerUps
+                                    team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -1844,7 +1844,7 @@ const CardGame = () => {
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
                                     team2Alloc.removeWorst !==
-                                  team2Data.totalPowerUps
+                                    team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}

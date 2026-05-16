@@ -16,18 +16,27 @@ export default function ShareButtons(props: ShareButtonsProps) {
   const shareTitle = "Thor's 3Key — Chaotic team card showdown";
   const shareText =
     "Fast, silly, team-based card chaos. Load players from Google Sheets, slam power-ups, and trash talk your way to victory.";
+  const nativeNavigator = useMemo(
+    () =>
+    typeof navigator !== 'undefined'
+      ? (navigator as Navigator & {
+          share?: (data: ShareData) => Promise<void>;
+        })
+      : null,
+    []
+  );
 
   const canNativeShare =
-    typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
-    typeof (navigator as any).share === 'function';
+    typeof window !== 'undefined' &&
+    typeof nativeNavigator?.share === 'function';
 
   const onNativeShare = useCallback(async () => {
-    await (navigator as any).share({
+    await nativeNavigator?.share?.({
       title: shareTitle,
       text: shareText,
       url: shareUrl
     }).catch(() => {});
-  }, [shareTitle, shareText, shareUrl]);
+  }, [nativeNavigator, shareTitle, shareText, shareUrl]);
 
   const onCopy = useCallback(async () => {
     await navigator.clipboard.writeText(shareUrl)
@@ -90,5 +99,3 @@ const buttonStyle: React.CSSProperties = {
   cursor: 'pointer',
   textDecoration: 'none'
 };
-
-

@@ -54,6 +54,35 @@ const GameArenaScreen = ({
 
   return (
     <>
+      {duelEquity ? (
+        <div
+          className="rpg-panel"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            padding: '10px 16px',
+            margin: '0 auto 12px',
+            background: 'var(--color-panel-bg)',
+            border: '1px solid var(--color-accent)',
+            color: '#fff',
+            fontFamily: 'var(--font-body)',
+            fontSize: '16px',
+            position: 'relative',
+            zIndex: 10
+          }}
+        >
+          <span style={{ color: 'var(--color-primary)' }}>
+            {player1EquityName}: {duelEquity.player1.winRate}%
+          </span>
+          <span style={{ color: 'var(--color-accent)' }}>|</span>
+          <span style={{ color: 'var(--color-secondary)' }}>
+            {player2EquityName}: {duelEquity.player2.winRate}%
+          </span>
+        </div>
+      ): <div className='placeholder' style={{height: '54px'}}>
+        </div>}
       <div
         style={{
           display: 'flex',
@@ -292,34 +321,6 @@ const GameArenaScreen = ({
         </div>
       </div>
 
-      {duelEquity && (
-        <div
-          className="rpg-panel"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '16px',
-            padding: '10px 16px',
-            margin: '0 auto 12px',
-            background: 'var(--color-panel-bg)',
-            border: '1px solid var(--color-accent)',
-            color: '#fff',
-            fontFamily: 'var(--font-body)',
-            fontSize: '16px',
-            position: 'relative',
-            zIndex: 10
-          }}
-        >
-          <span style={{ color: 'var(--color-primary)' }}>
-            {player1EquityName}: {duelEquity.player1.winRate}%
-          </span>
-          <span style={{ color: 'var(--color-accent)' }}>|</span>
-          <span style={{ color: 'var(--color-secondary)' }}>
-            {player2EquityName}: {duelEquity.player2.winRate}%
-          </span>
-        </div>
-      )}
 
       <RoundStatus
         duelResult={duelResult}

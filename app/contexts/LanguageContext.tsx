@@ -9,12 +9,12 @@ import en from '../locales/en';
 import vi from '../locales/vi';
 
 type Language = 'en' | 'vi';
-type Translations = typeof en;
+type TranslationNode = string | { [key: string]: TranslationNode };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (path: string, options?: any) => string;
+  t: (path: string, options?: Record<string, unknown>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -37,12 +37,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('app-language', lang);
   };
 
-  const t = (path: string, options?: any): string => {
+  const t = (path: string, options?: Record<string, unknown>): string => {
     const keys = path.split('.');
-    let current: any = language === 'en' ? en : vi;
+    let current: TranslationNode = language === 'en' ? en : vi;
 
     for (const key of keys) {
-      if (current[key] === undefined) {
+      if (typeof current === 'string' || current[key] === undefined) {
         console.warn(
           `Translation missing for key: ${path} in language: ${language}`
         );
@@ -54,7 +54,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     if (options) {
       Object.keys(options).forEach((key) => {
         if (options[key]) {
-          current = current.replace(`{{${key}}}`, options[key]);
+          current =
+            typeof current === 'string'
+              ? current.replace(`{{${key}}}`, String(options[key]))
+              : current;
         }
       });
     }
