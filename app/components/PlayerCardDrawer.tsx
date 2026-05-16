@@ -15,6 +15,7 @@ interface PlayerCardDrawerProps {
   className: string;
   duelData: DuelData;
   playerData: PlayerData;
+  fullCards: Card[];
   onSelect: () => void;
   side: 'left' | 'right';
   disabled: boolean;
@@ -26,6 +27,34 @@ interface PlayerCardDrawerProps {
   CARDS_COVER: Card[];
 }
 
+export const getPlayerCardDrawerDisplayState = ({
+  playerCards,
+  coveredCards,
+  fullCards,
+  isFinishDuel,
+  disabledByRemoveWorst
+}: {
+  playerCards: Card[];
+  coveredCards: Card[];
+  fullCards: Card[];
+  isFinishDuel: boolean;
+  disabledByRemoveWorst: boolean;
+}) => {
+  const isBlankHand = playerCards.length === 0;
+  const cards =
+    isBlankHand && isFinishDuel
+      ? fullCards
+      : playerCards.length > 0
+        ? playerCards
+        : coveredCards;
+
+  return {
+    cards,
+    shouldShowDrawButton: isBlankHand && !isFinishDuel,
+    canClickCards: isBlankHand && !isFinishDuel && !disabledByRemoveWorst
+  };
+};
+
 /**
  * Renders a player's card drawing interface with draw button, hand pointer, and card display
  */
@@ -33,6 +62,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   className,
   duelData,
   playerData,
+  fullCards,
   onSelect,
   side,
   disabled,
@@ -58,8 +88,13 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     return key ? disabled.has(key) : false;
   })();
   const isBlankHand = playerData.cards.length === 0;
-  const canClickDraw = isBlankHand && !disabledByRemoveWorst;
-  const shouldShowDrawButton = isBlankHand;
+  const displayState = getPlayerCardDrawerDisplayState({
+    playerCards: playerData.cards,
+    coveredCards: CARDS_COVER,
+    fullCards,
+    isFinishDuel: duelData.isFinishDuel,
+    disabledByRemoveWorst
+  });
   const isDrawDisabled = disabled || disabledByRemoveWorst;
 
   const containerStyle: React.CSSProperties = {
@@ -119,7 +154,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
             justifyContent: 'center'
           }}
         >
-          {shouldShowDrawButton && (
+          {displayState.shouldShowDrawButton && (
             <>
               {/* Animated Hand Pointer */}
               <img
@@ -215,8 +250,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           }}
         >
           {renderTheCards(
-            playerData.cards.length > 0 ? playerData.cards : CARDS_COVER,
-            canClickDraw ? onSelect : undefined,
+            displayState.cards,
+            displayState.canClickCards ? onSelect : undefined,
             isDrawDisabled
           )}
         </div>

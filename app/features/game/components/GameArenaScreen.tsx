@@ -206,6 +206,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={'mb-1'}
                 playerData={duelData.topLeftPlayerData}
+                fullCards={duelData.topLeftCards}
                 onSelect={() => onSelect('top-left')}
                 side="left"
                 duelData={duelData}
@@ -222,6 +223,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={''}
                 playerData={duelData.bottomLeftPlayerData}
+                fullCards={duelData.bottomLeftCards}
                 onSelect={() => onSelect('bottom-left')}
                 side="left"
                 duelData={duelData}
@@ -242,6 +244,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={'mb-1'}
                 playerData={duelData.topRightPlayerData}
+                fullCards={duelData.topRightCards}
                 onSelect={() => onSelect('top-right')}
                 side="right"
                 duelData={duelData}
@@ -258,6 +261,7 @@ const GameArenaScreen = ({
               <PlayerCardDrawer
                 className={''}
                 playerData={duelData.bottomRightPlayerData}
+                fullCards={duelData.bottomRightCards}
                 onSelect={() => onSelect('bottom-right')}
                 side="right"
                 duelData={duelData}
