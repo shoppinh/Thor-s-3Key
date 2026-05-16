@@ -3,6 +3,8 @@ import { calculateDuelEquity } from '~/features/game/engine/equityEngine';
 import { createInitialDuelData } from '~/features/game/state/initialState';
 import DuelData from '~/models/DuelData';
 
+const card = (value: number, suit: string) => ({ value, suit });
+
 const withPlayer1Selection = (
   updates: Partial<DuelData> = {}
 ): DuelData => ({
@@ -29,6 +31,20 @@ const withPlayer1Selection = (
   },
   ...updates
 });
+
+const withRevealTwo = (updates: Partial<DuelData> = {}): DuelData =>
+  withPlayer1Selection({
+    revealedCards: {
+      topLeft: [card(9, '♦'), card(9, '♥'), card(0, '')],
+      bottomLeft: [card(1, '♦'), card(1, '♥'), card(0, '')],
+      topRight: [card(2, '♣'), card(3, '♣'), card(0, '')],
+      bottomRight: [card(8, '♣'), card(1, '♣'), card(0, '')]
+    },
+    bottomLeftCards: [card(1, '♦'), card(1, '♥'), card(9, '♠')],
+    topRightCards: [card(2, '♣'), card(3, '♣'), card(4, '♣')],
+    bottomRightCards: [card(8, '♣'), card(1, '♣'), card(9, '♥')],
+    ...updates
+  });
 
 describe('calculateDuelEquity', () => {
   it('returns null before player 1 selects a side', () => {
@@ -75,6 +91,86 @@ describe('calculateDuelEquity', () => {
     expect(calculateDuelEquity(firstHiddenLayout)).toEqual(
       calculateDuelEquity(secondHiddenLayout)
     );
+  });
+
+  it('uses Reveal Two visible cards to constrain pre-player-2 equity', () => {
+    const genericEquity = calculateDuelEquity(withPlayer1Selection());
+    const revealTwoEquity = calculateDuelEquity(withRevealTwo());
+
+    expect(genericEquity).not.toBeNull();
+    expect(revealTwoEquity).not.toBeNull();
+    expect(revealTwoEquity?.player1.winRate).not.toBe(
+      genericEquity?.player1.winRate
+    );
+    expect(revealTwoEquity?.player2.winRate).toBe(
+      100 - (revealTwoEquity?.player1.winRate ?? 0)
+    );
+  });
+
+  it('does not use hidden third cards when Reveal Two is active', () => {
+    const firstHiddenLayout = withRevealTwo({
+      bottomLeftCards: [card(1, '♦'), card(1, '♥'), card(9, '♠')],
+      topRightCards: [card(2, '♣'), card(3, '♣'), card(4, '♣')],
+      bottomRightCards: [card(8, '♣'), card(1, '♣'), card(9, '♥')]
+    });
+    const secondHiddenLayout = withRevealTwo({
+      bottomLeftCards: [card(1, '♦'), card(1, '♥'), card(2, '♠')],
+      topRightCards: [card(2, '♣'), card(3, '♣'), card(9, '♣')],
+      bottomRightCards: [card(8, '♣'), card(1, '♣'), card(3, '♥')]
+    });
+
+    expect(calculateDuelEquity(firstHiddenLayout)).toEqual(
+      calculateDuelEquity(secondHiddenLayout)
+    );
+  });
+
+  it('excludes Remove Worst slots from Reveal Two equity', () => {
+    const allSlotsEquity = calculateDuelEquity(withRevealTwo());
+    const removedStrongSlotEquity = calculateDuelEquity(
+      withRevealTwo({
+        removedWorstGroups: ['bottom-left']
+      })
+    );
+
+    expect(allSlotsEquity).not.toBeNull();
+    expect(removedStrongSlotEquity).not.toBeNull();
+    expect(removedStrongSlotEquity?.player1.winRate).not.toBe(
+      allSlotsEquity?.player1.winRate
+    );
+  });
+
+  it('returns null after Second Chance resets player 1 selection', () => {
+    expect(
+      calculateDuelEquity(
+        withRevealTwo({
+          duelIndex: 0,
+          player1Name: '?',
+          player1SideSelected: undefined,
+          player2Name: '',
+          player2SideSelected: undefined,
+          topLeftPlayerData: {
+            name: '?',
+            team: '',
+            sum: 7,
+            cards: [card(9, '♦'), card(9, '♥'), card(9, '♠')]
+          }
+        })
+      )
+    ).toBeNull();
+  });
+
+  it('returns public equity after Second Chance resets player 2 selection', () => {
+    const equity = calculateDuelEquity(
+      withRevealTwo({
+        duelIndex: 1,
+        player2Name: '',
+        player2SideSelected: undefined
+      })
+    );
+
+    expect(equity).not.toBeNull();
+    expect(equity?.player1.winRate).toBeGreaterThan(0);
+    expect(equity?.player1.winRate).toBeLessThan(100);
   });
 
   it('returns exact equity after player 2 selects a losing hand', () => {
