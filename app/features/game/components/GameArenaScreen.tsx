@@ -8,6 +8,7 @@ import { ChanceType, TeamData } from '~/models/TeamData';
 import { CARDS_COVER } from '~/utils/gameUtil';
 import { useLanguage } from '~/contexts/LanguageContext';
 import { Side, TeamName } from '../types/gameTypes';
+import { DuelEquity } from '~/features/game/engine/equityEngine';
 
 type GameArenaScreenProps = {
   duelResult: string;
@@ -30,6 +31,7 @@ type GameArenaScreenProps = {
     teamName: TeamName,
     chanceType: ChanceType
   ) => void;
+  duelEquity: DuelEquity | null;
 };
 
 const GameArenaScreen = ({
@@ -43,9 +45,12 @@ const GameArenaScreen = ({
   isPlayerCardDrawerDisabled,
   renderTheCards,
   nextRound,
-  onChanceClick
+  onChanceClick,
+  duelEquity
 }: GameArenaScreenProps) => {
   const { t } = useLanguage();
+  const player1EquityName = duelData.player1Name;
+  const player2EquityName = duelData.player2Name || duelData.currentPlayerName;
 
   return (
     <>
@@ -286,6 +291,35 @@ const GameArenaScreen = ({
           </div>
         </div>
       </div>
+
+      {duelEquity && (
+        <div
+          className="rpg-panel"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            padding: '10px 16px',
+            margin: '0 auto 12px',
+            background: 'var(--color-panel-bg)',
+            border: '1px solid var(--color-accent)',
+            color: '#fff',
+            fontFamily: 'var(--font-body)',
+            fontSize: '16px',
+            position: 'relative',
+            zIndex: 10
+          }}
+        >
+          <span style={{ color: 'var(--color-primary)' }}>
+            {player1EquityName}: {duelEquity.player1.winRate}%
+          </span>
+          <span style={{ color: 'var(--color-accent)' }}>|</span>
+          <span style={{ color: 'var(--color-secondary)' }}>
+            {player2EquityName}: {duelEquity.player2.winRate}%
+          </span>
+        </div>
+      )}
 
       <RoundStatus
         duelResult={duelResult}

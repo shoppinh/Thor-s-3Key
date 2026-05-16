@@ -244,7 +244,7 @@ export const determineWinner = (
   p2Cards: Card[],
   p1Name: string,
   p2Name: string,
-  t: (key: string, options?: Record<string, any>) => string
+  t: (key: string, options?: Record<string, unknown>) => string
 ): { winner: string; isPlayer1Winner: boolean } => {
   let winner: string;
   const isPlayer1Winner = compareHands(p1Cards, p2Cards) === 'player1';

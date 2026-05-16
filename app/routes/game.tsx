@@ -11,6 +11,7 @@ import {
   getCardsBySide,
   getPlayerDataBySide
 } from '~/features/game/engine/duelEngine';
+import { calculateDuelEquity } from '~/features/game/engine/equityEngine';
 import {
   generateRandomAllocation,
   isStartGameDisabledByAllocation
@@ -2100,6 +2101,8 @@ const CardGame = () => {
     );
   }
 
+  const duelEquity = calculateDuelEquity(duelData);
+
   return (
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
       {renderGameInput()}
@@ -2121,6 +2124,7 @@ const CardGame = () => {
           renderTheCards={renderTheCards}
           nextRound={nextRound}
           onChanceClick={handleChanceClick}
+          duelEquity={duelEquity}
         />
       )}
 
