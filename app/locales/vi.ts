@@ -53,6 +53,8 @@ export default {
     locked: 'Đã khoá',
     isWinner: 'là đội chiến thắng',
     anonymous: 'Kẻ thế thân',
+    enableUndo: 'Bật hoàn tác cho chủ trò',
+    enableUndoHint: 'Cho phép chủ trò sửa lỗi bấm nhầm trong ván này.',
     undo: 'HOÀN TÁC',
     navigationWarning:
       'Trận đang diễn ra. Rời trang bây giờ sẽ mất ván hiện tại. Tiếp tục?'

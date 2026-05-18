@@ -44,3 +44,8 @@ export const pushGameSnapshot = (
   snapshot: GameSnapshot,
   limit = HISTORY_STACK_LIMIT
 ): GameSnapshot[] => [...historyStack, snapshot].slice(-limit);
+
+export const shouldRecordGameSnapshot = (
+  undoEnabled: boolean,
+  gameState: GameState
+): boolean => undoEnabled && gameState === 'gamePlaying';

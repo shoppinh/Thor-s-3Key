@@ -33,7 +33,8 @@ import {
 } from '~/features/game/state/initialState';
 import {
   createGameSnapshot,
-  pushGameSnapshot
+  pushGameSnapshot,
+  shouldRecordGameSnapshot
 } from '~/features/game/state/historyStack';
 import type { GameSnapshot } from '~/features/game/state/historyStack';
 import {
@@ -148,12 +149,15 @@ const CardGame = () => {
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('per-team');
+  const [undoEnabled, setUndoEnabled] = useState(false);
   const [historyStack, setHistoryStack] = useState<GameSnapshot[]>([]);
   const shouldGuardNavigation = gameState === 'gamePlaying';
 
   useNavigationGuard(shouldGuardNavigation, t('game.navigationWarning'));
 
   const recordHistorySnapshot = useCallback(() => {
+    if (!shouldRecordGameSnapshot(undoEnabled, gameState)) return;
+
     setHistoryStack((prev) =>
       pushGameSnapshot(
         prev,
@@ -179,7 +183,8 @@ const CardGame = () => {
     isFirstTurn,
     gameState,
     roundNumber,
-    winStreaks
+    winStreaks,
+    undoEnabled
   ]);
 
   const undoLastAction = useCallback(() => {
@@ -205,7 +210,7 @@ const CardGame = () => {
     setShowWinnerAnnouncement(false);
   }, [historyStack]);
 
-  const canUndo = historyStack.length > 0;
+  const canUndo = undoEnabled && historyStack.length > 0;
 
   /**
    * Starts the game with the provided team data
@@ -1416,6 +1421,63 @@ const CardGame = () => {
                         {t('game.randomBoth')}
                       </label>
                     </div>
+                  </div>
+                  <div
+                    className="rpg-panel"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 20,
+                      marginTop: 6,
+                      marginBottom: 15,
+                      padding: '16px 20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid var(--color-accent)'
+                    }}
+                  >
+                    <label
+                      htmlFor="enable-undo"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: undoEnabled ? 'var(--color-accent)' : '#fff'
+                      }}
+                    >
+                      <input
+                        id="enable-undo"
+                        type="checkbox"
+                        checked={undoEnabled}
+                        onChange={(event) => {
+                          const isEnabled = event.target.checked;
+                          setUndoEnabled(isEnabled);
+                          if (!isEnabled) {
+                            setHistoryStack([]);
+                          }
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-accent)',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      {t('game.enableUndo')}
+                    </label>
+                    <span
+                      style={{
+                        color: '#ccc',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '0.95rem',
+                        textAlign: 'right'
+                      }}
+                    >
+                      {t('game.enableUndoHint')}
+                    </span>
                   </div>
                   <div
                     className="setup-grid"

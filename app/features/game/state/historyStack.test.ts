@@ -3,6 +3,7 @@ import {
   HISTORY_STACK_LIMIT,
   createGameSnapshot,
   pushGameSnapshot,
+  shouldRecordGameSnapshot,
   type GameSnapshot
 } from '~/features/game/state/historyStack';
 import {
@@ -76,5 +77,13 @@ describe('history stack', () => {
 
     expect(snapshot.team1Data.players).toEqual([]);
     expect(snapshot.duelData.currentPlayerName).toBe('');
+  });
+
+  it('records snapshots only when undo is enabled during active gameplay', () => {
+    expect(shouldRecordGameSnapshot(true, 'gamePlaying')).toBe(true);
+    expect(shouldRecordGameSnapshot(false, 'gamePlaying')).toBe(false);
+    expect(shouldRecordGameSnapshot(true, 'setup')).toBe(false);
+    expect(shouldRecordGameSnapshot(true, 'gameLoading')).toBe(false);
+    expect(shouldRecordGameSnapshot(true, 'gameOver')).toBe(false);
   });
 });
