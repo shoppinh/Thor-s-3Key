@@ -52,7 +52,10 @@ export default {
     unknown: 'Đoán xem',
     locked: 'Đã khoá',
     isWinner: 'là đội chiến thắng',
-    anonymous: 'Kẻ thế thân'
+    anonymous: 'Kẻ thế thân',
+    undo: 'HOÀN TÁC',
+    navigationWarning:
+      'Trận đang diễn ra. Rời trang bây giờ sẽ mất ván hiện tại. Tiếp tục?'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
