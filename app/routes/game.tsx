@@ -32,6 +32,12 @@ import {
   createInitialTeamData
 } from '~/features/game/state/initialState';
 import {
+  createGameSnapshot,
+  pushGameSnapshot,
+  shouldRecordGameSnapshot
+} from '~/features/game/state/historyStack';
+import type { GameSnapshot } from '~/features/game/state/historyStack';
+import {
   GameState,
   PowerUpsAllocation,
   SetupMode,
@@ -51,6 +57,7 @@ import {
   getStreakMessage,
   shuffleDeck
 } from '~/utils/gameUtil';
+import useNavigationGuard from '~/utils/hooks/useNavigationGuard';
 import ConfirmPopup from '../components/ConfirmPopup';
 import PowerupGuideModal from '../components/PowerupGuideModal';
 import Card from '../models/Card';
@@ -142,6 +149,68 @@ const CardGame = () => {
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('per-team');
+  const [undoEnabled, setUndoEnabled] = useState(false);
+  const [historyStack, setHistoryStack] = useState<GameSnapshot[]>([]);
+  const shouldGuardNavigation = gameState === 'gamePlaying';
+
+  useNavigationGuard(shouldGuardNavigation, t('game.navigationWarning'));
+
+  const recordHistorySnapshot = useCallback(() => {
+    if (!shouldRecordGameSnapshot(undoEnabled, gameState)) return;
+
+    setHistoryStack((prev) =>
+      pushGameSnapshot(
+        prev,
+        createGameSnapshot({
+          team1Data,
+          team2Data,
+          duelData,
+          teamWinner,
+          duelResult,
+          isFirstTurn,
+          gameState,
+          roundNumber,
+          winStreaks
+        })
+      )
+    );
+  }, [
+    team1Data,
+    team2Data,
+    duelData,
+    teamWinner,
+    duelResult,
+    isFirstTurn,
+    gameState,
+    roundNumber,
+    winStreaks,
+    undoEnabled
+  ]);
+
+  const undoLastAction = useCallback(() => {
+    const snapshot = historyStack[historyStack.length - 1];
+    if (!snapshot) return;
+
+    setHistoryStack((prev) => prev.slice(0, -1));
+    setTeam1Data(snapshot.team1Data);
+    setTeam2Data(snapshot.team2Data);
+    setDuelData(snapshot.duelData);
+    setTeamWinner(snapshot.teamWinner);
+    setDuelResult(snapshot.duelResult);
+    setIsFirstTurn(snapshot.isFirstTurn);
+    setGameState(snapshot.gameState);
+    setRoundNumber(snapshot.roundNumber);
+    setWinStreaks(snapshot.winStreaks);
+    setConfirmPopup({
+      isVisible: false,
+      teamName: undefined,
+      chanceType: undefined,
+      chanceItemName: ''
+    });
+    setShowWinnerAnnouncement(false);
+  }, [historyStack]);
+
+  const canUndo = undoEnabled && historyStack.length > 0;
 
   /**
    * Starts the game with the provided team data
@@ -154,11 +223,12 @@ const CardGame = () => {
       return;
     }
 
+    setHistoryStack([]);
     setWinStreaks({});
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
-    nextRound(team1Data, team2Data);
+    nextRound(team1Data, team2Data, false);
   };
 
   /**
@@ -219,7 +289,15 @@ const CardGame = () => {
 
   // Function to select the next players for each team
   const nextRound = useCallback(
-    (inputTeam1: string[], inputTeam2: string[]) => {
+    (
+      inputTeam1: string[],
+      inputTeam2: string[],
+      shouldRecordHistory = true
+    ) => {
+      if (shouldRecordHistory) {
+        recordHistorySnapshot();
+      }
+
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
           inputTeam1.length === 0
@@ -278,10 +356,12 @@ const CardGame = () => {
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
     },
-    [roundNumber, t]
+    [recordHistorySnapshot, roundNumber, t]
   );
 
   const playerSelect = (side: Side) => {
+    recordHistorySnapshot();
+
     const currentPlayer = duelData.currentPlayerName; // Capture current player before any updates
     const newDuelIndex = duelData.duelIndex + 1;
     setIsFirstTurn(false);
@@ -710,6 +790,8 @@ const CardGame = () => {
     const { teamName, chanceType } = confirmPopup;
 
     if (teamName && chanceType) {
+      recordHistorySnapshot();
+
       switch (chanceType) {
         case 'secondChance': {
           if (teamName === 'team1') {
@@ -1339,6 +1421,63 @@ const CardGame = () => {
                         {t('game.randomBoth')}
                       </label>
                     </div>
+                  </div>
+                  <div
+                    className="rpg-panel"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 20,
+                      marginTop: 6,
+                      marginBottom: 15,
+                      padding: '16px 20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid var(--color-accent)'
+                    }}
+                  >
+                    <label
+                      htmlFor="enable-undo"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: undoEnabled ? 'var(--color-accent)' : '#fff'
+                      }}
+                    >
+                      <input
+                        id="enable-undo"
+                        type="checkbox"
+                        checked={undoEnabled}
+                        onChange={(event) => {
+                          const isEnabled = event.target.checked;
+                          setUndoEnabled(isEnabled);
+                          if (!isEnabled) {
+                            setHistoryStack([]);
+                          }
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: 'var(--color-accent)',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      {t('game.enableUndo')}
+                    </label>
+                    <span
+                      style={{
+                        color: '#ccc',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '0.95rem',
+                        textAlign: 'right'
+                      }}
+                    >
+                      {t('game.enableUndoHint')}
+                    </span>
                   </div>
                   <div
                     className="setup-grid"
@@ -2125,10 +2264,18 @@ const CardGame = () => {
           nextRound={nextRound}
           onChanceClick={handleChanceClick}
           duelEquity={duelEquity}
+          canUndo={canUndo}
+          onUndo={undoLastAction}
         />
       )}
 
-      {gameState == 'gameOver' && <GameOverScreen teamWinner={teamWinner} />}
+      {gameState == 'gameOver' && (
+        <GameOverScreen
+          teamWinner={teamWinner}
+          canUndo={canUndo}
+          onUndo={undoLastAction}
+        />
+      )}
 
       <WinnerAnnouncement
         show={showWinnerAnnouncement}

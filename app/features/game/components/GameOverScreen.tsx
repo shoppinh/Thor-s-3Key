@@ -2,9 +2,15 @@ import { useLanguage } from '~/contexts/LanguageContext';
 
 type GameOverScreenProps = {
   teamWinner: string;
+  canUndo: boolean;
+  onUndo: () => void;
 };
 
-const GameOverScreen = ({ teamWinner }: GameOverScreenProps) => {
+const GameOverScreen = ({
+  teamWinner,
+  canUndo,
+  onUndo
+}: GameOverScreenProps) => {
   const { t } = useLanguage();
   return (
     <div
@@ -66,6 +72,20 @@ const GameOverScreen = ({ teamWinner }: GameOverScreenProps) => {
             }}
           />
         </div>
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="rpg-button secondary"
+          style={{
+            marginTop: '24px',
+            fontSize: '18px',
+            padding: '10px 36px',
+            opacity: canUndo ? 1 : 0.45,
+            cursor: canUndo ? 'pointer' : 'not-allowed'
+          }}
+        >
+          {t('game.undo')}
+        </button>
       </div>
     </div>
   );

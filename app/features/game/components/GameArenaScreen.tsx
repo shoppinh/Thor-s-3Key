@@ -26,12 +26,18 @@ type GameArenaScreenProps = {
     onCardClick?: () => void,
     disabled?: boolean
   ) => JSX.Element[];
-  nextRound: (team1: string[], team2: string[]) => void;
+  nextRound: (
+    team1: string[],
+    team2: string[],
+    shouldRecordHistory?: boolean
+  ) => void;
   onChanceClick: (
     teamName: TeamName,
     chanceType: ChanceType
   ) => void;
   duelEquity: DuelEquity | null;
+  canUndo: boolean;
+  onUndo: () => void;
 };
 
 const GameArenaScreen = ({
@@ -46,7 +52,9 @@ const GameArenaScreen = ({
   renderTheCards,
   nextRound,
   onChanceClick,
-  duelEquity
+  duelEquity,
+  canUndo,
+  onUndo
 }: GameArenaScreenProps) => {
   const { t } = useLanguage();
   const player1EquityName = duelData.player1Name;
@@ -374,6 +382,8 @@ const GameArenaScreen = ({
         duelData={duelData}
         nextRound={nextRound}
         onChanceClick={onChanceClick}
+        canUndo={canUndo}
+        onUndo={onUndo}
       />
     </>
   );

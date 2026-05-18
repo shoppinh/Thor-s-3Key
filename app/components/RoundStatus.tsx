@@ -15,11 +15,17 @@ interface RoundStatusProps {
   team2Data: TeamData;
   isFinishDuel: boolean;
   duelData: DuelData;
-  nextRound: (team1: string[], team2: string[]) => void;
+  nextRound: (
+    team1: string[],
+    team2: string[],
+    shouldRecordHistory?: boolean
+  ) => void;
   onChanceClick: (
     teamName: TeamName,
     chanceType: ChanceType
   ) => void;
+  canUndo: boolean;
+  onUndo: () => void;
 }
 
 const RoundStatus: React.FC<RoundStatusProps> = ({
@@ -34,7 +40,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   isFinishDuel,
   duelData,
   nextRound,
-  onChanceClick
+  onChanceClick,
+  canUndo,
+  onUndo
 }) => {
   const { t } = useLanguage();
 
@@ -417,6 +425,22 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             )}
           </div>
         )}
+
+        <div style={{ marginTop: '12px' }}>
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="rpg-button secondary"
+            style={{
+              fontSize: '16px',
+              padding: '8px 28px',
+              opacity: canUndo ? 1 : 0.45,
+              cursor: canUndo ? 'pointer' : 'not-allowed'
+            }}
+          >
+            {t('game.undo')}
+          </button>
+        </div>
       </div>
 
       {/* Team 2 Status */}

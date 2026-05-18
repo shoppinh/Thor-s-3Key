@@ -52,7 +52,12 @@ export default {
     unknown: 'Unknown',
     locked: 'Locked',
     isWinner: 'is winner',
-    anonymous: 'ANONYMOUS'
+    anonymous: 'ANONYMOUS',
+    enableUndo: 'Enable Host Undo',
+    enableUndoHint: 'Lets the host reverse gameplay mistakes during this match.',
+    undo: 'UNDO',
+    navigationWarning:
+      'A game is in progress. Leaving now will lose the current game. Continue?'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
