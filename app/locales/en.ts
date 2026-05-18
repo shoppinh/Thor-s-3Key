@@ -55,7 +55,10 @@ export default {
     anonymous: 'ANONYMOUS',
     enableUndo: 'Enable Host Undo',
     enableUndoHint: 'Lets the host reverse gameplay mistakes during this match.',
+    enableRedo: 'Enable Host Redo',
+    enableRedoHint: 'Lets the host re-apply the most recently undone action.',
     undo: 'UNDO',
+    redo: 'REDO',
     navigationWarning:
       'A game is in progress. Leaving now will lose the current game. Continue?'
   },

@@ -26,6 +26,8 @@ interface RoundStatusProps {
   ) => void;
   canUndo: boolean;
   onUndo: () => void;
+  canRedo: boolean;
+  onRedo: () => void;
 }
 
 const RoundStatus: React.FC<RoundStatusProps> = ({
@@ -42,7 +44,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   nextRound,
   onChanceClick,
   canUndo,
-  onUndo
+  onUndo,
+  canRedo,
+  onRedo
 }) => {
   const { t } = useLanguage();
 
@@ -427,19 +431,34 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
         )}
 
         <div style={{ marginTop: '12px' }}>
-          <button
-            onClick={onUndo}
-            disabled={!canUndo}
-            className="rpg-button secondary"
-            style={{
-              fontSize: '16px',
-              padding: '8px 28px',
-              opacity: canUndo ? 1 : 0.45,
-              cursor: canUndo ? 'pointer' : 'not-allowed'
-            }}
-          >
-            {t('game.undo')}
-          </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="rpg-button secondary"
+              style={{
+                fontSize: '16px',
+                padding: '8px 28px',
+                opacity: canUndo ? 1 : 0.45,
+                cursor: canUndo ? 'pointer' : 'not-allowed'
+              }}
+            >
+              {t('game.undo')}
+            </button>
+            <button
+              onClick={onRedo}
+              disabled={!canRedo}
+              className="rpg-button secondary"
+              style={{
+                fontSize: '16px',
+                padding: '8px 28px',
+                opacity: canRedo ? 1 : 0.45,
+                cursor: canRedo ? 'pointer' : 'not-allowed'
+              }}
+            >
+              {t('game.redo')}
+            </button>
+          </div>
         </div>
       </div>
 

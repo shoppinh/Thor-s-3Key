@@ -4,12 +4,16 @@ type GameOverScreenProps = {
   teamWinner: string;
   canUndo: boolean;
   onUndo: () => void;
+  canRedo: boolean;
+  onRedo: () => void;
 };
 
 const GameOverScreen = ({
   teamWinner,
   canUndo,
-  onUndo
+  onUndo,
+  canRedo,
+  onRedo
 }: GameOverScreenProps) => {
   const { t } = useLanguage();
   return (
@@ -72,20 +76,41 @@ const GameOverScreen = ({
             }}
           />
         </div>
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          className="rpg-button secondary"
+        <div
           style={{
             marginTop: '24px',
-            fontSize: '18px',
-            padding: '10px 36px',
-            opacity: canUndo ? 1 : 0.45,
-            cursor: canUndo ? 'pointer' : 'not-allowed'
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
           }}
         >
-          {t('game.undo')}
-        </button>
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="rpg-button secondary"
+            style={{
+              fontSize: '18px',
+              padding: '10px 36px',
+              opacity: canUndo ? 1 : 0.45,
+              cursor: canUndo ? 'pointer' : 'not-allowed'
+            }}
+          >
+            {t('game.undo')}
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="rpg-button secondary"
+            style={{
+              fontSize: '18px',
+              padding: '10px 36px',
+              opacity: canRedo ? 1 : 0.45,
+              cursor: canRedo ? 'pointer' : 'not-allowed'
+            }}
+          >
+            {t('game.redo')}
+          </button>
+        </div>
       </div>
     </div>
   );
