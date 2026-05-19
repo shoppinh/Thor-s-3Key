@@ -213,22 +213,31 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
           >
             {t('dashboard.teamStreaks')}
           </h2>
-          {streaks.map((s) => (
-            <div key={s.team} style={{ marginBottom: '10px', color: '#ccc' }}>
-              {t('common.team')} {s.team === 'team1' ? '1' : '2'}:{' '}
-              <strong style={{ color: 'var(--color-accent)' }}>
-                {s.longestStreak}
-              </strong>{' '}
-              {t('dashboard.consecutiveWins')}
-            </div>
-          ))}
-          {summary.mostWinsPlayer && (
-            <div style={{ marginTop: '16px', color: '#ccc' }}>
-              {t('dashboard.mostWins')}:{' '}
-              <strong style={{ color: 'var(--color-primary)' }}>
-                {summary.mostWinsPlayer} ({summary.mostWinsCount})
-              </strong>
-            </div>
+          {data.allDuelEvents.length === 0 ? (
+            <p style={{ color: '#888' }}>{t('dashboard.noData')}</p>
+          ) : (
+            <>
+              {streaks.map((s) => (
+                <div
+                  key={s.team}
+                  style={{ marginBottom: '10px', color: '#ccc' }}
+                >
+                  {t('common.team')} {s.team === 'team1' ? '1' : '2'}:{' '}
+                  <strong style={{ color: 'var(--color-accent)' }}>
+                    {s.longestStreak}
+                  </strong>{' '}
+                  {t('dashboard.consecutiveWins')}
+                </div>
+              ))}
+              {summary.mostWinsPlayer && (
+                <div style={{ marginTop: '16px', color: '#ccc' }}>
+                  {t('dashboard.mostWins')}:{' '}
+                  <strong style={{ color: 'var(--color-primary)' }}>
+                    {summary.mostWinsPlayer} ({summary.mostWinsCount})
+                  </strong>
+                </div>
+              )}
+            </>
           )}
         </div>
 
