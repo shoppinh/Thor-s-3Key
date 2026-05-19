@@ -1,4 +1,5 @@
 import type { GameState } from '~/features/game/types/gameTypes';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
 import type DuelData from '~/models/DuelData';
 import type { TeamData } from '~/models/TeamData';
 
@@ -14,6 +15,7 @@ export type GameSnapshot = {
   gameState: GameState;
   roundNumber: number;
   winStreaks: Record<string, number>;
+  duelEvents: LocalDuelEvent[];
 };
 
 export type GameSnapshotInput = GameSnapshot;
@@ -25,9 +27,7 @@ const createTeamSnapshot = (teamData: TeamData): TeamData => ({
   scoreClass: ''
 });
 
-export const createGameSnapshot = (
-  state: GameSnapshotInput
-): GameSnapshot => ({
+export const createGameSnapshot = (state: GameSnapshotInput): GameSnapshot => ({
   team1Data: createTeamSnapshot(state.team1Data),
   team2Data: createTeamSnapshot(state.team2Data),
   duelData: clone(state.duelData),
@@ -36,7 +36,8 @@ export const createGameSnapshot = (
   isFirstTurn: state.isFirstTurn,
   gameState: state.gameState,
   roundNumber: state.roundNumber,
-  winStreaks: clone(state.winStreaks)
+  winStreaks: clone(state.winStreaks),
+  duelEvents: clone(state.duelEvents)
 });
 
 export const pushGameSnapshot = (

@@ -1,6 +1,7 @@
 import { useOutletContext } from '@remix-run/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
 import { useTheme } from '~/contexts/ThemeContext';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen from '~/features/game/components/GameOverScreen';
@@ -97,6 +98,7 @@ const CardGame = () => {
   const [gameState, setGameState] = useState<GameState>('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
+  const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
 
   // Effect to handle score blinking for Team 1
@@ -172,7 +174,8 @@ const CardGame = () => {
           isFirstTurn,
           gameState,
           roundNumber,
-          winStreaks
+          winStreaks,
+          duelEvents
         })
       )
     );
@@ -186,6 +189,7 @@ const CardGame = () => {
     gameState,
     roundNumber,
     winStreaks,
+    duelEvents,
     undoEnabled
   ]);
 
@@ -203,6 +207,7 @@ const CardGame = () => {
     setGameState(snapshot.gameState);
     setRoundNumber(snapshot.roundNumber);
     setWinStreaks(snapshot.winStreaks);
+    setDuelEvents(snapshot.duelEvents);
     setConfirmPopup({
       isVisible: false,
       teamName: undefined,
@@ -227,6 +232,7 @@ const CardGame = () => {
 
     setHistoryStack([]);
     setWinStreaks({});
+    setDuelEvents([]);
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
@@ -954,17 +960,49 @@ const CardGame = () => {
         p2Name,
         t
       );
-      const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
-
-      // Use passed team information or fallback to duelData
       const firstPlayerTeam = p1Team || duelData.player1Team;
       const secondPlayerTeam = p2Team || duelData.player2Team;
+      const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
       const losingTeam = isPlayer1Winner ? secondPlayerTeam : firstPlayerTeam;
+
+      if (!winningTeam || !losingTeam) {
+        throw new Error('Duel teams must be defined when calculating result');
+      }
 
       // If Shield is active for the losing team, do not eliminate that player this duel
       const shieldedTeam = duelData.lifeShieldUsedBy;
       const shouldPreventElimination =
         shieldedTeam && losingTeam === shieldedTeam;
+
+      const event: LocalDuelEvent = {
+        round: roundNumber,
+        winnerName: isPlayer1Winner ? p1Name : p2Name,
+        loserName: isPlayer1Winner ? p2Name : p1Name,
+        winnerTeam: winningTeam,
+        loserTeam: losingTeam,
+        shielded: !!shouldPreventElimination,
+        winnerCards: isPlayer1Winner ? p1Cards : p2Cards,
+        loserCards: isPlayer1Winner ? p2Cards : p1Cards,
+        winnerSum: isPlayer1Winner ? p1Sum : p2Sum,
+        loserSum: isPlayer1Winner ? p2Sum : p1Sum,
+        powerUpsUsed: {
+          ...(duelData.revealTwoUsedBy && {
+            revealTwo: duelData.revealTwoUsedBy
+          }),
+          ...(duelData.lifeShieldUsedBy && {
+            lifeShield: duelData.lifeShieldUsedBy
+          }),
+          ...(duelData.removeWorstUsedByTeams?.length && {
+            removeWorst: duelData.removeWorstUsedByTeams
+          }),
+          ...(duelData.secondChanceUsedByTeams?.length && {
+            secondChance: duelData.secondChanceUsedByTeams
+          })
+        }
+      };
+      setDuelEvents((prev) => [...prev, event]);
+
+      const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
 
       setTeam1Data((prev) => ({ ...prev, scoreClass: '' }));
       setTeam2Data((prev) => ({ ...prev, scoreClass: '' }));
@@ -999,9 +1037,6 @@ const CardGame = () => {
         }
 
         // Store the winning team in duelData (only if no shield is active)
-        const winningTeam = isPlayer1Winner
-          ? firstPlayerTeam
-          : secondPlayerTeam;
         setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
@@ -1084,8 +1119,12 @@ const CardGame = () => {
       duelData.player1Team,
       duelData.player2Team,
       duelData.lifeShieldUsedBy,
+      duelData.revealTwoUsedBy,
+      duelData.removeWorstUsedByTeams,
+      duelData.secondChanceUsedByTeams,
       winStreaks,
-      t
+      t,
+      roundNumber
     ]
   );
 
