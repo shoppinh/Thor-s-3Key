@@ -68,7 +68,7 @@ describe('saveMatch', () => {
 
     await saveMatch({
       supabase,
-      teamWinner: 'Team 1 is winner',
+      winnerTeam: 'team1',
       team1Data: mockTeam(),
       team2Data: mockTeam(),
       duelEvents: [mockEvent()]
@@ -86,7 +86,7 @@ describe('saveMatch', () => {
     await expect(
       saveMatch({
         supabase,
-        teamWinner: 'Team 1 is winner',
+        winnerTeam: 'team1',
         team1Data: mockTeam(),
         team2Data: mockTeam(),
         duelEvents: []
@@ -103,7 +103,7 @@ describe('saveMatch', () => {
     await expect(
       saveMatch({
         supabase,
-        teamWinner: 'Team 2 is winner',
+        winnerTeam: 'team2',
         team1Data: mockTeam(),
         team2Data: mockTeam(),
         duelEvents: [mockEvent()]

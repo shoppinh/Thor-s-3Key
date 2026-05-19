@@ -1,10 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, LocalDuelEvent } from '~/features/dashboard/types';
+import type { TeamName } from '~/features/game/types/gameTypes';
 import type { TeamData } from '~/models/TeamData';
 
 export interface SaveMatchInput {
   supabase: SupabaseClient<Database>;
-  teamWinner: string;
+  winnerTeam: TeamName;
   team1Data: TeamData;
   team2Data: TeamData;
   duelEvents: LocalDuelEvent[];
@@ -12,13 +13,11 @@ export interface SaveMatchInput {
 
 export async function saveMatch({
   supabase,
-  teamWinner,
+  winnerTeam,
   team1Data,
   team2Data,
   duelEvents
 }: SaveMatchInput): Promise<void> {
-  const winnerTeam = teamWinner.includes('1') ? 'team1' : 'team2';
-
   const { data: match, error: matchError } = await supabase
     .from('matches')
     .insert({

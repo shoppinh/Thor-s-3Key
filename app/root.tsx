@@ -74,7 +74,9 @@ export default function App() {
     API_KEY: '',
     SITE_URL: 'http://localhost:5173',
     ANALYTICS_DOMAIN: '',
-    TWITTER_HANDLE: 'thor3key'
+    TWITTER_HANDLE: 'thor3key',
+    SUPABASE_URL: '',
+    SUPABASE_ANON_KEY: ''
   };
   const siteUrl = clientSecrets.SITE_URL ?? 'http://localhost:5173';
   const analyticsDomain = clientSecrets.ANALYTICS_DOMAIN;
