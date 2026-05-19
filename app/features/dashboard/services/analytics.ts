@@ -1,4 +1,3 @@
-import type { LocalDuelEvent } from '~/features/dashboard/types';
 import type { TeamName } from '~/features/game/types/gameTypes';
 
 export interface LeaderboardEntry {
@@ -6,12 +5,17 @@ export interface LeaderboardEntry {
   winCount: number;
 }
 
+type WinnerNameEvent = { winnerName?: string; winner_name?: string };
+
 export function buildPlayerLeaderboard(
-  events: Pick<LocalDuelEvent, 'winnerName'>[]
+  events: WinnerNameEvent[]
 ): LeaderboardEntry[] {
   const wins: Record<string, number> = {};
   for (const event of events) {
-    wins[event.winnerName] = (wins[event.winnerName] || 0) + 1;
+    const name = event.winnerName ?? event.winner_name;
+    if (name) {
+      wins[name] = (wins[name] || 0) + 1;
+    }
   }
   return Object.entries(wins)
     .map(([name, winCount]) => ({ name, winCount }))
@@ -24,13 +28,22 @@ export interface HeadToHeadEntry {
   count: number;
 }
 
-export function buildHeadToHead(
-  events: Pick<LocalDuelEvent, 'winnerName' | 'loserName'>[]
-): HeadToHeadEntry[] {
+type WinnerLoserEvent = {
+  winnerName?: string;
+  winner_name?: string;
+  loserName?: string;
+  loser_name?: string;
+};
+
+export function buildHeadToHead(events: WinnerLoserEvent[]): HeadToHeadEntry[] {
   const map: Record<string, number> = {};
   for (const event of events) {
-    const key = `${event.winnerName}|${event.loserName}`;
-    map[key] = (map[key] || 0) + 1;
+    const winner = event.winnerName ?? event.winner_name;
+    const loser = event.loserName ?? event.loser_name;
+    if (winner && loser) {
+      const key = `${winner}|${loser}`;
+      map[key] = (map[key] || 0) + 1;
+    }
   }
   return Object.entries(map)
     .map(([key, count]) => {
@@ -45,24 +58,23 @@ export interface TeamStreakEntry {
   longestStreak: number;
 }
 
-export function buildTeamStreaks(
-  events: Pick<LocalDuelEvent, 'winnerTeam'>[]
-): TeamStreakEntry[] {
+type WinnerTeamEvent = { winnerTeam?: TeamName; winner_team?: TeamName };
+
+export function buildTeamStreaks(events: WinnerTeamEvent[]): TeamStreakEntry[] {
   const streaks: Record<TeamName, number> = { team1: 0, team2: 0 };
   let currentTeam: TeamName | '' = '';
   let currentCount = 0;
 
   for (const event of events) {
-    if (event.winnerTeam === currentTeam) {
+    const team = event.winnerTeam ?? event.winner_team;
+    if (!team) continue;
+    if (team === currentTeam) {
       currentCount++;
     } else {
-      currentTeam = event.winnerTeam;
+      currentTeam = team;
       currentCount = 1;
     }
-    streaks[event.winnerTeam] = Math.max(
-      streaks[event.winnerTeam],
-      currentCount
-    );
+    streaks[team] = Math.max(streaks[team], currentCount);
   }
 
   return [
@@ -78,13 +90,22 @@ export interface MatchSummary {
   mostWinsCount: number;
 }
 
+type WinnerShieldedEvent = {
+  winnerName?: string;
+  winner_name?: string;
+  shielded: boolean;
+};
+
 export function calculateMatchSummary(
-  events: Pick<LocalDuelEvent, 'winnerName' | 'shielded'>[]
+  events: WinnerShieldedEvent[]
 ): MatchSummary {
   const wins: Record<string, number> = {};
   let shielded = 0;
   for (const event of events) {
-    wins[event.winnerName] = (wins[event.winnerName] || 0) + 1;
+    const name = event.winnerName ?? event.winner_name;
+    if (name) {
+      wins[name] = (wins[name] || 0) + 1;
+    }
     if (event.shielded) shielded++;
   }
   const entries = Object.entries(wins);
