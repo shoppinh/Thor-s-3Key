@@ -1,4 +1,14 @@
-@RTK.md
+## RTK - Rust Token Killer
+
+All shell commands must be prefixed with `rtk`.
+
+```bash
+rtk git status
+rtk npm run build
+rtk pytest -q
+```
+
+Meta commands: `rtk gain` (token savings analytics), `rtk gain --history`, `rtk proxy <cmd>` (raw command without filtering).
 
 ## Agent skills
 
