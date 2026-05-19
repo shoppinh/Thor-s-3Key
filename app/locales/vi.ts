@@ -97,6 +97,12 @@ export default {
     score: 'Tỷ số',
     duels: 'Số đấu',
     date: 'Ngày',
+    matchDetail: 'Chi tiết trận đấu',
+    duration: 'Thời gian',
+    roster: 'Đội hình',
+    powerUps: 'Quyền năng',
+    minuteAbbr: 'ph',
+    secondAbbr: 'gi',
     noData: 'Chưa có dữ liệu.'
   }
 };

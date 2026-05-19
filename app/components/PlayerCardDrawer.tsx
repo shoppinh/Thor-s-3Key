@@ -88,6 +88,12 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     return key ? disabled.has(key) : false;
   })();
   const isBlankHand = playerData.cards.length === 0;
+  const titleTeamClass =
+    playerData.team === 'team1'
+      ? 'team-one'
+      : playerData.team === 'team2'
+        ? 'team-two'
+        : '';
   const displayState = getPlayerCardDrawerDisplayState({
     playerCards: playerData.cards,
     coveredCards: CARDS_COVER,
@@ -108,21 +114,23 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
 
   return (
     <div
-      className={`${className} rpg-panel`}
+      className={`${className} rpg-panel player-card-drawer ${
+        isDrawDisabled && !playerData.name ? 'is-locked' : ''
+      }`}
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         padding: '10px',
         margin: '5px',
-        background: 'rgba(15, 12, 41, 0.6)',
+        background: 'var(--color-surface, rgba(15, 12, 41, 0.6))',
         border: '1px solid rgba(0, 242, 255, 0.3)',
-        opacity: isDrawDisabled && !playerData.name ? 0.5 : 1
+        opacity: isDrawDisabled && !playerData.name ? 0.64 : 1
       }}
     >
       <div className={'playerContainer'} style={containerStyle}>
         {/* Player Name Header */}
         <div
-          className="rpg-skewed"
+          className="rpg-skewed player-card-header"
           style={{
             background:
               'linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent)',
@@ -133,7 +141,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           }}
         >
           <h2
-            className={'m0 text-glow'}
+            className={`m0 text-glow player-card-title ${titleTeamClass}`}
             style={{
               color: varColorForTeam(playerData.team),
               fontSize: '1.5rem',
@@ -206,7 +214,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
 
           {!isBlankHand && (
             <div
-              className="rpg-skewed"
+              className="rpg-skewed player-score-badge"
               style={{
                 display: 'flex',
                 padding: '4px 12px',
@@ -214,7 +222,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                 alignItems: 'center',
                 height: '60px',
                 background: 'rgba(0, 0, 0, 0.5)',
-                border: `2px solid ${varColorForTeam(playerData.team)}`,
+                border: `2px solid ${varColorForTeam(playerData.team)}`
               }}
             >
               <span

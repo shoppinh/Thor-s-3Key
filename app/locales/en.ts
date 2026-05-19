@@ -95,12 +95,18 @@ export default {
     loser: 'Loser',
     count: 'Count',
     teamStreaks: 'Team Streaks',
-    consecutiveWins: 'consecutive wins',
+    consecutiveWins: 'Consecutive wins',
     mostWins: 'Most duel wins',
     recentMatches: 'Recent Matches',
     score: 'Score',
     duels: 'Duels',
     date: 'Date',
+    matchDetail: 'Match Detail',
+    duration: 'Duration',
+    roster: 'Roster',
+    powerUps: 'Power-Ups',
+    minuteAbbr: 'm',
+    secondAbbr: 's',
     noData: 'No data yet.'
   }
 };

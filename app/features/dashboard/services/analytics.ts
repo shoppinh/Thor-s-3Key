@@ -83,6 +83,33 @@ export function buildTeamStreaks(events: WinnerTeamEvent[]): TeamStreakEntry[] {
   ];
 }
 
+type WinnerTeamMatch = { winner_team?: TeamName };
+
+export function buildMatchStreaks(
+  matches: WinnerTeamMatch[]
+): TeamStreakEntry[] {
+  const streaks: Record<TeamName, number> = { team1: 0, team2: 0 };
+  let currentTeam: TeamName | '' = '';
+  let currentCount = 0;
+
+  for (const match of matches) {
+    const team = match.winner_team;
+    if (!team) continue;
+    if (team === currentTeam) {
+      currentCount++;
+    } else {
+      currentTeam = team;
+      currentCount = 1;
+    }
+    streaks[team] = Math.max(streaks[team], currentCount);
+  }
+
+  return [
+    { team: 'team1' as const, longestStreak: streaks.team1 },
+    { team: 'team2' as const, longestStreak: streaks.team2 }
+  ];
+}
+
 export interface MatchSummary {
   totalDuels: number;
   shieldedDuels: number;

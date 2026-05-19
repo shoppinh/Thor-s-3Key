@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
+import MatchDetailModal from '~/features/dashboard/components/MatchDetailModal';
 import {
   buildHeadToHead,
+  buildMatchStreaks,
   buildPlayerLeaderboard,
-  buildTeamStreaks,
   calculateMatchSummary
 } from '~/features/dashboard/services/analytics';
 import type { DashboardData } from '~/features/dashboard/services/matchService';
+import type { Database } from '~/features/dashboard/types';
 
 type DashboardScreenProps = {
   data: DashboardData;
@@ -13,9 +16,12 @@ type DashboardScreenProps = {
 
 const DashboardScreen = ({ data }: DashboardScreenProps) => {
   const { t } = useLanguage();
+  const [selectedMatch, setSelectedMatch] = useState<
+    Database['public']['Tables']['matches']['Row'] | null
+  >(null);
   const leaderboard = buildPlayerLeaderboard(data.allDuelEvents);
   const headToHead = buildHeadToHead(data.allDuelEvents);
-  const streaks = buildTeamStreaks(data.allDuelEvents);
+  const streaks = buildMatchStreaks(data.allMatches);
   const summary = calculateMatchSummary(data.allDuelEvents);
 
   const cardStyle: React.CSSProperties = {
@@ -46,7 +52,14 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
+    <div
+      style={{
+        maxWidth: 1200,
+        width: '100%',
+        margin: '0 auto',
+        padding: '40px 20px'
+      }}
+    >
       <h1
         className="text-glow"
         style={{
@@ -142,8 +155,8 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '30px'
+          gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
+          gap: '24px'
         }}
       >
         <div className="rpg-panel" style={{ padding: '20px' }}>
@@ -213,22 +226,30 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
           >
             {t('dashboard.teamStreaks')}
           </h2>
-          {data.allDuelEvents.length === 0 ? (
+          {data.allMatches.length === 0 ? (
             <p style={{ color: '#888' }}>{t('dashboard.noData')}</p>
           ) : (
             <>
-              {streaks.map((s) => (
-                <div
-                  key={s.team}
-                  style={{ marginBottom: '10px', color: '#ccc' }}
-                >
-                  {t('common.team')} {s.team === 'team1' ? '1' : '2'}:{' '}
-                  <strong style={{ color: 'var(--color-accent)' }}>
-                    {s.longestStreak}
-                  </strong>{' '}
-                  {t('dashboard.consecutiveWins')}
-                </div>
-              ))}
+              <table style={tableStyle}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>{t('common.team')}</th>
+                    <th style={thStyle}>{t('dashboard.consecutiveWins')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {streaks.map((s) => (
+                    <tr key={s.team}>
+                      <td style={tdStyle}>{s.team === 'team1' ? '1' : '2'}</td>
+                      <td style={tdStyle}>
+                        <strong style={{ color: 'var(--color-accent)' }}>
+                          {s.longestStreak}
+                        </strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               {summary.mostWinsPlayer && (
                 <div style={{ marginTop: '16px', color: '#ccc' }}>
                   {t('dashboard.mostWins')}:{' '}
@@ -262,7 +283,21 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
               </thead>
               <tbody>
                 {data.recentMatches.map((match) => (
-                  <tr key={match.id}>
+                  <tr
+                    key={match.id}
+                    onClick={() => setSelectedMatch(match)}
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={(e) => {
+                      (
+                        e.currentTarget as HTMLTableRowElement
+                      ).style.background = 'rgba(255,255,255,0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (
+                        e.currentTarget as HTMLTableRowElement
+                      ).style.background = 'transparent';
+                    }}
+                  >
                     <td style={tdStyle}>
                       {match.winner_team === 'team1'
                         ? t('common.team') + ' 1'
@@ -282,6 +317,12 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
           )}
         </div>
       </div>
+
+      <MatchDetailModal
+        isOpen={!!selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        match={selectedMatch}
+      />
     </div>
   );
 };

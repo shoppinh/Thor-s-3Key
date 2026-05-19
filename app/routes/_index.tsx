@@ -35,6 +35,13 @@ export default function IndexRoute() {
           <Link to={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
             START GAME
           </Link>
+          <Link
+            to="/dashboard"
+            className="rpg-button"
+            style={styles.ctaSecondary}
+          >
+            DASHBOARD
+          </Link>
         </div>
 
         <div className="rpg-panel" style={styles.mediaFrame}>
@@ -184,6 +191,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-block',
     textAlign: 'center',
     minWidth: 200
+  },
+  ctaSecondary: {
+    textDecoration: 'none',
+    display: 'inline-block',
+    textAlign: 'center',
+    minWidth: 200,
+    background: 'transparent',
+    border: '2px solid var(--color-secondary)',
+    color: 'var(--color-secondary)'
   },
   mediaFrame: {
     width: '100%',

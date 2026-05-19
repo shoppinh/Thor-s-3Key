@@ -71,6 +71,8 @@ describe('saveMatch', () => {
       winnerTeam: 'team1',
       team1Data: mockTeam(),
       team2Data: mockTeam(),
+      team1InitialRoster: ['A', 'B'],
+      team2InitialRoster: ['C', 'D'],
       duelEvents: [mockEvent()]
     });
 
@@ -89,6 +91,8 @@ describe('saveMatch', () => {
         winnerTeam: 'team1',
         team1Data: mockTeam(),
         team2Data: mockTeam(),
+        team1InitialRoster: ['A', 'B'],
+        team2InitialRoster: ['C', 'D'],
         duelEvents: []
       })
     ).rejects.toThrow('db down');
@@ -106,6 +110,8 @@ describe('saveMatch', () => {
         winnerTeam: 'team2',
         team1Data: mockTeam(),
         team2Data: mockTeam(),
+        team1InitialRoster: ['A', 'B'],
+        team2InitialRoster: ['C', 'D'],
         duelEvents: [mockEvent()]
       })
     ).rejects.toThrow('events error');

@@ -8,6 +8,9 @@ export interface SaveMatchInput {
   winnerTeam: TeamName;
   team1Data: TeamData;
   team2Data: TeamData;
+  team1InitialRoster: string[];
+  team2InitialRoster: string[];
+  durationSeconds?: number;
   duelEvents: LocalDuelEvent[];
 }
 
@@ -16,6 +19,9 @@ export async function saveMatch({
   winnerTeam,
   team1Data,
   team2Data,
+  team1InitialRoster,
+  team2InitialRoster,
+  durationSeconds,
   duelEvents
 }: SaveMatchInput): Promise<void> {
   const { data: match, error: matchError } = await supabase
@@ -24,9 +30,14 @@ export async function saveMatch({
       winner_team: winnerTeam,
       team1_roster: team1Data.players,
       team2_roster: team2Data.players,
+      team1_initial_roster: team1InitialRoster,
+      team2_initial_roster: team2InitialRoster,
+      team1_powerups: team1Data.powerUps,
+      team2_powerups: team2Data.powerUps,
       team1_score: team1Data.score,
       team2_score: team2Data.score,
-      total_duels: duelEvents.length
+      total_duels: duelEvents.length,
+      duration_seconds: durationSeconds ?? null
     })
     .select('id')
     .single();
@@ -63,6 +74,7 @@ export async function saveMatch({
 
 export interface DashboardData {
   recentMatches: Database['public']['Tables']['matches']['Row'][];
+  allMatches: Database['public']['Tables']['matches']['Row'][];
   allDuelEvents: Database['public']['Tables']['duel_events']['Row'][];
   summary: {
     totalMatches: number;
@@ -81,8 +93,7 @@ export async function fetchDashboardData(
       supabase
         .from('matches')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50),
+        .order('created_at', { ascending: false }),
       supabase.from('duel_events').select('*')
     ]);
 
@@ -93,7 +104,8 @@ export async function fetchDashboardData(
   const allEvents = duelEvents || [];
 
   return {
-    recentMatches: allMatches,
+    recentMatches: allMatches.slice(0, 50),
+    allMatches,
     allDuelEvents: allEvents,
     summary: {
       totalMatches: allMatches.length,

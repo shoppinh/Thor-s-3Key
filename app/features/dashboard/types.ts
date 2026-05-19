@@ -1,5 +1,8 @@
 import type Card from '~/models/Card';
-import type { TeamName } from '~/features/game/types/gameTypes';
+import type {
+  TeamName,
+  PowerUpsAllocation
+} from '~/features/game/types/gameTypes';
 
 export interface PowerUpsUsed {
   revealTwo?: TeamName;
@@ -22,6 +25,13 @@ export interface LocalDuelEvent {
   powerUpsUsed: PowerUpsUsed;
 }
 
+export interface SavedPowerUps {
+  secondChance: number;
+  revealTwo: number;
+  lifeShield: number;
+  removeWorst: number;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -31,26 +41,41 @@ export interface Database {
           winner_team: TeamName;
           team1_roster: string[];
           team2_roster: string[];
+          team1_initial_roster: string[];
+          team2_initial_roster: string[];
+          team1_powerups: SavedPowerUps;
+          team2_powerups: SavedPowerUps;
           team1_score: number;
           team2_score: number;
           total_duels: number;
+          duration_seconds: number | null;
           created_at: string;
         };
         Insert: {
           winner_team: TeamName;
           team1_roster: string[];
           team2_roster: string[];
+          team1_initial_roster: string[];
+          team2_initial_roster: string[];
+          team1_powerups: SavedPowerUps;
+          team2_powerups: SavedPowerUps;
           team1_score: number;
           team2_score: number;
           total_duels: number;
+          duration_seconds?: number | null;
         };
         Update: {
           winner_team?: TeamName;
           team1_roster?: string[];
           team2_roster?: string[];
+          team1_initial_roster?: string[];
+          team2_initial_roster?: string[];
+          team1_powerups?: SavedPowerUps;
+          team2_powerups?: SavedPowerUps;
           team1_score?: number;
           team2_score?: number;
           total_duels?: number;
+          duration_seconds?: number | null;
         };
         Relationships: [];
       };

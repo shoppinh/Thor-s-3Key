@@ -112,21 +112,28 @@
 
 [data-theme='summer'] {
   /* Theme Colors - Summer */
-  --color-bg: #ffe4b5;
-  --color-bg-gradient: linear-gradient(135deg, #ff7e5f, #feb47b, #ff9966);
-  --color-primary: #ff5e62; /* Hot Coral */
-  --color-primary-dark: #e04a4e;
-  --color-secondary: #00f2ff; /* Bright Ocean Cyan */
-  --color-secondary-dark: #00c2cc;
-  --color-accent: #ffdd00; /* Sunny Yellow */
-  --color-text: #ffffff;
-  --color-text-muted: #fff5e6;
-  --color-panel-bg: rgba(255, 126, 95, 0.85);
-  --color-border: rgba(255, 221, 0, 0.6);
+  --color-bg: #ffcf8b;
+  --color-bg-gradient: linear-gradient(135deg, #ff8a6b, #ffc875 48%, #ff9a74);
+  --color-primary: #ff5f6d; /* Hibiscus coral */
+  --color-primary-dark: #d83d4d;
+  --color-secondary: #10d8e8; /* Lagoon cyan */
+  --color-secondary-dark: #008da0;
+  --color-accent: #ffe65a; /* Sunny yellow */
+  --color-text: #fffaf2;
+  --color-text-muted: #ffe9d2;
+  --color-panel-bg: rgba(62, 34, 54, 0.9);
+  --color-border: rgba(255, 230, 90, 0.78);
+  --color-surface: rgba(70, 38, 59, 0.92);
+  --color-surface-strong: rgba(30, 19, 38, 0.96);
+  --color-surface-soft: rgba(106, 59, 72, 0.88);
+  --color-team-1: #ff7380;
+  --color-team-2: #28e5f1;
+  --color-on-team-1: #fff8f2;
+  --color-on-team-2: #06242a;
 
   /* Fonts */
   --font-header: 'Pacifico', cursive;
-  --font-body: 'Rajdhani', sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'Rajdhani', sans-serif;
 
   /* Effects */
   --glow-primary: 0 0 15px rgba(255, 94, 98, 0.8),
@@ -141,11 +148,14 @@
 
 /* Summer Theme Overrides */
 [data-theme='summer'] .rpg-panel {
-  border-radius: 16px;
-  border: 3px solid var(--color-accent);
+  border-radius: 14px;
+  border: 2px solid rgba(0, 207, 227, 0.9);
+  background: var(--color-surface);
   box-shadow:
-    0 0 25px rgba(255, 221, 0, 0.4),
-    inset 0 0 15px rgba(255, 94, 98, 0.3);
+    0 18px 42px rgba(97, 42, 48, 0.34),
+    0 0 0 1px rgba(255, 250, 242, 0.12),
+    inset 0 1px 0 rgba(255, 250, 242, 0.16);
+  backdrop-filter: blur(8px) saturate(110%);
 }
 
 [data-theme='summer'] .rpg-panel::before,
@@ -155,14 +165,17 @@
 
 [data-theme='summer'] .rpg-button {
   border-radius: 30px;
-  border: 2px solid #fff;
+  border: 3px solid #fff6ea;
   background: linear-gradient(
     to bottom,
     var(--color-primary),
     var(--color-primary-dark)
   );
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  color: #fffdf8;
+  box-shadow:
+    0 6px 0 rgba(80, 36, 32, 0.5),
+    0 14px 28px rgba(90, 38, 44, 0.28);
+  text-shadow: 0 2px 2px rgba(59, 18, 22, 0.8);
 }
 
 [data-theme='summer'] .rpg-button:hover {
@@ -183,8 +196,154 @@
   letter-spacing: 1px;
   text-transform: none; /* Pacifico looks better with natural casing */
   text-shadow:
-    2px 2px 0 #ff5e62,
-    0 0 15px var(--color-accent);
+    0 2px 0 rgba(58, 24, 35, 0.85),
+    0 0 10px rgba(255, 212, 59, 0.5);
+}
+
+[data-theme='summer'] .text-glow {
+  text-shadow:
+    0 2px 0 rgba(37, 21, 37, 0.9),
+    0 0 8px rgba(255, 250, 242, 0.34);
+}
+
+[data-theme='summer'] .text-gradient {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+[data-theme='summer'] input[type='number'].num-input,
+[data-theme='summer'] input[type='number'],
+[data-theme='summer'] input[type='text'].rpg-input,
+[data-theme='summer'] input[type='text'] {
+  background: var(--color-surface-strong);
+  border-color: rgba(0, 207, 227, 0.95);
+  color: #fffaf2;
+  box-shadow: 0 0 0 1px rgba(255, 250, 242, 0.08);
+}
+
+[data-theme='summer'] input[type='number'].num-input,
+[data-theme='summer'] input[type='number'] {
+  color: var(--color-accent);
+}
+
+[data-theme='summer'] .setup-card {
+  background:
+    linear-gradient(180deg, rgba(82, 44, 66, 0.94), rgba(52, 30, 50, 0.94)),
+    var(--color-surface);
+  border-color: rgba(0, 207, 227, 0.9);
+}
+
+[data-theme='summer'] .setup-row {
+  border-bottom-color: rgba(255, 250, 242, 0.18);
+}
+
+[data-theme='summer'] .setup-row label {
+  color: #fffaf2;
+}
+
+[data-theme='summer'] .summer-equity-panel,
+[data-theme='summer'] .summer-team-panel,
+[data-theme='summer'] .player-card-drawer {
+  background:
+    linear-gradient(180deg, rgba(82, 44, 66, 0.94), rgba(47, 29, 50, 0.94)),
+    var(--color-surface) !important;
+}
+
+[data-theme='summer'] .summer-team-panel {
+  min-height: 320px;
+}
+
+[data-theme='summer'] .summer-team-panel--one {
+  border-color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .summer-team-panel--two {
+  border-color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .summer-team-title--one {
+  color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .summer-team-title--two {
+  color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .summer-roster-member {
+  color: #fffaf2 !important;
+  background: rgba(255, 250, 242, 0.08) !important;
+  border-color: rgba(255, 250, 242, 0.2) !important;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+[data-theme='summer'] .note {
+  color: #00616f !important;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 250, 242, 0.55);
+}
+
+[data-theme='summer'] a[href='#powerups-guide'] {
+  color: #9f2634 !important;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(255, 250, 242, 0.5) !important;
+}
+
+[data-theme='summer'] .player-card-drawer {
+  border-color: rgba(0, 207, 227, 0.74) !important;
+  opacity: 1 !important;
+}
+
+[data-theme='summer'] .player-card-drawer.is-locked {
+  opacity: 0.72 !important;
+}
+
+[data-theme='summer'] .player-card-header {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 207, 227, 0.18),
+    transparent
+  ) !important;
+  border-bottom-color: rgba(0, 207, 227, 0.88) !important;
+}
+
+[data-theme='summer'] .player-card-title {
+  color: #fffaf2 !important;
+  text-shadow:
+    0 2px 0 rgba(40, 20, 28, 0.95),
+    0 0 8px rgba(255, 212, 59, 0.45);
+}
+
+[data-theme='summer'] .player-card-title.team-one {
+  color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .player-card-title.team-two {
+  color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .player-score-badge {
+  background: var(--color-surface-strong) !important;
+  color: #fffaf2 !important;
+  box-shadow: 0 0 0 1px rgba(255, 250, 242, 0.1);
+}
+
+[data-theme='summer'] .cardContainer img {
+  box-shadow: 0 5px 16px rgba(26, 18, 28, 0.36);
+}
+
+[data-theme='summer'] .rpg-button:disabled {
+  background: #2f3440 !important;
+  border-color: rgba(255, 250, 242, 0.38);
+  color: rgba(255, 250, 242, 0.76);
+  text-shadow: none;
+}
+
+[data-theme='summer'] .summer-setup-option label,
+[data-theme='summer'] label,
+[data-theme='summer'] span {
+  text-rendering: optimizeLegibility;
 }
 
 html,

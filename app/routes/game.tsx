@@ -105,6 +105,9 @@ const CardGame = () => {
   const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
+  const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
+  const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<number | null>(null);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -232,11 +235,32 @@ const CardGame = () => {
     const supabase = getSupabaseClient(url, key);
     const winnerTeam: TeamName =
       team1Data.players.length === 0 ? 'team2' : 'team1';
+    const durationSeconds =
+      gameStartTime != null
+        ? Math.floor((Date.now() - gameStartTime) / 1000)
+        : undefined;
     setSaveStatus('saving');
-    saveMatch({ supabase, winnerTeam, team1Data, team2Data, duelEvents })
+    saveMatch({
+      supabase,
+      winnerTeam,
+      team1Data,
+      team2Data,
+      team1InitialRoster: initialTeam1Roster,
+      team2InitialRoster: initialTeam2Roster,
+      durationSeconds,
+      duelEvents
+    })
       .then(() => setSaveStatus('saved'))
       .catch(() => setSaveStatus('error'));
-  }, [clientSecrets, team1Data, team2Data, duelEvents]);
+  }, [
+    clientSecrets,
+    team1Data,
+    team2Data,
+    initialTeam1Roster,
+    initialTeam2Roster,
+    duelEvents,
+    gameStartTime
+  ]);
 
   useEffect(() => {
     if (gameState !== 'gameOver') return;
@@ -253,12 +277,18 @@ const CardGame = () => {
    * @param team1Data - Array of team 1 player names
    * @param team2Data - Array of team 2 player names
    */
-  const startGameWithTeams = (team1Data: string[], team2Data: string[]) => {
-    if (team1Data.length === 0 || team2Data.length === 0) {
+  const startGameWithTeams = (
+    team1Players: string[],
+    team2Players: string[]
+  ) => {
+    if (team1Players.length === 0 || team2Players.length === 0) {
       alert('Both teams must have at least one player.');
       return;
     }
 
+    setInitialTeam1Roster([...team1Players]);
+    setInitialTeam2Roster([...team2Players]);
+    setGameStartTime(Date.now());
     setHistoryStack([]);
     setWinStreaks({});
     setDuelEvents([]);
@@ -266,7 +296,7 @@ const CardGame = () => {
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
-    nextRound(team1Data, team2Data, false);
+    nextRound(team1Players, team2Players, false);
   };
 
   /**
@@ -1319,6 +1349,7 @@ const CardGame = () => {
               {/* Left: Setup UI */}
               <div style={{ flex: 1 }}>
                 <div
+                  data-summer-wave-safe-bottom
                   style={{
                     maxWidth: 920,
                     margin: '0 0 0 auto'
