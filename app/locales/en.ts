@@ -54,10 +54,15 @@ export default {
     isWinner: 'is winner',
     anonymous: 'ANONYMOUS',
     enableUndo: 'Enable Host Undo',
-    enableUndoHint: 'Lets the host reverse gameplay mistakes during this match.',
+    enableUndoHint:
+      'Lets the host reverse gameplay mistakes during this match.',
     undo: 'UNDO',
     navigationWarning:
-      'A game is in progress. Leaving now will lose the current game. Continue?'
+      'A game is in progress. Leaving now will lose the current game. Continue?',
+    savingMatch: 'Saving match history...',
+    matchSaved: 'Match saved!',
+    saveFailed: 'Failed to save match history.',
+    retrySave: 'Retry'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
@@ -74,5 +79,28 @@ export default {
     confirmTitle: 'Confirm Power-Up',
     confirmMessage: 'Are you sure you want to use',
     title: 'You scared to use it?'
+  },
+  dashboard: {
+    title: 'BATTLE ARCHIVE',
+    totalMatches: 'Total Matches',
+    totalDuels: 'Total Duels',
+    team1Wins: 'Team 1 Wins',
+    team2Wins: 'Team 2 Wins',
+    shieldedDuels: 'Shielded Duels',
+    leaderboard: 'Player Leaderboard',
+    player: 'Player',
+    duelsWon: 'Duels Won',
+    headToHead: 'Head-to-Head',
+    winner: 'Winner',
+    loser: 'Loser',
+    count: 'Count',
+    teamStreaks: 'Team Streaks',
+    consecutiveWins: 'consecutive wins',
+    mostWins: 'Most duel wins',
+    recentMatches: 'Recent Matches',
+    score: 'Score',
+    duels: 'Duels',
+    date: 'Date',
+    noData: 'No data yet.'
   }
 };
