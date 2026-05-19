@@ -2489,10 +2489,6 @@ const CardGame = () => {
       {gameState == 'gameOver' && (
         <GameOverScreen
           teamWinner={teamWinner}
-          canUndo={canUndo}
-          onUndo={undoLastAction}
-          canRedo={canRedo}
-          onRedo={redoLastAction}
           saveStatus={saveStatus}
           onRetrySave={handleRetrySave}
         />

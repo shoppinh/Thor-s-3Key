@@ -1,23 +1,17 @@
+import { Link } from '@remix-run/react';
 import { useLanguage } from '~/contexts/LanguageContext';
+import VictoryCrown from '~/components/VictoryCrown';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type GameOverScreenProps = {
   teamWinner: string;
-  canUndo: boolean;
-  onUndo: () => void;
-  canRedo: boolean;
-  onRedo: () => void;
   saveStatus: SaveStatus;
   onRetrySave: () => void;
 };
 
 const GameOverScreen = ({
   teamWinner,
-  canUndo,
-  onUndo,
-  canRedo,
-  onRedo,
   saveStatus,
   onRetrySave
 }: GameOverScreenProps) => {
@@ -113,15 +107,7 @@ const GameOverScreen = ({
             background: 'rgba(0,0,0,0.3)'
           }}
         >
-          <img
-            src="/images/the-end.webp"
-            alt="Victory"
-            style={{
-              width: '600px',
-              maxWidth: '100%',
-              opacity: 0.9
-            }}
-          />
+          <VictoryCrown />
         </div>
         <div
           style={{
@@ -131,32 +117,30 @@ const GameOverScreen = ({
             justifyContent: 'center'
           }}
         >
-          <button
-            onClick={onUndo}
-            disabled={!canUndo}
+          <Link
+            to="/"
             className="rpg-button secondary"
             style={{
               fontSize: '18px',
               padding: '10px 36px',
-              opacity: canUndo ? 1 : 0.45,
-              cursor: canUndo ? 'pointer' : 'not-allowed'
+              textDecoration: 'none',
+              textAlign: 'center'
             }}
           >
-            {t('game.undo')}
-          </button>
-          <button
-            onClick={onRedo}
-            disabled={!canRedo}
-            className="rpg-button secondary"
+            {t('game.returnHome')}
+          </Link>
+          <Link
+            to="/dashboard"
+            className="rpg-button"
             style={{
               fontSize: '18px',
               padding: '10px 36px',
-              opacity: canRedo ? 1 : 0.45,
-              cursor: canRedo ? 'pointer' : 'not-allowed'
+              textDecoration: 'none',
+              textAlign: 'center'
             }}
           >
-            {t('game.redo')}
-          </button>
+            {t('game.viewDashboard')}
+          </Link>
         </div>
       </div>
     </div>

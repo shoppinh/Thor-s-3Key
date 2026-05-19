@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from '@remix-run/react';
 import ShareButtons from '~/components/ShareButtons';
+import VictoryCrown from '~/components/VictoryCrown';
 import type { MetaFunction } from '@remix-run/node';
 
 export const meta: MetaFunction = () => {
@@ -45,12 +46,7 @@ export default function IndexRoute() {
         </div>
 
         <div className="rpg-panel" style={styles.mediaFrame}>
-          <img
-            src="/images/the-end.webp"
-            alt="Gameplay screenshot"
-            style={{ width: '100%', display: 'block', opacity: 0.8 }}
-            loading="lazy"
-          />
+          <VictoryCrown />
           <div style={styles.scanline} />
         </div>
 

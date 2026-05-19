@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@remix-run/react';
 import { useLanguage } from '~/contexts/LanguageContext';
 import MatchDetailModal from '~/features/dashboard/components/MatchDetailModal';
 import {
@@ -60,6 +61,25 @@ const DashboardScreen = ({ data }: DashboardScreenProps) => {
         padding: '40px 20px'
       }}
     >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          marginBottom: '8px'
+        }}
+      >
+        <Link
+          to="/"
+          className="rpg-button secondary"
+          style={{
+            textDecoration: 'none',
+            fontSize: '14px',
+            padding: '8px 20px'
+          }}
+        >
+          ← {t('dashboard.backHome')}
+        </Link>
+      </div>
       <h1
         className="text-glow"
         style={{

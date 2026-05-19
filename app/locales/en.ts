@@ -65,7 +65,9 @@ export default {
     savingMatch: 'Saving match history...',
     matchSaved: 'Match saved!',
     saveFailed: 'Failed to save match history.',
-    retrySave: 'Retry'
+    retrySave: 'Retry',
+    returnHome: 'RETURN HOME',
+    viewDashboard: 'VIEW DASHBOARD'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
@@ -110,6 +112,7 @@ export default {
     powerUps: 'Power-Ups',
     minuteAbbr: 'm',
     secondAbbr: 's',
-    noData: 'No data yet.'
+    noData: 'No data yet.',
+    backHome: 'BACK HOME'
   }
 };

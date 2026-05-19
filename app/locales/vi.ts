@@ -64,7 +64,9 @@ export default {
     savingMatch: 'Đang lưu lịch sử trận đấu...',
     matchSaved: 'Đã lưu trận đấu!',
     saveFailed: 'Lưu lịch sử thất bại.',
-    retrySave: 'Thử lại'
+    retrySave: 'Thử lại',
+    returnHome: 'VỀ TRANG CHỦ',
+    viewDashboard: 'XEM LỊCH SỬ'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
@@ -106,6 +108,7 @@ export default {
     powerUps: 'Quyền năng',
     minuteAbbr: 'ph',
     secondAbbr: 'gi',
-    noData: 'Chưa có dữ liệu.'
+    noData: 'Chưa có dữ liệu.',
+    backHome: 'VỀ TRANG CHỦ'
   }
 };
