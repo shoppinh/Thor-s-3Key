@@ -2,9 +2,13 @@ import { useOutletContext } from '@remix-run/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
 import type { LocalDuelEvent } from '~/features/dashboard/types';
+import { getSupabaseClient } from '~/lib/supabase';
+import { saveMatch } from '~/features/dashboard/services/matchService';
 import { useTheme } from '~/contexts/ThemeContext';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
-import GameOverScreen from '~/features/game/components/GameOverScreen';
+import GameOverScreen, {
+  type SaveStatus
+} from '~/features/game/components/GameOverScreen';
 import WinnerAnnouncement from '~/features/game/components/WinnerAnnouncement';
 import {
   applyPlayerSelectionToDuel,
@@ -99,6 +103,7 @@ const CardGame = () => {
   const [roundNumber, setRoundNumber] = useState(0);
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
   const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
 
   // Effect to handle score blinking for Team 1
@@ -219,6 +224,30 @@ const CardGame = () => {
 
   const canUndo = undoEnabled && historyStack.length > 0;
 
+  const performSave = useCallback(() => {
+    const url = clientSecrets?.SUPABASE_URL;
+    const key = clientSecrets?.SUPABASE_ANON_KEY;
+    if (!url || !key) return;
+
+    const supabase = getSupabaseClient(url, key);
+    const winnerTeam: TeamName =
+      team1Data.players.length === 0 ? 'team2' : 'team1';
+    setSaveStatus('saving');
+    saveMatch({ supabase, winnerTeam, team1Data, team2Data, duelEvents })
+      .then(() => setSaveStatus('saved'))
+      .catch(() => setSaveStatus('error'));
+  }, [clientSecrets, team1Data, team2Data, duelEvents]);
+
+  useEffect(() => {
+    if (gameState !== 'gameOver') return;
+    if (saveStatus !== 'idle') return;
+    performSave();
+  }, [gameState, saveStatus, performSave]);
+
+  const handleRetrySave = useCallback(() => {
+    performSave();
+  }, [performSave]);
+
   /**
    * Starts the game with the provided team data
    * @param team1Data - Array of team 1 player names
@@ -233,6 +262,7 @@ const CardGame = () => {
     setHistoryStack([]);
     setWinStreaks({});
     setDuelEvents([]);
+    setSaveStatus('idle');
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
@@ -2314,6 +2344,8 @@ const CardGame = () => {
           teamWinner={teamWinner}
           canUndo={canUndo}
           onUndo={undoLastAction}
+          saveStatus={saveStatus}
+          onRetrySave={handleRetrySave}
         />
       )}
 

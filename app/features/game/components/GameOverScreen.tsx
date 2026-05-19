@@ -1,17 +1,33 @@
 import { useLanguage } from '~/contexts/LanguageContext';
 
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 type GameOverScreenProps = {
   teamWinner: string;
   canUndo: boolean;
   onUndo: () => void;
+  saveStatus: SaveStatus;
+  onRetrySave: () => void;
 };
 
 const GameOverScreen = ({
   teamWinner,
   canUndo,
-  onUndo
+  onUndo,
+  saveStatus,
+  onRetrySave
 }: GameOverScreenProps) => {
   const { t } = useLanguage();
+
+  const saveStatusText =
+    saveStatus === 'saving'
+      ? t('game.savingMatch')
+      : saveStatus === 'saved'
+        ? t('game.matchSaved')
+        : saveStatus === 'error'
+          ? t('game.saveFailed')
+          : '';
+
   return (
     <div
       style={{
@@ -54,6 +70,37 @@ const GameOverScreen = ({
         >
           {teamWinner}
         </h1>
+
+        {saveStatusText && (
+          <div
+            style={{
+              marginTop: '16px',
+              fontSize: '18px',
+              color:
+                saveStatus === 'error'
+                  ? '#ff4d4d'
+                  : saveStatus === 'saved'
+                    ? '#4dff88'
+                    : '#ccc'
+            }}
+          >
+            {saveStatusText}
+            {saveStatus === 'error' && (
+              <button
+                onClick={onRetrySave}
+                className="rpg-button secondary"
+                style={{
+                  marginLeft: '12px',
+                  fontSize: '14px',
+                  padding: '6px 16px'
+                }}
+              >
+                {t('game.retrySave')}
+              </button>
+            )}
+          </div>
+        )}
+
         <div
           className="rpg-panel"
           style={{
