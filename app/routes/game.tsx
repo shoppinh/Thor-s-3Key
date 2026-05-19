@@ -38,6 +38,8 @@ import {
 } from '~/features/game/state/initialState';
 import {
   createGameSnapshot,
+  createRedoTransition,
+  createUndoTransition,
   pushGameSnapshot,
   shouldRecordGameSnapshot
 } from '~/features/game/state/historyStack';
@@ -162,50 +164,41 @@ const CardGame = () => {
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('per-team');
   const [undoEnabled, setUndoEnabled] = useState(false);
+  const [redoEnabled, setRedoEnabled] = useState(false);
   const [historyStack, setHistoryStack] = useState<GameSnapshot[]>([]);
+  const [redoStack, setRedoStack] = useState<GameSnapshot[]>([]);
   const shouldGuardNavigation = gameState === 'gamePlaying';
 
   useNavigationGuard(shouldGuardNavigation, t('game.navigationWarning'));
+  const createCurrentSnapshot = useCallback(
+    () =>
+      createGameSnapshot({
+        team1Data,
+        team2Data,
+        duelData,
+        teamWinner,
+        duelResult,
+        isFirstTurn,
+        gameState,
+        roundNumber,
+        winStreaks,
+        duelEvents
+      }),
+    [
+      team1Data,
+      team2Data,
+      duelData,
+      teamWinner,
+      duelResult,
+      isFirstTurn,
+      gameState,
+      roundNumber,
+      winStreaks,
+      duelEvents
+    ]
+  );
 
-  const recordHistorySnapshot = useCallback(() => {
-    if (!shouldRecordGameSnapshot(undoEnabled, gameState)) return;
-
-    setHistoryStack((prev) =>
-      pushGameSnapshot(
-        prev,
-        createGameSnapshot({
-          team1Data,
-          team2Data,
-          duelData,
-          teamWinner,
-          duelResult,
-          isFirstTurn,
-          gameState,
-          roundNumber,
-          winStreaks,
-          duelEvents
-        })
-      )
-    );
-  }, [
-    team1Data,
-    team2Data,
-    duelData,
-    teamWinner,
-    duelResult,
-    isFirstTurn,
-    gameState,
-    roundNumber,
-    winStreaks,
-    duelEvents,
-    undoEnabled
-  ]);
-
-  const undoLastAction = useCallback(() => {
-    const snapshot = historyStack[historyStack.length - 1];
-    if (!snapshot) return;
-
-    setHistoryStack((prev) => prev.slice(0, -1));
+  const applyGameSnapshot = useCallback((snapshot: GameSnapshot) => {
     setTeam1Data(snapshot.team1Data);
     setTeam2Data(snapshot.team2Data);
     setDuelData(snapshot.duelData);
@@ -223,9 +216,62 @@ const CardGame = () => {
       chanceItemName: ''
     });
     setShowWinnerAnnouncement(false);
-  }, [historyStack]);
+  }, []);
+
+  const recordHistorySnapshot = useCallback(() => {
+    if (!shouldRecordGameSnapshot(undoEnabled, gameState)) return;
+
+    setHistoryStack((prev) => pushGameSnapshot(prev, createCurrentSnapshot()));
+    setRedoStack([]);
+  }, [createCurrentSnapshot, gameState, undoEnabled]);
+
+  const undoLastAction = useCallback(() => {
+    if (!undoEnabled) return;
+
+    const transition = createUndoTransition({
+      historyStack,
+      redoStack,
+      currentSnapshot: createCurrentSnapshot(),
+      trackRedo: redoEnabled
+    });
+    if (!transition.snapshotToApply) return;
+
+    setHistoryStack(transition.nextHistoryStack);
+    setRedoStack(transition.nextRedoStack);
+    applyGameSnapshot(transition.snapshotToApply);
+  }, [
+    applyGameSnapshot,
+    createCurrentSnapshot,
+    historyStack,
+    redoEnabled,
+    redoStack,
+    undoEnabled
+  ]);
+
+  const redoLastAction = useCallback(() => {
+    if (!undoEnabled || !redoEnabled) return;
+
+    const transition = createRedoTransition({
+      historyStack,
+      redoStack,
+      currentSnapshot: createCurrentSnapshot()
+    });
+    if (!transition.snapshotToApply) return;
+
+    setHistoryStack(transition.nextHistoryStack);
+    setRedoStack(transition.nextRedoStack);
+    applyGameSnapshot(transition.snapshotToApply);
+  }, [
+    applyGameSnapshot,
+    createCurrentSnapshot,
+    historyStack,
+    redoEnabled,
+    redoStack,
+    undoEnabled
+  ]);
 
   const canUndo = undoEnabled && historyStack.length > 0;
+  const canRedo = undoEnabled && redoEnabled && redoStack.length > 0;
 
   const performSave = useCallback(() => {
     const url = clientSecrets?.SUPABASE_URL;
@@ -290,6 +336,7 @@ const CardGame = () => {
     setInitialTeam2Roster([...team2Players]);
     setGameStartTime(Date.now());
     setHistoryStack([]);
+    setRedoStack([]);
     setWinStreaks({});
     setDuelEvents([]);
     setSaveStatus('idle');
@@ -1527,7 +1574,7 @@ const CardGame = () => {
                     className="rpg-panel"
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                       justifyContent: 'space-between',
                       gap: 20,
                       marginTop: 6,
@@ -1537,48 +1584,115 @@ const CardGame = () => {
                       border: '2px solid var(--color-accent)'
                     }}
                   >
-                    <label
-                      htmlFor="enable-undo"
+                    <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '1.1rem',
-                        cursor: 'pointer',
-                        color: undoEnabled ? 'var(--color-accent)' : '#fff'
+                        flexDirection: 'column',
+                        gap: 12
                       }}
                     >
-                      <input
-                        id="enable-undo"
-                        type="checkbox"
-                        checked={undoEnabled}
-                        onChange={(event) => {
-                          const isEnabled = event.target.checked;
-                          setUndoEnabled(isEnabled);
-                          if (!isEnabled) {
-                            setHistoryStack([]);
-                          }
-                        }}
+                      <label
+                        htmlFor="enable-undo"
                         style={{
-                          width: '20px',
-                          height: '20px',
-                          accentColor: 'var(--color-accent)',
-                          cursor: 'pointer'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          color: undoEnabled ? 'var(--color-accent)' : '#fff'
                         }}
-                      />
-                      {t('game.enableUndo')}
-                    </label>
-                    <span
+                      >
+                        <input
+                          id="enable-undo"
+                          type="checkbox"
+                          checked={undoEnabled}
+                          onChange={(event) => {
+                            const isEnabled = event.target.checked;
+                            setUndoEnabled(isEnabled);
+                            if (!isEnabled) {
+                              setRedoEnabled(false);
+                              setHistoryStack([]);
+                              setRedoStack([]);
+                            }
+                          }}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            accentColor: 'var(--color-accent)',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        {t('game.enableUndo')}
+                      </label>
+                      <label
+                        htmlFor="enable-redo"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '1.1rem',
+                          cursor: undoEnabled ? 'pointer' : 'not-allowed',
+                          color:
+                            undoEnabled && redoEnabled
+                              ? 'var(--color-accent)'
+                              : '#fff',
+                          opacity: undoEnabled ? 1 : 0.55
+                        }}
+                      >
+                        <input
+                          id="enable-redo"
+                          type="checkbox"
+                          checked={redoEnabled}
+                          disabled={!undoEnabled}
+                          onChange={(event) => {
+                            const isEnabled = event.target.checked;
+                            setRedoEnabled(isEnabled);
+                            if (!isEnabled) {
+                              setRedoStack([]);
+                            }
+                          }}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            accentColor: 'var(--color-accent)',
+                            cursor: undoEnabled ? 'pointer' : 'not-allowed'
+                          }}
+                        />
+                        {t('game.enableRedo')}
+                      </label>
+                    </div>
+                    <div
                       style={{
-                        color: '#ccc',
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '0.95rem',
-                        textAlign: 'right'
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                        alignItems: 'flex-end'
                       }}
                     >
-                      {t('game.enableUndoHint')}
-                    </span>
+                      <span
+                        style={{
+                          color: '#ccc',
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.95rem',
+                          textAlign: 'right'
+                        }}
+                      >
+                        {t('game.enableUndoHint')}
+                      </span>
+                      <span
+                        style={{
+                          color: '#ccc',
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.95rem',
+                          textAlign: 'right',
+                          opacity: undoEnabled ? 1 : 0.55
+                        }}
+                      >
+                        {t('game.enableRedoHint')}
+                      </span>
+                    </div>
                   </div>
                   <div
                     className="setup-grid"
@@ -2367,6 +2481,8 @@ const CardGame = () => {
           duelEquity={duelEquity}
           canUndo={canUndo}
           onUndo={undoLastAction}
+          canRedo={canRedo}
+          onRedo={redoLastAction}
         />
       )}
 
@@ -2375,6 +2491,8 @@ const CardGame = () => {
           teamWinner={teamWinner}
           canUndo={canUndo}
           onUndo={undoLastAction}
+          canRedo={canRedo}
+          onRedo={redoLastAction}
           saveStatus={saveStatus}
           onRetrySave={handleRetrySave}
         />

@@ -70,23 +70,41 @@ Just open the app, paste a Google Sheet link with your player names, and start d
 
 ### For Developers
 
+Install dependencies:
+
 ```sh
-# Install dependencies
 npm install
+```
 
-# Start dev server
+Start the Vite development server:
+
+```sh
 npm run dev
+```
 
-# Production build
+Build for production:
+
+```sh
 npm run build
+```
 
-# Run in production mode
+Run the production server:
+
+```sh
 npm start
+```
 
-# Run tests
-npm run test
+Run checks:
 
-# Kill a stuck dev server
+```sh
+npm run typecheck
+npm run lint
+npm test
+```
+
+If the default dev port is already in use:
+
+```sh
 npx kill-port 5173
 ```
 

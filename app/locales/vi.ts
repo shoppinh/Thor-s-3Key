@@ -55,7 +55,10 @@ export default {
     anonymous: 'Kẻ thế thân',
     enableUndo: 'Bật hoàn tác cho chủ trò',
     enableUndoHint: 'Cho phép chủ trò sửa lỗi bấm nhầm trong ván này.',
+    enableRedo: 'Bật làm lại cho chủ trò',
+    enableRedoHint: 'Cho phép chủ trò làm lại thao tác vừa hoàn tác.',
     undo: 'HOÀN TÁC',
+    redo: 'LÀM LẠI',
     navigationWarning:
       'Trận đang diễn ra. Rồi trang bây giờ sẽ mất ván hiện tại. Tiếp tục?',
     savingMatch: 'Đang lưu lịch sử trận đấu...',

@@ -19,6 +19,24 @@ export type GameSnapshot = {
 };
 
 export type GameSnapshotInput = GameSnapshot;
+export type GameHistoryTransition = {
+  snapshotToApply?: GameSnapshot;
+  nextHistoryStack: GameSnapshot[];
+  nextRedoStack: GameSnapshot[];
+};
+type UndoTransitionInput = {
+  historyStack: GameSnapshot[];
+  redoStack: GameSnapshot[];
+  currentSnapshot: GameSnapshot;
+  trackRedo?: boolean;
+  limit?: number;
+};
+type RedoTransitionInput = {
+  historyStack: GameSnapshot[];
+  redoStack: GameSnapshot[];
+  currentSnapshot: GameSnapshot;
+  limit?: number;
+};
 
 const clone = <T>(value: T): T => structuredClone(value);
 
@@ -50,3 +68,50 @@ export const shouldRecordGameSnapshot = (
   undoEnabled: boolean,
   gameState: GameState
 ): boolean => undoEnabled && gameState === 'gamePlaying';
+
+export const createUndoTransition = ({
+  historyStack,
+  redoStack,
+  currentSnapshot,
+  trackRedo = true,
+  limit = HISTORY_STACK_LIMIT
+}: UndoTransitionInput): GameHistoryTransition => {
+  const snapshotToApply = historyStack[historyStack.length - 1];
+  if (!snapshotToApply) {
+    return {
+      snapshotToApply: undefined,
+      nextHistoryStack: historyStack,
+      nextRedoStack: redoStack
+    };
+  }
+
+  return {
+    snapshotToApply,
+    nextHistoryStack: historyStack.slice(0, -1),
+    nextRedoStack: trackRedo
+      ? pushGameSnapshot(redoStack, currentSnapshot, limit)
+      : redoStack
+  };
+};
+
+export const createRedoTransition = ({
+  historyStack,
+  redoStack,
+  currentSnapshot,
+  limit = HISTORY_STACK_LIMIT
+}: RedoTransitionInput): GameHistoryTransition => {
+  const snapshotToApply = redoStack[redoStack.length - 1];
+  if (!snapshotToApply) {
+    return {
+      snapshotToApply: undefined,
+      nextHistoryStack: historyStack,
+      nextRedoStack: redoStack
+    };
+  }
+
+  return {
+    snapshotToApply,
+    nextHistoryStack: pushGameSnapshot(historyStack, currentSnapshot, limit),
+    nextRedoStack: redoStack.slice(0, -1)
+  };
+};
