@@ -38,6 +38,8 @@ type GameArenaScreenProps = {
   duelEquity: DuelEquity | null;
   canUndo: boolean;
   onUndo: () => void;
+  canRedo: boolean;
+  onRedo: () => void;
 };
 
 const GameArenaScreen = ({
@@ -54,7 +56,9 @@ const GameArenaScreen = ({
   onChanceClick,
   duelEquity,
   canUndo,
-  onUndo
+  onUndo,
+  canRedo,
+  onRedo
 }: GameArenaScreenProps) => {
   const { t } = useLanguage();
   const player1EquityName = duelData.player1Name;
@@ -384,6 +388,8 @@ const GameArenaScreen = ({
         onChanceClick={onChanceClick}
         canUndo={canUndo}
         onUndo={onUndo}
+        canRedo={canRedo}
+        onRedo={onRedo}
       />
     </>
   );
