@@ -44,6 +44,15 @@ export interface Database {
           team2_score: number;
           total_duels: number;
         };
+        Update: {
+          winner_team?: TeamName;
+          team1_roster?: string[];
+          team2_roster?: string[];
+          team1_score?: number;
+          team2_score?: number;
+          total_duels?: number;
+        };
+        Relationships: [];
       };
       duel_events: {
         Row: {
@@ -76,7 +85,24 @@ export interface Database {
           loser_sum: number;
           power_ups_used: PowerUpsUsed;
         };
+        Update: {
+          match_id?: string;
+          round?: number;
+          winner_name?: string;
+          loser_name?: string;
+          winner_team?: TeamName;
+          loser_team?: TeamName;
+          shielded?: boolean;
+          winner_cards?: Card[];
+          loser_cards?: Card[];
+          winner_sum?: number;
+          loser_sum?: number;
+          power_ups_used?: PowerUpsUsed;
+        };
+        Relationships: [];
       };
     };
+    Views: {};
+    Functions: {};
   };
 }
