@@ -38,7 +38,9 @@ export async function loader() {
     API_KEY: process.env.API_KEY ?? '',
     SITE_URL: process.env.SITE_URL ?? 'http://localhost:5173',
     ANALYTICS_DOMAIN: process.env.PLAUSIBLE_DOMAIN ?? '',
-    TWITTER_HANDLE: process.env.TWITTER_HANDLE ?? 'thor3key'
+    TWITTER_HANDLE: process.env.TWITTER_HANDLE ?? 'thor3key',
+    SUPABASE_URL: process.env.SUPABASE_URL ?? '',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? ''
   });
 }
 
