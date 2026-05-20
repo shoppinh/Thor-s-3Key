@@ -66,7 +66,14 @@ export default {
     saveFailed: 'Lưu lịch sử thất bại.',
     retrySave: 'Thử lại',
     returnHome: 'VỀ TRANG CHỦ',
-    viewDashboard: 'XEM LỊCH SỬ'
+    viewDashboard: 'XEM LỊCH SỬ',
+    rosterSetup: 'CÀI ĐẶT ĐỘI HÌNH',
+    loadRoster: 'TẢI ĐỘI HÌNH',
+    loadingRoster: 'Đang tải đội hình...',
+    rosterLoadFailed: 'Không tải được đội hình từ Google Sheets.',
+    rosterTeamEmpty: 'Mỗi đội phải có ít nhất một thành viên.',
+    rosterBlankName: 'Tên thành viên không được để trống.',
+    rosterDuplicateName: 'Tên thành viên không được trùng giữa hai đội.'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',

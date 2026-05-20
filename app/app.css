@@ -1029,3 +1029,132 @@ input[type='text']:disabled {
     opacity: 0.3;
   }
 }
+
+.roster-setup {
+  margin-top: 20px;
+}
+
+.roster-setup__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.roster-card {
+  background: rgba(15, 12, 41, 0.8);
+  border: 2px solid var(--color-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+}
+
+.roster-card--team1 {
+  border-color: var(--color-primary);
+}
+
+.roster-card--team2 {
+  border-color: var(--color-secondary);
+}
+
+.roster-card__header,
+.roster-member,
+.roster-add-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roster-card__header {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.roster-card__header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.roster-card__header span {
+  color: var(--color-accent);
+  font-family: var(--font-header);
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 56px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roster-member {
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.roster-member__handle,
+.roster-member__actions button {
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid var(--color-secondary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.roster-member__handle:disabled,
+.roster-member__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.roster-member__position {
+  color: var(--color-accent);
+  font-family: var(--font-header);
+  min-width: 24px;
+}
+
+.roster-member__name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.roster-member__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roster-add-form {
+  margin-top: 12px;
+}
+
+.roster-add-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.roster-add-form .rpg-button {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+}
+
+.roster-errors {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: #ff8f8f;
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+[data-theme='summer'] .roster-card {
+  background: var(--color-surface);
+}
