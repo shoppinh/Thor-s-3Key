@@ -1477,7 +1477,7 @@ const CardGame = () => {
               style={{
                 display: 'flex',
                 width: '100%',
-                maxWidth: 1150,
+                maxWidth: 1600,
                 alignItems: 'stretch',
                 gap: 50,
                 padding: 20
@@ -1487,10 +1487,7 @@ const CardGame = () => {
               <div style={{ flex: 1 }}>
                 <div
                   data-summer-wave-safe-bottom
-                  style={{
-                    maxWidth: 920,
-                    margin: '0 0 0 auto'
-                  }}
+                  
                 >
                   <h2
                     className="text-glow"
