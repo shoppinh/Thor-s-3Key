@@ -67,7 +67,14 @@ export default {
     saveFailed: 'Failed to save match history.',
     retrySave: 'Retry',
     returnHome: 'RETURN HOME',
-    viewDashboard: 'VIEW DASHBOARD'
+    viewDashboard: 'VIEW DASHBOARD',
+    rosterSetup: 'ROSTER SETUP',
+    loadRoster: 'LOAD ROSTER',
+    loadingRoster: 'Loading roster...',
+    rosterLoadFailed: 'Failed to load roster from Google Sheets.',
+    rosterTeamEmpty: 'Each team must have at least one member.',
+    rosterBlankName: 'Member names cannot be blank.',
+    rosterDuplicateName: 'Member names must be unique across both teams.'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
