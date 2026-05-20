@@ -1,9 +1,14 @@
 import { useOutletContext } from '@remix-run/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '~/contexts/LanguageContext';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
+import { getSupabaseClient } from '~/lib/supabase';
+import { saveMatch } from '~/features/dashboard/services/matchService';
 import { useTheme } from '~/contexts/ThemeContext';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
-import GameOverScreen from '~/features/game/components/GameOverScreen';
+import GameOverScreen, {
+  type SaveStatus
+} from '~/features/game/components/GameOverScreen';
 import WinnerAnnouncement from '~/features/game/components/WinnerAnnouncement';
 import {
   applyPlayerSelectionToDuel,
@@ -71,6 +76,8 @@ type RootContext = {
   SITE_URL?: string;
   ANALYTICS_DOMAIN?: string;
   TWITTER_HANDLE?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_ANON_KEY?: string;
 };
 
 const CardGame = () => {
@@ -97,7 +104,12 @@ const CardGame = () => {
   const [gameState, setGameState] = useState<GameState>('setup'); // setup -> gameLoading -> gamePlaying -> gameOver
   const [roundNumber, setRoundNumber] = useState(0);
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
+  const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
+  const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
+  const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<number | null>(null);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -169,7 +181,8 @@ const CardGame = () => {
         isFirstTurn,
         gameState,
         roundNumber,
-        winStreaks
+        winStreaks,
+        duelEvents
       }),
     [
       team1Data,
@@ -180,7 +193,8 @@ const CardGame = () => {
       isFirstTurn,
       gameState,
       roundNumber,
-      winStreaks
+      winStreaks,
+      duelEvents
     ]
   );
 
@@ -194,6 +208,7 @@ const CardGame = () => {
     setGameState(snapshot.gameState);
     setRoundNumber(snapshot.roundNumber);
     setWinStreaks(snapshot.winStreaks);
+    setDuelEvents(snapshot.duelEvents);
     setConfirmPopup({
       isVisible: false,
       teamName: undefined,
@@ -206,15 +221,9 @@ const CardGame = () => {
   const recordHistorySnapshot = useCallback(() => {
     if (!shouldRecordGameSnapshot(undoEnabled, gameState)) return;
 
-    setHistoryStack((prev) =>
-      pushGameSnapshot(prev, createCurrentSnapshot())
-    );
+    setHistoryStack((prev) => pushGameSnapshot(prev, createCurrentSnapshot()));
     setRedoStack([]);
-  }, [
-    createCurrentSnapshot,
-    gameState,
-    undoEnabled
-  ]);
+  }, [createCurrentSnapshot, gameState, undoEnabled]);
 
   const undoLastAction = useCallback(() => {
     if (!undoEnabled) return;
@@ -264,24 +273,77 @@ const CardGame = () => {
   const canUndo = undoEnabled && historyStack.length > 0;
   const canRedo = undoEnabled && redoEnabled && redoStack.length > 0;
 
+  const performSave = useCallback(() => {
+    const url = clientSecrets?.SUPABASE_URL;
+    const key = clientSecrets?.SUPABASE_ANON_KEY;
+    if (!url || !key) return;
+
+    const supabase = getSupabaseClient(url, key);
+    const winnerTeam: TeamName =
+      team1Data.players.length === 0 ? 'team2' : 'team1';
+    const durationSeconds =
+      gameStartTime != null
+        ? Math.floor((Date.now() - gameStartTime) / 1000)
+        : undefined;
+    setSaveStatus('saving');
+    saveMatch({
+      supabase,
+      winnerTeam,
+      team1Data,
+      team2Data,
+      team1InitialRoster: initialTeam1Roster,
+      team2InitialRoster: initialTeam2Roster,
+      durationSeconds,
+      duelEvents
+    })
+      .then(() => setSaveStatus('saved'))
+      .catch(() => setSaveStatus('error'));
+  }, [
+    clientSecrets,
+    team1Data,
+    team2Data,
+    initialTeam1Roster,
+    initialTeam2Roster,
+    duelEvents,
+    gameStartTime
+  ]);
+
+  useEffect(() => {
+    if (gameState !== 'gameOver') return;
+    if (saveStatus !== 'idle') return;
+    performSave();
+  }, [gameState, saveStatus, performSave]);
+
+  const handleRetrySave = useCallback(() => {
+    performSave();
+  }, [performSave]);
+
   /**
    * Starts the game with the provided team data
    * @param team1Data - Array of team 1 player names
    * @param team2Data - Array of team 2 player names
    */
-  const startGameWithTeams = (team1Data: string[], team2Data: string[]) => {
-    if (team1Data.length === 0 || team2Data.length === 0) {
+  const startGameWithTeams = (
+    team1Players: string[],
+    team2Players: string[]
+  ) => {
+    if (team1Players.length === 0 || team2Players.length === 0) {
       alert('Both teams must have at least one player.');
       return;
     }
 
+    setInitialTeam1Roster([...team1Players]);
+    setInitialTeam2Roster([...team2Players]);
+    setGameStartTime(Date.now());
     setHistoryStack([]);
     setRedoStack([]);
     setWinStreaks({});
+    setDuelEvents([]);
+    setSaveStatus('idle');
     setGameState('gamePlaying');
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
-    nextRound(team1Data, team2Data, false);
+    nextRound(team1Players, team2Players, false);
   };
 
   /**
@@ -364,15 +426,14 @@ const CardGame = () => {
       setIsFirstTurn(roundNumber == 0);
 
       const deck = shuffleDeck([...DECKS]);
-      const firstRandomizedTeam = Math.random() >= 0.5 ? inputTeam1 : inputTeam2;
+      const firstRandomizedTeam =
+        Math.random() >= 0.5 ? inputTeam1 : inputTeam2;
 
       setDuelData((prev) => ({
         ...prev,
         duelIndex: 0,
         currentPlayerName:
-          roundNumber === 0
-            ? firstRandomizedTeam[0]
-            : prev.currentPlayerName,
+          roundNumber === 0 ? firstRandomizedTeam[0] : prev.currentPlayerName,
 
         player1Name: '',
         player1Team: undefined,
@@ -505,42 +566,42 @@ const CardGame = () => {
           topLeftPlayerData:
             (newData.topLeftPlayerData.cards.length == 0 ||
               !newData.topLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topLeftPlayerData,
-                cards: newData.topLeftCards,
-                sum: calculateSum(newData.topLeftCards)
-              }
+                  ...newData.topLeftPlayerData,
+                  cards: newData.topLeftCards,
+                  sum: calculateSum(newData.topLeftCards)
+                }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
             (newData.bottomLeftPlayerData.cards.length == 0 ||
               !newData.bottomLeftRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomLeftPlayerData,
-                cards: newData.bottomLeftCards,
-                sum: calculateSum(newData.bottomLeftCards)
-              }
+                  ...newData.bottomLeftPlayerData,
+                  cards: newData.bottomLeftCards,
+                  sum: calculateSum(newData.bottomLeftCards)
+                }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
             (newData.topRightPlayerData.cards.length == 0 ||
               !newData.topRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.topRightPlayerData,
-                cards: newData.topRightCards,
-                sum: calculateSum(newData.topRightCards)
-              }
+                  ...newData.topRightPlayerData,
+                  cards: newData.topRightCards,
+                  sum: calculateSum(newData.topRightCards)
+                }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
             (newData.bottomRightPlayerData.cards.length == 0 ||
               !newData.bottomRightRevealed) &&
-              shouldRevealAllCards
+            shouldRevealAllCards
               ? {
-                ...newData.bottomRightPlayerData,
-                cards: newData.bottomRightCards,
-                sum: calculateSum(newData.bottomRightCards)
-              }
+                  ...newData.bottomRightPlayerData,
+                  cards: newData.bottomRightCards,
+                  sum: calculateSum(newData.bottomRightCards)
+                }
               : newData.bottomRightPlayerData
         };
 
@@ -1006,17 +1067,49 @@ const CardGame = () => {
         p2Name,
         t
       );
-      const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
-
-      // Use passed team information or fallback to duelData
       const firstPlayerTeam = p1Team || duelData.player1Team;
       const secondPlayerTeam = p2Team || duelData.player2Team;
+      const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
       const losingTeam = isPlayer1Winner ? secondPlayerTeam : firstPlayerTeam;
+
+      if (!winningTeam || !losingTeam) {
+        throw new Error('Duel teams must be defined when calculating result');
+      }
 
       // If Shield is active for the losing team, do not eliminate that player this duel
       const shieldedTeam = duelData.lifeShieldUsedBy;
       const shouldPreventElimination =
         shieldedTeam && losingTeam === shieldedTeam;
+
+      const event: LocalDuelEvent = {
+        round: roundNumber,
+        winnerName: isPlayer1Winner ? p1Name : p2Name,
+        loserName: isPlayer1Winner ? p2Name : p1Name,
+        winnerTeam: winningTeam,
+        loserTeam: losingTeam,
+        shielded: !!shouldPreventElimination,
+        winnerCards: isPlayer1Winner ? p1Cards : p2Cards,
+        loserCards: isPlayer1Winner ? p2Cards : p1Cards,
+        winnerSum: isPlayer1Winner ? p1Sum : p2Sum,
+        loserSum: isPlayer1Winner ? p2Sum : p1Sum,
+        powerUpsUsed: {
+          ...(duelData.revealTwoUsedBy && {
+            revealTwo: duelData.revealTwoUsedBy
+          }),
+          ...(duelData.lifeShieldUsedBy && {
+            lifeShield: duelData.lifeShieldUsedBy
+          }),
+          ...(duelData.removeWorstUsedByTeams?.length && {
+            removeWorst: duelData.removeWorstUsedByTeams
+          }),
+          ...(duelData.secondChanceUsedByTeams?.length && {
+            secondChance: duelData.secondChanceUsedByTeams
+          })
+        }
+      };
+      setDuelEvents((prev) => [...prev, event]);
+
+      const losingPlayer = isPlayer1Winner ? p2Name : p1Name;
 
       setTeam1Data((prev) => ({ ...prev, scoreClass: '' }));
       setTeam2Data((prev) => ({ ...prev, scoreClass: '' }));
@@ -1051,9 +1144,6 @@ const CardGame = () => {
         }
 
         // Store the winning team in duelData (only if no shield is active)
-        const winningTeam = isPlayer1Winner
-          ? firstPlayerTeam
-          : secondPlayerTeam;
         setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
@@ -1136,8 +1226,12 @@ const CardGame = () => {
       duelData.player1Team,
       duelData.player2Team,
       duelData.lifeShieldUsedBy,
+      duelData.revealTwoUsedBy,
+      duelData.removeWorstUsedByTeams,
+      duelData.secondChanceUsedByTeams,
       winStreaks,
-      t
+      t,
+      roundNumber
     ]
   );
 
@@ -1168,11 +1262,11 @@ const CardGame = () => {
         onKeyDown={
           onCardClick && !disabled
             ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onCardClick();
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onCardClick();
+                }
               }
-            }
             : undefined
         }
       />
@@ -1302,6 +1396,7 @@ const CardGame = () => {
               {/* Left: Setup UI */}
               <div style={{ flex: 1 }}>
                 <div
+                  data-summer-wave-safe-bottom
                   style={{
                     maxWidth: 920,
                     margin: '0 0 0 auto'
@@ -1754,7 +1849,7 @@ const CardGame = () => {
                                   team1Alloc.revealTwo +
                                   team1Alloc.lifeShield +
                                   team1Alloc.removeWorst !==
-                                  team1Data.totalPowerUps
+                                team1Data.totalPowerUps
                                   ? 'red'
                                   : undefined
                             }}
@@ -1929,7 +2024,7 @@ const CardGame = () => {
                                     team1Alloc.revealTwo +
                                     team1Alloc.lifeShield +
                                     team1Alloc.removeWorst !==
-                                    team1Data.totalPowerUps
+                                  team1Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -2103,7 +2198,7 @@ const CardGame = () => {
                                     team2Alloc.revealTwo +
                                     team2Alloc.lifeShield +
                                     team2Alloc.removeWorst !==
-                                    team2Data.totalPowerUps
+                                  team2Data.totalPowerUps
                                     ? 'red'
                                     : undefined
                               }}
@@ -2394,10 +2489,8 @@ const CardGame = () => {
       {gameState == 'gameOver' && (
         <GameOverScreen
           teamWinner={teamWinner}
-          canUndo={canUndo}
-          onUndo={undoLastAction}
-          canRedo={canRedo}
-          onRedo={redoLastAction}
+          saveStatus={saveStatus}
+          onRetrySave={handleRetrySave}
         />
       )}
 

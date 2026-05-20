@@ -60,7 +60,13 @@ export default {
     undo: 'HOÀN TÁC',
     redo: 'LÀM LẠI',
     navigationWarning:
-      'Trận đang diễn ra. Rời trang bây giờ sẽ mất ván hiện tại. Tiếp tục?'
+      'Trận đang diễn ra. Rồi trang bây giờ sẽ mất ván hiện tại. Tiếp tục?',
+    savingMatch: 'Đang lưu lịch sử trận đấu...',
+    matchSaved: 'Đã lưu trận đấu!',
+    saveFailed: 'Lưu lịch sử thất bại.',
+    retrySave: 'Thử lại',
+    returnHome: 'VỀ TRANG CHỦ',
+    viewDashboard: 'XEM LỊCH SỬ'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
@@ -73,6 +79,36 @@ export default {
     removeWorstDesc: 'Loại bỏ tụ bài xấu nhất đang có trên bàn.',
     confirmTitle: 'Xác Nhận Dùng',
     confirmMessage: 'Bạn có chắc muốn sử dụng',
-    title: "Sợ à mà dùng?"
+    title: 'Sợ à mà dùng?'
+  },
+  dashboard: {
+    title: 'LỊCH SỬ CHIẾN ĐẤU',
+    totalMatches: 'Tổng trận',
+    totalDuels: 'Tổng đấu',
+    team1Wins: 'Đội 1 thắng',
+    team2Wins: 'Đội 2 thắng',
+    shieldedDuels: 'Đấu có khiên',
+    leaderboard: 'Bảng xếp hạng',
+    player: 'Ngườii chơi',
+    duelsWon: 'Thắng đấu',
+    headToHead: 'Đối đầu',
+    winner: 'Ngườii thắng',
+    loser: 'Ngườii thua',
+    count: 'Số lần',
+    teamStreaks: 'Chuỗii thắng đội',
+    consecutiveWins: 'thắng liên tiếp',
+    mostWins: 'Thắng đấu nhiều nhất',
+    recentMatches: 'Trận gần đây',
+    score: 'Tỷ số',
+    duels: 'Số đấu',
+    date: 'Ngày',
+    matchDetail: 'Chi tiết trận đấu',
+    duration: 'Thời gian',
+    roster: 'Đội hình',
+    powerUps: 'Quyền năng',
+    minuteAbbr: 'ph',
+    secondAbbr: 'gi',
+    noData: 'Chưa có dữ liệu.',
+    backHome: 'VỀ TRANG CHỦ'
   }
 };

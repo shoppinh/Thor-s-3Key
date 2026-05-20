@@ -11,7 +11,7 @@ import {
   createInitialTeamData
 } from '~/features/game/state/initialState';
 
-const createSnapshot = (roundNumber: number) =>
+const createSnapshot = (roundNumber: number): GameSnapshot =>
   createGameSnapshot({
     team1Data: createInitialTeamData(1, 'Team'),
     team2Data: createInitialTeamData(2, 'Team'),
@@ -21,7 +21,8 @@ const createSnapshot = (roundNumber: number) =>
     isFirstTurn: false,
     gameState: 'gamePlaying',
     roundNumber,
-    winStreaks: {}
+    winStreaks: {},
+    duelEvents: []
   });
 
 describe('history stack', () => {
@@ -35,7 +36,8 @@ describe('history stack', () => {
       isFirstTurn: true,
       gameState: 'gamePlaying',
       roundNumber: 1,
-      winStreaks: {}
+      winStreaks: {},
+      duelEvents: []
     });
 
     expect(snapshot.team1Data.scoreClass).toBe('');
@@ -60,6 +62,21 @@ describe('history stack', () => {
   it('copies snapshot data so later mutations cannot leak into history', () => {
     const team1Data = createInitialTeamData(1, 'Team');
     const duelData = createInitialDuelData();
+    const duelEvents = [
+      {
+        round: 1,
+        winnerName: 'A',
+        loserName: 'B',
+        winnerTeam: 'team1' as const,
+        loserTeam: 'team2' as const,
+        shielded: false,
+        winnerCards: [],
+        loserCards: [],
+        winnerSum: 5,
+        loserSum: 3,
+        powerUpsUsed: {}
+      }
+    ];
     const snapshot = createGameSnapshot({
       team1Data,
       team2Data: createInitialTeamData(2, 'Team'),
@@ -69,14 +86,30 @@ describe('history stack', () => {
       isFirstTurn: true,
       gameState: 'gamePlaying',
       roundNumber: 1,
-      winStreaks: {}
+      winStreaks: {},
+      duelEvents
     });
 
     team1Data.players.push('Late Player');
     duelData.currentPlayerName = 'Late Player';
+    duelEvents.push({
+      round: 2,
+      winnerName: 'C',
+      loserName: 'D',
+      winnerTeam: 'team1',
+      loserTeam: 'team2',
+      shielded: false,
+      winnerCards: [],
+      loserCards: [],
+      winnerSum: 5,
+      loserSum: 3,
+      powerUpsUsed: {}
+    });
 
     expect(snapshot.team1Data.players).toEqual([]);
     expect(snapshot.duelData.currentPlayerName).toBe('');
+    expect(snapshot.duelEvents).toHaveLength(1);
+    expect(snapshot.duelEvents[0].round).toBe(1);
   });
 
   it('records snapshots only when undo is enabled during active gameplay', () => {

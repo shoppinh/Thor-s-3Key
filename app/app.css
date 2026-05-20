@@ -17,11 +17,12 @@
   --font-body: 'Rajdhani', sans-serif;
 
   /* Effects */
-  --glow-primary: 0 0 10px rgba(255, 0, 85, 0.6), 0 0 20px rgba(255, 0, 85, 0.4);
-  --glow-secondary: 0 0 10px rgba(0, 242, 255, 0.6),
-    0 0 20px rgba(0, 242, 255, 0.4);
-  --glow-accent: 0 0 10px rgba(255, 215, 0, 0.6),
-    0 0 20px rgba(255, 215, 0, 0.4);
+  --glow-primary:
+    0 0 10px rgba(255, 0, 85, 0.6), 0 0 20px rgba(255, 0, 85, 0.4);
+  --glow-secondary:
+    0 0 10px rgba(0, 242, 255, 0.6), 0 0 20px rgba(0, 242, 255, 0.4);
+  --glow-accent:
+    0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4);
   --skew-angle: -10deg;
   --border-width: 2px;
 }
@@ -45,12 +46,12 @@
   --font-body: 'Rajdhani', sans-serif;
 
   /* Effects */
-  --glow-primary: 0 0 15px rgba(212, 36, 38, 0.8),
-    0 0 30px rgba(212, 36, 38, 0.4);
-  --glow-secondary: 0 0 15px rgba(47, 158, 68, 0.8),
-    0 0 30px rgba(47, 158, 68, 0.4);
-  --glow-accent: 0 0 15px rgba(248, 178, 41, 0.8),
-    0 0 30px rgba(248, 178, 41, 0.4);
+  --glow-primary:
+    0 0 15px rgba(212, 36, 38, 0.8), 0 0 30px rgba(212, 36, 38, 0.4);
+  --glow-secondary:
+    0 0 15px rgba(47, 158, 68, 0.8), 0 0 30px rgba(47, 158, 68, 0.4);
+  --glow-accent:
+    0 0 15px rgba(248, 178, 41, 0.8), 0 0 30px rgba(248, 178, 41, 0.4);
   --skew-angle: 0deg; /* No skew for cozy feel */
   --border-width: 4px;
 }
@@ -112,40 +113,50 @@
 
 [data-theme='summer'] {
   /* Theme Colors - Summer */
-  --color-bg: #ffe4b5;
-  --color-bg-gradient: linear-gradient(135deg, #ff7e5f, #feb47b, #ff9966);
-  --color-primary: #ff5e62; /* Hot Coral */
-  --color-primary-dark: #e04a4e;
-  --color-secondary: #00f2ff; /* Bright Ocean Cyan */
-  --color-secondary-dark: #00c2cc;
-  --color-accent: #ffdd00; /* Sunny Yellow */
-  --color-text: #ffffff;
-  --color-text-muted: #fff5e6;
-  --color-panel-bg: rgba(255, 126, 95, 0.85);
-  --color-border: rgba(255, 221, 0, 0.6);
+  --color-bg: #ffcf8b;
+  --color-bg-gradient: linear-gradient(135deg, #ff8a6b, #ffc875 48%, #ff9a74);
+  --color-primary: #ff5f6d; /* Hibiscus coral */
+  --color-primary-dark: #d83d4d;
+  --color-secondary: #10d8e8; /* Lagoon cyan */
+  --color-secondary-dark: #008da0;
+  --color-accent: #ffe65a; /* Sunny yellow */
+  --color-text: #fffaf2;
+  --color-text-muted: #ffe9d2;
+  --color-panel-bg: rgba(62, 34, 54, 0.9);
+  --color-border: rgba(255, 230, 90, 0.78);
+  --color-surface: rgba(70, 38, 59, 0.92);
+  --color-surface-strong: rgba(30, 19, 38, 0.96);
+  --color-surface-soft: rgba(106, 59, 72, 0.88);
+  --color-team-1: #ff7380;
+  --color-team-2: #28e5f1;
+  --color-on-team-1: #fff8f2;
+  --color-on-team-2: #06242a;
 
   /* Fonts */
   --font-header: 'Pacifico', cursive;
-  --font-body: 'Rajdhani', sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'Rajdhani', sans-serif;
 
   /* Effects */
-  --glow-primary: 0 0 15px rgba(255, 94, 98, 0.8),
-    0 0 30px rgba(255, 94, 98, 0.4);
-  --glow-secondary: 0 0 15px rgba(0, 242, 255, 0.8),
-    0 0 30px rgba(0, 242, 255, 0.4);
-  --glow-accent: 0 0 15px rgba(255, 221, 0, 0.8),
-    0 0 30px rgba(255, 221, 0, 0.4);
+  --glow-primary:
+    0 0 15px rgba(255, 94, 98, 0.8), 0 0 30px rgba(255, 94, 98, 0.4);
+  --glow-secondary:
+    0 0 15px rgba(0, 242, 255, 0.8), 0 0 30px rgba(0, 242, 255, 0.4);
+  --glow-accent:
+    0 0 15px rgba(255, 221, 0, 0.8), 0 0 30px rgba(255, 221, 0, 0.4);
   --skew-angle: -5deg;
   --border-width: 3px;
 }
 
 /* Summer Theme Overrides */
 [data-theme='summer'] .rpg-panel {
-  border-radius: 16px;
-  border: 3px solid var(--color-accent);
+  border-radius: 14px;
+  border: 2px solid rgba(0, 207, 227, 0.9);
+  background: var(--color-surface);
   box-shadow:
-    0 0 25px rgba(255, 221, 0, 0.4),
-    inset 0 0 15px rgba(255, 94, 98, 0.3);
+    0 18px 42px rgba(97, 42, 48, 0.34),
+    0 0 0 1px rgba(255, 250, 242, 0.12),
+    inset 0 1px 0 rgba(255, 250, 242, 0.16);
+  backdrop-filter: blur(8px) saturate(110%);
 }
 
 [data-theme='summer'] .rpg-panel::before,
@@ -155,14 +166,17 @@
 
 [data-theme='summer'] .rpg-button {
   border-radius: 30px;
-  border: 2px solid #fff;
+  border: 3px solid #fff6ea;
   background: linear-gradient(
     to bottom,
     var(--color-primary),
     var(--color-primary-dark)
   );
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  color: #fffdf8;
+  box-shadow:
+    0 6px 0 rgba(80, 36, 32, 0.5),
+    0 14px 28px rgba(90, 38, 44, 0.28);
+  text-shadow: 0 2px 2px rgba(59, 18, 22, 0.8);
 }
 
 [data-theme='summer'] .rpg-button:hover {
@@ -183,8 +197,154 @@
   letter-spacing: 1px;
   text-transform: none; /* Pacifico looks better with natural casing */
   text-shadow:
-    2px 2px 0 #ff5e62,
-    0 0 15px var(--color-accent);
+    0 2px 0 rgba(58, 24, 35, 0.85),
+    0 0 10px rgba(255, 212, 59, 0.5);
+}
+
+[data-theme='summer'] .text-glow {
+  text-shadow:
+    0 2px 0 rgba(37, 21, 37, 0.9),
+    0 0 8px rgba(255, 250, 242, 0.34);
+}
+
+[data-theme='summer'] .text-gradient {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+[data-theme='summer'] input[type='number'].num-input,
+[data-theme='summer'] input[type='number'],
+[data-theme='summer'] input[type='text'].rpg-input,
+[data-theme='summer'] input[type='text'] {
+  background: var(--color-surface-strong);
+  border-color: rgba(0, 207, 227, 0.95);
+  color: #fffaf2;
+  box-shadow: 0 0 0 1px rgba(255, 250, 242, 0.08);
+}
+
+[data-theme='summer'] input[type='number'].num-input,
+[data-theme='summer'] input[type='number'] {
+  color: var(--color-accent);
+}
+
+[data-theme='summer'] .setup-card {
+  background:
+    linear-gradient(180deg, rgba(82, 44, 66, 0.94), rgba(52, 30, 50, 0.94)),
+    var(--color-surface);
+  border-color: rgba(0, 207, 227, 0.9);
+}
+
+[data-theme='summer'] .setup-row {
+  border-bottom-color: rgba(255, 250, 242, 0.18);
+}
+
+[data-theme='summer'] .setup-row label {
+  color: #fffaf2;
+}
+
+[data-theme='summer'] .summer-equity-panel,
+[data-theme='summer'] .summer-team-panel,
+[data-theme='summer'] .player-card-drawer {
+  background:
+    linear-gradient(180deg, rgba(82, 44, 66, 0.94), rgba(47, 29, 50, 0.94)),
+    var(--color-surface) !important;
+}
+
+[data-theme='summer'] .summer-team-panel {
+  min-height: 320px;
+}
+
+[data-theme='summer'] .summer-team-panel--one {
+  border-color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .summer-team-panel--two {
+  border-color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .summer-team-title--one {
+  color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .summer-team-title--two {
+  color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .summer-roster-member {
+  color: #fffaf2 !important;
+  background: rgba(255, 250, 242, 0.08) !important;
+  border-color: rgba(255, 250, 242, 0.2) !important;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+[data-theme='summer'] .note {
+  color: #00616f !important;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 250, 242, 0.55);
+}
+
+[data-theme='summer'] a[href='#powerups-guide'] {
+  color: #9f2634 !important;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(255, 250, 242, 0.5) !important;
+}
+
+[data-theme='summer'] .player-card-drawer {
+  border-color: rgba(0, 207, 227, 0.74) !important;
+  opacity: 1 !important;
+}
+
+[data-theme='summer'] .player-card-drawer.is-locked {
+  opacity: 0.72 !important;
+}
+
+[data-theme='summer'] .player-card-header {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 207, 227, 0.18),
+    transparent
+  ) !important;
+  border-bottom-color: rgba(0, 207, 227, 0.88) !important;
+}
+
+[data-theme='summer'] .player-card-title {
+  color: #fffaf2 !important;
+  text-shadow:
+    0 2px 0 rgba(40, 20, 28, 0.95),
+    0 0 8px rgba(255, 212, 59, 0.45);
+}
+
+[data-theme='summer'] .player-card-title.team-one {
+  color: var(--color-team-1) !important;
+}
+
+[data-theme='summer'] .player-card-title.team-two {
+  color: var(--color-team-2) !important;
+}
+
+[data-theme='summer'] .player-score-badge {
+  background: var(--color-surface-strong) !important;
+  color: #fffaf2 !important;
+  box-shadow: 0 0 0 1px rgba(255, 250, 242, 0.1);
+}
+
+[data-theme='summer'] .cardContainer img {
+  box-shadow: 0 5px 16px rgba(26, 18, 28, 0.36);
+}
+
+[data-theme='summer'] .rpg-button:disabled {
+  background: #2f3440 !important;
+  border-color: rgba(255, 250, 242, 0.38);
+  color: rgba(255, 250, 242, 0.76);
+  text-shadow: none;
+}
+
+[data-theme='summer'] .summer-setup-option label,
+[data-theme='summer'] label,
+[data-theme='summer'] span {
+  text-rendering: optimizeLegibility;
 }
 
 html,
@@ -574,4 +734,298 @@ input[type='text']:disabled {
 
 .blink-score {
   animation: blink 0.5s linear 3;
+}
+
+/* Victory Crown Animation */
+.victory-crown-wrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.victory-crown {
+  position: relative;
+  z-index: 2;
+  width: 140px;
+  height: 110px;
+}
+
+.crown-points {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+}
+
+.crown-point {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  animation: crown-bob 2s ease-in-out infinite;
+}
+
+.point-left {
+  left: 5px;
+  border-width: 0 20px 55px 20px;
+  border-color: transparent transparent var(--color-accent) transparent;
+  animation-delay: 0s;
+}
+
+.point-center {
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 24px 65px 24px;
+  border-color: transparent transparent #ffe066 transparent;
+  animation-delay: 0.15s;
+}
+
+.point-right {
+  right: 5px;
+  border-width: 0 20px 55px 20px;
+  border-color: transparent transparent var(--color-accent) transparent;
+  animation-delay: 0.3s;
+}
+
+.crown-base {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 35px;
+}
+
+.crown-band {
+  position: absolute;
+  bottom: 0;
+  left: -5px;
+  width: 150px;
+  height: 35px;
+  background: linear-gradient(180deg, var(--color-accent) 0%, #b8860b 100%);
+  border-radius: 4px;
+  box-shadow:
+    0 0 15px rgba(255, 215, 0, 0.5),
+    0 0 30px rgba(255, 215, 0, 0.3);
+  animation: crown-glow 2s ease-in-out infinite alternate;
+}
+
+.crown-jewel-center {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  box-shadow:
+    0 0 8px var(--color-primary),
+    0 0 16px var(--color-primary);
+  z-index: 3;
+  animation: jewel-pulse 1.5s ease-in-out infinite alternate;
+}
+
+.crown-jewel-left {
+  position: absolute;
+  bottom: 10px;
+  left: 18px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-secondary);
+  border-radius: 50%;
+  box-shadow:
+    0 0 6px var(--color-secondary),
+    0 0 12px var(--color-secondary);
+  z-index: 3;
+  animation: jewel-pulse 1.5s ease-in-out infinite alternate-reverse;
+}
+
+.crown-jewel-right {
+  position: absolute;
+  bottom: 10px;
+  right: 18px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-secondary);
+  border-radius: 50%;
+  box-shadow:
+    0 0 6px var(--color-secondary),
+    0 0 12px var(--color-secondary);
+  z-index: 3;
+  animation: jewel-pulse 1.5s ease-in-out infinite alternate;
+}
+
+.crown-sparkles {
+  position: absolute;
+  top: -20px;
+  left: -30px;
+  width: 200px;
+  height: 140px;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  animation: sparkle-float 2s ease-in-out infinite;
+}
+
+.sparkle::before,
+.sparkle::after {
+  content: '';
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.sparkle::before {
+  width: 4px;
+  height: 4px;
+  top: -6px;
+  left: 0;
+}
+
+.sparkle::after {
+  width: 4px;
+  height: 4px;
+  top: 6px;
+  left: 0;
+}
+
+.sparkle-0 {
+  left: 10%;
+  top: 15%;
+  animation-delay: 0s;
+  animation-duration: 1.8s;
+}
+.sparkle-1 {
+  left: 40%;
+  top: 5%;
+  animation-delay: 0.3s;
+  animation-duration: 2.2s;
+}
+.sparkle-2 {
+  left: 70%;
+  top: 20%;
+  animation-delay: 0.6s;
+  animation-duration: 1.6s;
+}
+.sparkle-3 {
+  left: 85%;
+  top: 50%;
+  animation-delay: 0.9s;
+  animation-duration: 2s;
+}
+.sparkle-4 {
+  left: 20%;
+  top: 65%;
+  animation-delay: 1.2s;
+  animation-duration: 1.9s;
+}
+.sparkle-5 {
+  left: 55%;
+  top: 70%;
+  animation-delay: 0.4s;
+  animation-duration: 2.1s;
+}
+.sparkle-6 {
+  left: 90%;
+  top: 80%;
+  animation-delay: 0.7s;
+  animation-duration: 1.7s;
+}
+.sparkle-7 {
+  left: 5%;
+  top: 85%;
+  animation-delay: 1s;
+  animation-duration: 2.3s;
+}
+
+.victory-glow-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  opacity: 0.3;
+  z-index: 1;
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes crown-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes crown-glow {
+  0% {
+    box-shadow:
+      0 0 15px rgba(255, 215, 0, 0.5),
+      0 0 30px rgba(255, 215, 0, 0.3);
+  }
+  100% {
+    box-shadow:
+      0 0 20px rgba(255, 215, 0, 0.7),
+      0 0 50px rgba(255, 215, 0, 0.4),
+      0 0 80px rgba(255, 215, 0, 0.2);
+  }
+}
+
+@keyframes jewel-pulse {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1.2);
+    filter: brightness(1.4);
+  }
+}
+
+@keyframes sparkle-float {
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1) translateY(-5px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1) translateY(-15px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) translateY(-25px);
+  }
+}
+
+@keyframes ring-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
 }

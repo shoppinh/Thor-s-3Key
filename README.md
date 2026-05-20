@@ -1,92 +1,74 @@
-# Thor's 3Key
+# ⚡ Thor's 3Key
 
-Thor's 3Key is a Remix web game for chaotic two-team card duels. Players are loaded from Google Sheets, each team allocates limited power-ups, and every round resolves a head-to-head card choice with theme-specific visuals, localized UI, undo/redo support, and duel equity feedback.
+**CHAOTIC TEAM CARD BATTLES // POWER-UPS // RNG GLORY**
 
-## Tech Stack
+Fast, silly, team-based card chaos. Load players from a Google Sheet, slam power-ups, and trash talk your way to victory.
 
-- **Runtime:** Node.js 20+
-- **Framework:** Remix 2 with the Vite compiler
-- **UI:** React 18, Remix routes, CSS in `app/app.css`
-- **Language:** TypeScript
-- **Testing:** Vitest
-- **Linting and formatting:** ESLint, Prettier
-- **Data source:** Google Sheets API via browser `fetch`
-- **Assets:** Static card, power-up, theme, favicon, and PWA manifest files in `public/`
+---
 
-## Architecture
+## 🎮 What Is It?
 
-```text
-app/
-  root.tsx                    Remix document shell, metadata, env loader, providers
-  routes/
-    _index.tsx                Landing page and share entry point
-    game.tsx                  Main game controller and route-level orchestration
-    robots.txt.ts             SEO route
-    sitemap.xml.ts            SEO route
-  contexts/
-    LanguageContext.tsx       English/Vietnamese translation state
-    ThemeContext.tsx          Theme state and persistence
-  components/                 Shared UI used across routes
-  features/game/
-    components/               Game-specific screens and display components
-    engine/                   Pure game rules: duels, equity, power-ups, allocation
-    services/                 External and asset services
-    state/                    Initial state and undo/redo history stack
-    types/                    Feature-level TypeScript types
-  models/                     Core data shapes used by game state
-  utils/                      Card utilities and reusable hooks
-public/
-  images/                     Card faces, backs, power-up icons, scene imagery
-  manifest.webmanifest        PWA metadata
-docs/
-  superpowers/                Design specs and implementation plans
-```
+Thor's 3Key is a browser-based party game where two teams face off in a series of 1v1 card duels. Each player draws 3 cards — the highest sum wins the round and eliminates the opponent. The last team standing takes the crown.
 
-### Request and State Flow
+Simple to learn. Impossible to take seriously. Perfect for game night.
 
-```text
-Browser
-  -> Remix root loader
-       exposes API_KEY, SITE_URL, analytics, and social metadata
-  -> LanguageProvider + ThemeProvider
-  -> /game route
-       preloads card/theme assets
-       loads team names from Google Sheets
-       initializes team, duel, power-up, and history state
-       renders setup, arena, or game-over screens
-  -> game engines
-       calculate legal selections, power-up effects, duel winners, and equity
-  -> UI components
-       render cards, rounds, announcements, modals, share controls, and themes
-```
+## ⚔️ How Duels Work
 
-`app/routes/game.tsx` owns the high-level game lifecycle and React state transitions. The reusable rules live in `app/features/game/engine`, so the logic can be tested without rendering the route. Services isolate I/O concerns such as Google Sheets loading and image preloading, while `state` modules create initial domain data and manage undo/redo snapshots.
+- Each player draws **3 cards** from a standard deck (values 1–9, four suits)
+- Card sums use baccarat-style scoring: if the total exceeds 10, only the last digit counts (e.g. 7+5+8 = 20 → 0 → treated as 10)
+- **4 card groups** are laid out each round — the first player picks one, then the opponent picks from what's left
+- Tied? The highest card's suit breaks it: Diamonds > Hearts > Spades > Clubs
+- **Lose a duel, you're eliminated** from your team. No mercy.
 
-## Key Modules
+## 🛡️ Power-Ups (The Chaos Engine)
 
-- `app/features/game/engine/duelEngine.ts` handles side selection and duel data lookup.
-- `app/features/game/engine/powerupEngine.ts` applies power-up behavior such as reveal, shield, second chance, and remove-worst logic.
-- `app/features/game/engine/equityEngine.ts` estimates duel win rates from known and unknown cards.
-- `app/features/game/state/historyStack.ts` stores undo/redo snapshots for in-progress games.
-- `app/features/game/services/sheetService.ts` loads and shuffles team rosters from Google Sheets.
-- `app/utils/gameUtil.ts` builds decks, shuffles, draws cards, compares hands, and resolves winners.
-- `app/contexts/LanguageContext.tsx` and `app/locales/*.ts` provide English and Vietnamese text.
-- `app/contexts/ThemeContext.tsx` drives visual theme selection and persistence.
+Each team gets **4 power-up slots** (max 2 of each type). Choose wisely — or let fate decide with random allocation.
 
-## Environment
+| Power-Up          | What It Does                                                               | When to Use                              |
+| ----------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
+| **Second Chance** | Force a re-duel if you lose. Total "we run it back" energy.                | When you're losing and need a do-over    |
+| **Reveal Two**    | Peek at the first 2 cards in every group. Knowledge is power.              | When you want to make a smart pick       |
+| **Life Shield**   | Survive elimination even if you lose. Immune to the ban hammer.            | When you can't afford to lose a teammate |
+| **Remove Worst**  | Zap the weakest card group off the board. Fewer bad options = better odds. | When you want to tighten the field       |
 
-Create a local `.env` file when using Google Sheets or production metadata:
+Every power-up activation triggers a dramatic confirmation popup. No accidental button mashing here.
 
-```sh
-API_KEY=your_google_sheets_api_key
-SITE_URL=http://localhost:5173
-PLAUSIBLE_DOMAIN=
-TWITTER_HANDLE=thor3key
-```
+## 🏆 Win Streaks
 
-`API_KEY` is read by the Remix root loader and passed to the game route through outlet context. The game route uses it to call the Google Sheets API with the configured sheet ID and range.
+String together kills and the game announces it to the room:
 
-## Development
+3 kills → **Killing Spree** // 4 → **Rampage** // 5 → **Unstoppable** // 6 → **Dominating** // 7 → **Godlike** // 8+ → **Legendary**
+
+Get shut down? The game announces that too. Stay humble.
+
+## 📊 Dashboard & Match History
+
+Every completed match is saved with full duel-by-duel detail. The dashboard gives you:
+
+- **Player Leaderboard** — who's actually carrying
+- **Head-to-Head Records** — settle the debates
+- **Team Streaks** — longest consecutive wins
+- **Match Detail** — rosters, power-ups, scores, and full replay data
+
+## 🎨 Three Visual Themes
+
+Not feeling the vibe? Switch it up:
+
+- **Summer** — Beach vibes with animated ocean waves, palm trees, and sunshine
+- **Christmas** — Snowfall, festive card backs, and twinkling gold stars
+- **JRPG** — Cyberpunk aesthetics with neon card backs and spinning power-up rings
+
+## 🌍 Bilingual (EN / VI)
+
+Full support for English and Vietnamese. The Vietnamese translations include playful slang and inside jokes — because "Second Chance" hitting different when it's called "Hải way xe".
+
+## 🚀 Quick Start
+
+### For Players
+
+Just open the app, paste a Google Sheet link with your player names, and start dueling. No accounts, no downloads, no nonsense.
+
+### For Developers
 
 Install dependencies:
 
@@ -125,3 +107,31 @@ If the default dev port is already in use:
 ```sh
 npx kill-port 5173
 ```
+
+### Environment Variables
+
+| Variable            | Purpose                                            |
+| ------------------- | -------------------------------------------------- |
+| `API_KEY`           | Google Sheets API key (player roster loading)      |
+| `SUPABASE_URL`      | Supabase project URL                               |
+| `SUPABASE_ANON_KEY` | Supabase anon key                                  |
+| `SITE_URL`          | Public site URL (default: `http://localhost:5173`) |
+| `PLAUSIBLE_DOMAIN`  | Plausible analytics domain (optional)              |
+| `TWITTER_HANDLE`    | Twitter handle for share buttons (optional)        |
+
+See `docs/SUPABASE_SETUP_GUIDE.md` for database setup instructions.
+
+## 🃏 Made For
+
+- **Streamers** — Real-time win probability display adds hype to every card flip
+- **Friend groups** — Load a roster from any Google Sheet and go
+- **Office game nights** — The power-up system creates just enough strategy to keep things interesting
+- **Anyone who enjoys watching their friends suffer a bad card draw**
+
+## Tech Stack
+
+Remix · React 18 · TypeScript · Supabase · Google Sheets API
+
+---
+
+_Deal the cards. Pick your group. Pray to RNG._ ⚡

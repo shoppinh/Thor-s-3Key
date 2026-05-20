@@ -17,9 +17,7 @@ type GameArenaScreenProps = {
   team1Data: TeamData;
   team2Data: TeamData;
   theme: string;
-  onSelect: (
-    side: Side 
-  ) => void;
+  onSelect: (side: Side) => void;
   isPlayerCardDrawerDisabled: (playerData: PlayerData) => boolean;
   renderTheCards: (
     cards: Card[],
@@ -31,10 +29,7 @@ type GameArenaScreenProps = {
     team2: string[],
     shouldRecordHistory?: boolean
   ) => void;
-  onChanceClick: (
-    teamName: TeamName,
-    chanceType: ChanceType
-  ) => void;
+  onChanceClick: (teamName: TeamName, chanceType: ChanceType) => void;
   duelEquity: DuelEquity | null;
   canUndo: boolean;
   onUndo: () => void;
@@ -68,7 +63,7 @@ const GameArenaScreen = ({
     <>
       {duelEquity ? (
         <div
-          className="rpg-panel"
+          className="rpg-panel summer-equity-panel"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -92,14 +87,16 @@ const GameArenaScreen = ({
           <span style={{ color: 'var(--color-primary)' }}>
             {player1EquityName}: {duelEquity.player1.winRate}%
           </span>
-          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>|</span>
+          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>
+            |
+          </span>
           <span style={{ color: 'var(--color-secondary)' }}>
             {player2EquityName}: {duelEquity.player2.winRate}%
           </span>
         </div>
       ) : (
         <div
-          className="rpg-panel"
+          className="rpg-panel summer-equity-panel"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -124,7 +121,9 @@ const GameArenaScreen = ({
           <span style={{ color: 'var(--color-primary)' }}>
             {player1EquityName}: 0%
           </span>
-          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>|</span>
+          <span style={{ color: 'var(--color-accent)', fontSize: '32px' }}>
+            |
+          </span>
           <span style={{ color: 'var(--color-secondary)' }}>
             {player2EquityName}: 0%
           </span>
@@ -140,7 +139,7 @@ const GameArenaScreen = ({
         }}
       >
         <div
-          className="rpg-panel"
+          className="rpg-panel summer-team-panel summer-team-panel--one"
           style={{
             width: '200px',
             padding: '20px',
@@ -164,7 +163,7 @@ const GameArenaScreen = ({
             {team1Data.score}
           </div>
           <h2
-            className="text-glow"
+            className="text-glow summer-team-title--one"
             style={{
               textAlign: 'center',
               color: 'var(--color-primary)',
@@ -195,6 +194,7 @@ const GameArenaScreen = ({
             {team1Data.players.map((member, index) => (
               <div
                 key={index}
+                className="summer-roster-member"
                 style={{
                   padding: '8px',
                   marginBottom: '5px',
@@ -300,7 +300,7 @@ const GameArenaScreen = ({
         </div>
 
         <div
-          className="rpg-panel"
+          className="rpg-panel summer-team-panel summer-team-panel--two"
           style={{
             width: '200px',
             padding: '20px',
@@ -324,7 +324,7 @@ const GameArenaScreen = ({
             {team2Data.score}
           </div>
           <h2
-            className="text-glow"
+            className="text-glow summer-team-title--two"
             style={{
               textAlign: 'center',
               color: 'var(--color-secondary)',
@@ -355,6 +355,7 @@ const GameArenaScreen = ({
             {team2Data.players.map((member, index) => (
               <div
                 key={index}
+                className="summer-roster-member"
                 style={{
                   padding: '8px',
                   marginBottom: '5px',
@@ -371,7 +372,6 @@ const GameArenaScreen = ({
           </div>
         </div>
       </div>
-
 
       <RoundStatus
         duelResult={duelResult}

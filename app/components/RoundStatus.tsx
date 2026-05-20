@@ -116,17 +116,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
         !disabledByRemoveWorst.has('top-left') &&
-          !duelData.topLeftRevealed &&
-          duelData.topLeftPlayerData.cards.length === 0,
+        !duelData.topLeftRevealed &&
+        duelData.topLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-left') &&
-          !duelData.bottomLeftRevealed &&
-          duelData.bottomLeftPlayerData.cards.length === 0,
+        !duelData.bottomLeftRevealed &&
+        duelData.bottomLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('top-right') &&
-          !duelData.topRightRevealed &&
-          duelData.topRightPlayerData.cards.length === 0,
+        !duelData.topRightRevealed &&
+        duelData.topRightPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-right') &&
-          !duelData.bottomRightRevealed &&
-          duelData.bottomRightPlayerData.cards.length === 0
+        !duelData.bottomRightRevealed &&
+        duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       if (availableCount === 0) return false;
 
@@ -179,17 +179,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const disabled = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
         !disabled.has('top-left') &&
-          !duelData.topLeftRevealed &&
-          duelData.topLeftPlayerData.cards.length === 0,
+        !duelData.topLeftRevealed &&
+        duelData.topLeftPlayerData.cards.length === 0,
         !disabled.has('bottom-left') &&
-          !duelData.bottomLeftRevealed &&
-          duelData.bottomLeftPlayerData.cards.length === 0,
+        !duelData.bottomLeftRevealed &&
+        duelData.bottomLeftPlayerData.cards.length === 0,
         !disabled.has('top-right') &&
-          !duelData.topRightRevealed &&
-          duelData.topRightPlayerData.cards.length === 0,
+        !duelData.topRightRevealed &&
+        duelData.topRightPlayerData.cards.length === 0,
         !disabled.has('bottom-right') &&
-          !duelData.bottomRightRevealed &&
-          duelData.bottomRightPlayerData.cards.length === 0
+        !duelData.bottomRightRevealed &&
+        duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       return availableCount > 1;
     };
@@ -412,52 +412,56 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </div>
         </div>
 
-        {duelResult && isFinishDuel && (
+        {duelResult && isFinishDuel && Math.min(team1Players.length, team2Players.length) > 0 && (
           <div style={{ marginTop: '15px' }}>
-            {Math.min(team1Players.length, team2Players.length) > 0 && (
-              <button
-                onClick={() => nextRound(team1Players, team2Players)}
-                className="rpg-button"
-                style={{
-                  fontSize: '18px',
-                  padding: '10px 40px',
-                  animation: 'pulse-glow 2s infinite'
-                }}
-              >
-                {t('game.nextRound')}
-              </button>
-            )}
+            <button
+              onClick={() => nextRound(team1Players, team2Players)}
+              className="rpg-button"
+              style={{
+                fontSize: '18px',
+                padding: '10px 40px',
+                animation: 'pulse-glow 2s infinite'
+              }}
+            >
+              {t('game.nextRound')}
+            </button>
           </div>
         )}
 
         <div style={{ marginTop: '12px' }}>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-            <button
-              onClick={onUndo}
-              disabled={!canUndo}
-              className="rpg-button secondary"
-              style={{
-                fontSize: '16px',
-                padding: '8px 28px',
-                opacity: canUndo ? 1 : 0.45,
-                cursor: canUndo ? 'pointer' : 'not-allowed'
-              }}
-            >
-              {t('game.undo')}
-            </button>
-            <button
-              onClick={onRedo}
-              disabled={!canRedo}
-              className="rpg-button secondary"
-              style={{
-                fontSize: '16px',
-                padding: '8px 28px',
-                opacity: canRedo ? 1 : 0.45,
-                cursor: canRedo ? 'pointer' : 'not-allowed'
-              }}
-            >
-              {t('game.redo')}
-            </button>
+
+            {
+              canUndo && <button
+                onClick={onUndo}
+                className="rpg-button secondary"
+                style={{
+                  fontSize: '16px',
+                  padding: '8px 28px',
+                  opacity: canUndo ? 1 : 0.45,
+                  cursor: canUndo ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {t('game.undo')}
+              </button>
+
+            }
+            {
+              canRedo &&
+              <button
+                onClick={onRedo}
+                className="rpg-button secondary"
+                style={{
+                  fontSize: '16px',
+                  padding: '8px 28px',
+                  opacity: canRedo ? 1 : 0.45,
+                  cursor: canRedo ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {t('game.redo')}
+              </button>
+
+            }
           </div>
         </div>
       </div>

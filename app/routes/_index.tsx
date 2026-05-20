@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from '@remix-run/react';
 import ShareButtons from '~/components/ShareButtons';
+import VictoryCrown from '~/components/VictoryCrown';
 import type { MetaFunction } from '@remix-run/node';
 
 export const meta: MetaFunction = () => {
@@ -35,15 +36,17 @@ export default function IndexRoute() {
           <Link to={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
             START GAME
           </Link>
+          <Link
+            to="/dashboard"
+            className="rpg-button"
+            style={styles.ctaSecondary}
+          >
+            DASHBOARD
+          </Link>
         </div>
 
         <div className="rpg-panel" style={styles.mediaFrame}>
-          <img
-            src="/images/the-end.webp"
-            alt="Gameplay screenshot"
-            style={{ width: '100%', display: 'block', opacity: 0.8 }}
-            loading="lazy"
-          />
+          <VictoryCrown />
           <div style={styles.scanline} />
         </div>
 
@@ -184,6 +187,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-block',
     textAlign: 'center',
     minWidth: 200
+  },
+  ctaSecondary: {
+    textDecoration: 'none',
+    display: 'inline-block',
+    textAlign: 'center',
+    minWidth: 200,
+    background: 'transparent',
+    border: '2px solid var(--color-secondary)',
+    color: 'var(--color-secondary)'
   },
   mediaFrame: {
     width: '100%',

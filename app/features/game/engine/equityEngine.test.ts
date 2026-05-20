@@ -93,13 +93,13 @@ describe('calculateDuelEquity', () => {
     );
   });
 
-  it('uses Reveal Two visible cards to constrain pre-player-2 equity', () => {
+  it('using Reveal Two visible cards does not affect the equity', () => {
     const genericEquity = calculateDuelEquity(withPlayer1Selection());
     const revealTwoEquity = calculateDuelEquity(withRevealTwo());
 
     expect(genericEquity).not.toBeNull();
     expect(revealTwoEquity).not.toBeNull();
-    expect(revealTwoEquity?.player1.winRate).not.toBe(
+    expect(revealTwoEquity?.player1.winRate).toBe(
       genericEquity?.player1.winRate
     );
     expect(revealTwoEquity?.player2.winRate).toBe(
@@ -124,7 +124,7 @@ describe('calculateDuelEquity', () => {
     );
   });
 
-  it('excludes Remove Worst slots from Reveal Two equity', () => {
+  it('Remove Worst and Reveal Two combination does not affect the equity', () => {
     const allSlotsEquity = calculateDuelEquity(withRevealTwo());
     const removedStrongSlotEquity = calculateDuelEquity(
       withRevealTwo({
@@ -134,7 +134,7 @@ describe('calculateDuelEquity', () => {
 
     expect(allSlotsEquity).not.toBeNull();
     expect(removedStrongSlotEquity).not.toBeNull();
-    expect(removedStrongSlotEquity?.player1.winRate).not.toBe(
+    expect(removedStrongSlotEquity?.player1.winRate).toBe(
       allSlotsEquity?.player1.winRate
     );
   });

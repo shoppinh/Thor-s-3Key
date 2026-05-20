@@ -20,7 +20,13 @@ export default function SummerScene() {
     canvas.height = height;
 
     // Elements
-    const birds: { x: number; y: number; scale: number; speed: number; flapOffset: number }[] = [];
+    const birds: {
+      x: number;
+      y: number;
+      scale: number;
+      speed: number;
+      flapOffset: number;
+    }[] = [];
     for (let i = 0; i < 7; i++) {
       birds.push({
         x: Math.random() * width,
@@ -44,34 +50,52 @@ export default function SummerScene() {
     let time = 0;
     let animationFrameId: number;
 
+    const getWaveStartY = () => {
+      const setupSection = document.querySelector(
+        '[data-summer-wave-safe-bottom]'
+      );
+      const safeBottom =
+        setupSection instanceof HTMLElement
+          ? setupSection.getBoundingClientRect().bottom + 28
+          : 0;
+
+      return Math.max(height * 0.88, Math.min(height * 1.08, safeBottom));
+    };
+
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
 
-      const horizonY = height * 0.65;
+      const horizonY = getWaveStartY();
 
       // Draw Sun
-      ctx.fillStyle = 'rgba(255, 230, 0, 0.9)';
+      ctx.fillStyle = 'rgba(255, 226, 78, 0.82)';
       ctx.beginPath();
       ctx.arc(width * 0.75, horizonY - 50, 70, 0, Math.PI * 2);
       ctx.fill();
       // Sun glow
-      ctx.fillStyle = 'rgba(255, 230, 0, 0.2)';
+      ctx.fillStyle = 'rgba(255, 188, 82, 0.16)';
       ctx.beginPath();
-      ctx.arc(width * 0.75, horizonY - 50, 120 + Math.sin(time * 0.03) * 10, 0, Math.PI * 2);
+      ctx.arc(
+        width * 0.75,
+        horizonY - 50,
+        120 + Math.sin(time * 0.03) * 10,
+        0,
+        Math.PI * 2
+      );
       ctx.fill();
 
       // Draw Ocean
       const oceanGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-      oceanGradient.addColorStop(0, 'rgba(0, 130, 255, 0.6)');
-      oceanGradient.addColorStop(1, 'rgba(0, 200, 255, 0.6)');
+      oceanGradient.addColorStop(0, 'rgba(45, 150, 205, 0.46)');
+      oceanGradient.addColorStop(1, 'rgba(98, 206, 226, 0.4)');
       ctx.fillStyle = oceanGradient;
       ctx.fillRect(0, horizonY, width, height - horizonY);
 
       // Draw Waves
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
       for (let i = 0; i < 4; i++) {
         ctx.beginPath();
-        const waveY = horizonY + i * 35 + Math.sin(time * 0.04 + i) * 15;
+        const waveY = horizonY + i * 28 + Math.sin(time * 0.04 + i) * 10;
         ctx.moveTo(0, waveY);
         for (let x = 0; x <= width; x += 20) {
           ctx.lineTo(x, waveY + Math.sin(x * 0.02 + time * 0.04 + i) * 10);
@@ -85,18 +109,28 @@ export default function SummerScene() {
       ctx.fillStyle = '#ffdf80'; // Sand color
       ctx.beginPath();
       ctx.moveTo(0, height);
-      ctx.lineTo(0, height * 0.8);
-      ctx.quadraticCurveTo(width * 0.25, height * 0.75, width * 0.45, height);
+      ctx.lineTo(0, Math.min(height, horizonY + 55));
+      ctx.quadraticCurveTo(
+        width * 0.2,
+        Math.min(height, horizonY + 18),
+        width * 0.34,
+        height
+      );
       ctx.lineTo(0, height);
       ctx.fill();
 
       // Draw Palm Tree Silhouette
       ctx.fillStyle = '#2c1e16'; // Trunk
       ctx.beginPath();
-      ctx.moveTo(width * 0.08, height);
-      ctx.quadraticCurveTo(width * 0.15, height * 0.7, width * 0.1, height * 0.4);
-      ctx.lineTo(width * 0.12, height * 0.4);
-      ctx.quadraticCurveTo(width * 0.18, height * 0.7, width * 0.12, height);
+      ctx.moveTo(width * 0.035, height);
+      ctx.quadraticCurveTo(
+        width * 0.08,
+        height * 0.68,
+        width * 0.065,
+        height * 0.42
+      );
+      ctx.lineTo(width * 0.08, height * 0.42);
+      ctx.quadraticCurveTo(width * 0.12, height * 0.68, width * 0.07, height);
       ctx.fill();
 
       // Leaves
@@ -112,22 +146,48 @@ export default function SummerScene() {
         ctx.fill();
         ctx.restore();
       };
-      
-      const treeTopX = width * 0.11;
-      const treeTopY = height * 0.4;
-      
-      drawLeaf(treeTopX, treeTopY, Math.PI * -0.1 + Math.sin(time * 0.02) * 0.05);
-      drawLeaf(treeTopX, treeTopY, Math.PI * -0.4 + Math.sin(time * 0.02 + 1) * 0.05);
-      drawLeaf(treeTopX, treeTopY, Math.PI * -0.7 + Math.sin(time * 0.02 + 2) * 0.05);
-      drawLeaf(treeTopX, treeTopY, Math.PI * 0.2 + Math.sin(time * 0.02 + 3) * 0.05);
-      drawLeaf(treeTopX, treeTopY, Math.PI * 0.5 + Math.sin(time * 0.02 + 4) * 0.05);
+
+      const treeTopX = width * 0.072;
+      const treeTopY = height * 0.42;
+
+      drawLeaf(
+        treeTopX,
+        treeTopY,
+        Math.PI * -0.1 + Math.sin(time * 0.02) * 0.05
+      );
+      drawLeaf(
+        treeTopX,
+        treeTopY,
+        Math.PI * -0.4 + Math.sin(time * 0.02 + 1) * 0.05
+      );
+      drawLeaf(
+        treeTopX,
+        treeTopY,
+        Math.PI * -0.7 + Math.sin(time * 0.02 + 2) * 0.05
+      );
+      drawLeaf(
+        treeTopX,
+        treeTopY,
+        Math.PI * 0.2 + Math.sin(time * 0.02 + 3) * 0.05
+      );
+      drawLeaf(
+        treeTopX,
+        treeTopY,
+        Math.PI * 0.5 + Math.sin(time * 0.02 + 4) * 0.05
+      );
 
       // Draw Clouds
       ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      clouds.forEach(c => {
+      clouds.forEach((c) => {
         ctx.beginPath();
         ctx.arc(c.x, c.y, 30 * c.scale, 0, Math.PI * 2);
-        ctx.arc(c.x + 25 * c.scale, c.y - 10 * c.scale, 35 * c.scale, 0, Math.PI * 2);
+        ctx.arc(
+          c.x + 25 * c.scale,
+          c.y - 10 * c.scale,
+          35 * c.scale,
+          0,
+          Math.PI * 2
+        );
         ctx.arc(c.x + 50 * c.scale, c.y, 30 * c.scale, 0, Math.PI * 2);
         ctx.fill();
         c.x += c.speed;
@@ -140,12 +200,22 @@ export default function SummerScene() {
       // Draw Birds
       ctx.strokeStyle = '#222';
       ctx.lineWidth = 2;
-      birds.forEach(b => {
+      birds.forEach((b) => {
         ctx.beginPath();
         const flap = Math.sin(time * 0.2 + b.flapOffset) * 10 * b.scale;
         ctx.moveTo(b.x, b.y);
-        ctx.quadraticCurveTo(b.x + 10 * b.scale, b.y - 10 * b.scale + flap, b.x + 20 * b.scale, b.y);
-        ctx.quadraticCurveTo(b.x + 30 * b.scale, b.y - 10 * b.scale + flap, b.x + 40 * b.scale, b.y);
+        ctx.quadraticCurveTo(
+          b.x + 10 * b.scale,
+          b.y - 10 * b.scale + flap,
+          b.x + 20 * b.scale,
+          b.y
+        );
+        ctx.quadraticCurveTo(
+          b.x + 30 * b.scale,
+          b.y - 10 * b.scale + flap,
+          b.x + 40 * b.scale,
+          b.y
+        );
         ctx.stroke();
         b.x += b.speed;
         if (b.x > width + 50) {

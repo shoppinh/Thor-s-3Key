@@ -27,7 +27,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Pacifico&family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&family=Mountains+of+Christmas:wght@400;700&display=swap'
+    href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pacifico&family=Rajdhani:wght@300;400;500;600;700&family=Russo+One&family=Mountains+of+Christmas:wght@400;700&display=swap'
   }
 ];
 
@@ -38,7 +38,9 @@ export async function loader() {
     API_KEY: process.env.API_KEY ?? '',
     SITE_URL: process.env.SITE_URL ?? 'http://localhost:5173',
     ANALYTICS_DOMAIN: process.env.PLAUSIBLE_DOMAIN ?? '',
-    TWITTER_HANDLE: process.env.TWITTER_HANDLE ?? 'thor3key'
+    TWITTER_HANDLE: process.env.TWITTER_HANDLE ?? 'thor3key',
+    SUPABASE_URL: process.env.SUPABASE_URL ?? '',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? ''
   });
 }
 
@@ -72,7 +74,9 @@ export default function App() {
     API_KEY: '',
     SITE_URL: 'http://localhost:5173',
     ANALYTICS_DOMAIN: '',
-    TWITTER_HANDLE: 'thor3key'
+    TWITTER_HANDLE: 'thor3key',
+    SUPABASE_URL: '',
+    SUPABASE_ANON_KEY: ''
   };
   const siteUrl = clientSecrets.SITE_URL ?? 'http://localhost:5173';
   const analyticsDomain = clientSecrets.ANALYTICS_DOMAIN;
