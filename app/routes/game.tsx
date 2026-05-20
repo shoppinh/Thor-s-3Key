@@ -10,6 +10,13 @@ import GameOverScreen, {
   type SaveStatus
 } from '~/features/game/components/GameOverScreen';
 import WinnerAnnouncement from '~/features/game/components/WinnerAnnouncement';
+import { RosterSetup } from '~/features/game/components/RosterSetup';
+import {
+  addRosterMember,
+  moveRosterMember,
+  removeRosterMember,
+  validateRosterSetup
+} from '~/features/game/services/rosterSetup';
 import {
   applyPlayerSelectionToDuel,
   getAvailableSelectableGroupCount,
@@ -160,6 +167,10 @@ const CardGame = () => {
 
   const [sheetId, setSheetId] = useState(SHEET_ID);
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
+  const [setupTeam1Roster, setSetupTeam1Roster] = useState<string[]>([]);
+  const [setupTeam2Roster, setSetupTeam2Roster] = useState<string[]>([]);
+  const [isRosterLoading, setIsRosterLoading] = useState(false);
+  const [rosterLoadError, setRosterLoadError] = useState('');
   const [setupForBothTeams, setSetupForBothTeams] = useState(false);
   const [isPowerupGuideOpen, setIsPowerupGuideOpen] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('per-team');
@@ -273,6 +284,27 @@ const CardGame = () => {
   const canUndo = undoEnabled && historyStack.length > 0;
   const canRedo = undoEnabled && redoEnabled && redoStack.length > 0;
 
+  const rosterValidation = useMemo(
+    () => validateRosterSetup(setupTeam1Roster, setupTeam2Roster),
+    [setupTeam1Roster, setupTeam2Roster]
+  );
+
+  const rosterErrors = [
+    ...(rosterLoadError ? [t('game.rosterLoadFailed')] : []),
+    ...rosterValidation.errors.map((error) => {
+      if (error === 'Each team must have at least one member.') {
+        return t('game.rosterTeamEmpty');
+      }
+      if (error === 'Member names cannot be blank.') {
+        return t('game.rosterBlankName');
+      }
+      if (error === 'Member names must be unique across both teams.') {
+        return t('game.rosterDuplicateName');
+      }
+      return error;
+    })
+  ];
+
   const performSave = useCallback(() => {
     const url = clientSecrets?.SUPABASE_URL;
     const key = clientSecrets?.SUPABASE_ANON_KEY;
@@ -351,7 +383,32 @@ const CardGame = () => {
    * Keeps the app in the 'setup' state where setup and welcome UIs are combined.
    */
 
+  const loadRoster = async () => {
+    setIsRosterLoading(true);
+    setRosterLoadError('');
+
+    try {
+      const { team1, team2 } = await loadPlayersFromSheet({
+        apiKey: API_KEY,
+        sheetId,
+        sheetRange
+      });
+
+      setSetupTeam1Roster(team1);
+      setSetupTeam2Roster(team2);
+    } catch (error) {
+      console.error('Error fetching roster:', error);
+      setRosterLoadError('failed');
+    } finally {
+      setIsRosterLoading(false);
+    }
+  };
+
   const startGame = async () => {
+    if (!rosterValidation.isValid) {
+      return;
+    }
+
     setGameState('gameLoading');
     try {
       await preloadGameImages(getThemeExtraCardBacks(theme));
@@ -361,45 +418,34 @@ const CardGame = () => {
       return;
     }
 
-    try {
-      const { team1: shuffledTeam1, team2: shuffledTeam2 } =
-        await loadPlayersFromSheet({
-          apiKey: API_KEY,
-          sheetId,
-          sheetRange,
-          anonymousLabel: t('game.anonymous')
-        });
+    const team1Players = [...setupTeam1Roster];
+    const team2Players = [...setupTeam2Roster];
 
-      // Respect setup mode at start: in both/random modes, apply shared allocation
-      if (setupMode === 'both' || setupMode === 'random') {
-        setTeam1Data((prev) => ({
-          ...prev,
-          players: shuffledTeam1,
-          powerUps: { ...team1Alloc }
-        }));
-        setTeam2Data((prev) => ({
-          ...prev,
-          players: shuffledTeam2,
-          powerUps: { ...team1Alloc }
-        }));
-      } else {
-        setTeam1Data((prev) => ({
-          ...prev,
-          players: shuffledTeam1,
-          powerUps: { ...team1Alloc }
-        }));
-        setTeam2Data((prev) => ({
-          ...prev,
-          players: shuffledTeam2,
-          powerUps: { ...team2Alloc }
-        }));
-      }
-
-      startGameWithTeams(shuffledTeam1, shuffledTeam2);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setGameState('setup');
+    if (setupMode === 'both' || setupMode === 'random') {
+      setTeam1Data((prev) => ({
+        ...prev,
+        players: team1Players,
+        powerUps: { ...team1Alloc }
+      }));
+      setTeam2Data((prev) => ({
+        ...prev,
+        players: team2Players,
+        powerUps: { ...team1Alloc }
+      }));
+    } else {
+      setTeam1Data((prev) => ({
+        ...prev,
+        players: team1Players,
+        powerUps: { ...team1Alloc }
+      }));
+      setTeam2Data((prev) => ({
+        ...prev,
+        players: team2Players,
+        powerUps: { ...team2Alloc }
+      }));
     }
+
+    startGameWithTeams(team1Players, team2Players);
   };
 
   // Function to select the next players for each team
@@ -1287,14 +1333,18 @@ const CardGame = () => {
    * @returns true if the button should be disabled; otherwise false
    */
   const isStartGameDisabled = (): boolean => {
-    return isStartGameDisabledByAllocation({
-      gameState,
-      setupMode,
-      team1Alloc,
-      team2Alloc,
-      team1Total: team1Data.totalPowerUps,
-      team2Total: team2Data.totalPowerUps
-    });
+    return (
+      isRosterLoading ||
+      !rosterValidation.isValid ||
+      isStartGameDisabledByAllocation({
+        gameState,
+        setupMode,
+        team1Alloc,
+        team2Alloc,
+        team1Total: team1Data.totalPowerUps,
+        team2Total: team2Data.totalPowerUps
+      })
+    );
   };
 
   /**
@@ -1335,6 +1385,46 @@ const CardGame = () => {
     const t2 = generateRandomAllocation(team2Data.totalPowerUps, 2);
     setTeam1Alloc(t1);
     setTeam2Alloc(t2);
+  };
+
+  const addSetupRosterMember = (team: TeamName, name: string) => {
+    setRosterLoadError('');
+    if (team === 'team1') {
+      setSetupTeam1Roster((prev) => addRosterMember(prev, name));
+      return;
+    }
+
+    setSetupTeam2Roster((prev) => addRosterMember(prev, name));
+  };
+
+  const removeSetupRosterMember = (team: TeamName, index: number) => {
+    setRosterLoadError('');
+    if (team === 'team1') {
+      setSetupTeam1Roster((prev) => removeRosterMember(prev, index));
+      return;
+    }
+
+    setSetupTeam2Roster((prev) => removeRosterMember(prev, index));
+  };
+
+  const moveSetupRosterMember = (
+    fromTeam: TeamName,
+    fromIndex: number,
+    toTeam: TeamName,
+    toIndex: number
+  ) => {
+    setRosterLoadError('');
+    const result = moveRosterMember({
+      team1: setupTeam1Roster,
+      team2: setupTeam2Roster,
+      fromTeam,
+      fromIndex,
+      toTeam,
+      toIndex
+    });
+
+    setSetupTeam1Roster(result.team1);
+    setSetupTeam2Roster(result.team2);
   };
 
   /**
@@ -2257,6 +2347,30 @@ const CardGame = () => {
                       {t('game.powerUpsGuide')}
                     </a>
                   </div>
+                  <h2
+                    className="text-glow"
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 24,
+                      marginBottom: 12,
+                      fontSize: '2rem',
+                      color: 'var(--color-primary)',
+                      letterSpacing: '2px'
+                    }}
+                  >
+                    {t('game.rosterSetup')}
+                  </h2>
+                  <RosterSetup
+                    team1={setupTeam1Roster}
+                    team2={setupTeam2Roster}
+                    team1Name={team1Data.name}
+                    team2Name={team2Data.name}
+                    isLoading={isRosterLoading || gameState !== 'setup'}
+                    errors={rosterErrors}
+                    onAddMember={addSetupRosterMember}
+                    onRemoveMember={removeSetupRosterMember}
+                    onMoveMember={moveSetupRosterMember}
+                  />
                 </div>
               </div>
 
@@ -2422,6 +2536,23 @@ const CardGame = () => {
                         transition: 'all 0.3s ease'
                       }}
                     />
+                  </div>
+
+                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <button
+                      onClick={() => loadRoster()}
+                      className="rpg-button secondary"
+                      disabled={gameState !== 'setup' || isRosterLoading}
+                      style={{
+                        width: '100%',
+                        padding: '12px 20px',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {isRosterLoading
+                        ? t('game.loadingRoster')
+                        : t('game.loadRoster')}
+                    </button>
                   </div>
 
                   <div style={{ textAlign: 'center' }}>
