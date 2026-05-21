@@ -16,4 +16,5 @@ export type ChanceType =
   | 'secondChance'
   | 'revealTwo'
   | 'lifeShield'
-  | 'removeWorst';
+  | 'removeWorst'
+  | 'aiRecommendation';

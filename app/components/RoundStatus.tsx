@@ -20,14 +20,12 @@ interface RoundStatusProps {
     team2: string[],
     shouldRecordHistory?: boolean
   ) => void;
-  onChanceClick: (
-    teamName: TeamName,
-    chanceType: ChanceType
-  ) => void;
+  onChanceClick: (teamName: TeamName, chanceType: ChanceType) => void;
   canUndo: boolean;
   onUndo: () => void;
   canRedo: boolean;
   onRedo: () => void;
+  onAiPick?: () => void;
 }
 
 const RoundStatus: React.FC<RoundStatusProps> = ({
@@ -36,9 +34,9 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   currentPlayerName,
   duelIndex,
   team1: team1Players,
-  team2: team2Players,
-  team1Data,
   team2Data,
+  team1Data,
+  team2: team2Players,
   isFinishDuel,
   duelData,
   nextRound,
@@ -46,7 +44,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   canUndo,
   onUndo,
   canRedo,
-  onRedo
+  onRedo,
+  onAiPick
 }) => {
   const { t } = useLanguage();
 
@@ -83,10 +82,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     team2Data
   ]);
 
-  const renderTeamChances = (
-    teamData: TeamData,
-    teamKey: TeamName
-  ) => {
+  const renderTeamChances = (teamData: TeamData, teamKey: TeamName) => {
     const isTeam1 = teamKey === 'team1';
     const teamColor = isTeam1
       ? 'var(--color-secondary)'
@@ -116,17 +112,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
         !disabledByRemoveWorst.has('top-left') &&
-        !duelData.topLeftRevealed &&
-        duelData.topLeftPlayerData.cards.length === 0,
+          !duelData.topLeftRevealed &&
+          duelData.topLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-left') &&
-        !duelData.bottomLeftRevealed &&
-        duelData.bottomLeftPlayerData.cards.length === 0,
+          !duelData.bottomLeftRevealed &&
+          duelData.bottomLeftPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('top-right') &&
-        !duelData.topRightRevealed &&
-        duelData.topRightPlayerData.cards.length === 0,
+          !duelData.topRightRevealed &&
+          duelData.topRightPlayerData.cards.length === 0,
         !disabledByRemoveWorst.has('bottom-right') &&
-        !duelData.bottomRightRevealed &&
-        duelData.bottomRightPlayerData.cards.length === 0
+          !duelData.bottomRightRevealed &&
+          duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       if (availableCount === 0) return false;
 
@@ -179,17 +175,17 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       const disabled = new Set(duelData.removedWorstGroups || []);
       const availableCount = [
         !disabled.has('top-left') &&
-        !duelData.topLeftRevealed &&
-        duelData.topLeftPlayerData.cards.length === 0,
+          !duelData.topLeftRevealed &&
+          duelData.topLeftPlayerData.cards.length === 0,
         !disabled.has('bottom-left') &&
-        !duelData.bottomLeftRevealed &&
-        duelData.bottomLeftPlayerData.cards.length === 0,
+          !duelData.bottomLeftRevealed &&
+          duelData.bottomLeftPlayerData.cards.length === 0,
         !disabled.has('top-right') &&
-        !duelData.topRightRevealed &&
-        duelData.topRightPlayerData.cards.length === 0,
+          !duelData.topRightRevealed &&
+          duelData.topRightPlayerData.cards.length === 0,
         !disabled.has('bottom-right') &&
-        !duelData.bottomRightRevealed &&
-        duelData.bottomRightPlayerData.cards.length === 0
+          !duelData.bottomRightRevealed &&
+          duelData.bottomRightPlayerData.cards.length === 0
       ].filter(Boolean).length;
       return availableCount > 1;
     };
@@ -235,7 +231,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                 width: '75px',
                 height: '75px',
                 filter: enabled ? 'none' : 'grayscale(100%)',
-                transform: 'skewX(5deg)' // Counter skew
+                transform: 'skewX(5deg)'
               }}
             />
             <div
@@ -385,7 +381,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               </>
             ) : (
               <>
-                {currentPlayerName &&
+                {onAiPick &&
+                  currentPlayerName &&
                   Math.min(team1Players.length, team2Players.length) > 0 && (
                     <>
                       <div
@@ -412,27 +409,69 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           </div>
         </div>
 
-        {duelResult && isFinishDuel && Math.min(team1Players.length, team2Players.length) > 0 && (
-          <div style={{ marginTop: '15px' }}>
-            <button
-              onClick={() => nextRound(team1Players, team2Players)}
-              className="rpg-button"
-              style={{
-                fontSize: '18px',
-                padding: '10px 40px',
-                animation: 'pulse-glow 2s infinite'
-              }}
-            >
-              {t('game.nextRound')}
-            </button>
-          </div>
-        )}
+        {/* AI Pick Button */}
+        {onAiPick &&
+          currentPlayerName &&
+          !isFinishDuel &&
+          Math.min(team1Players.length, team2Players.length) > 0 && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={onAiPick ?? undefined}
+                className="rpg-skewed"
+                style={{
+                  width: '110px',
+                  height: '70px',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '3px solid #E040FB',
+                  display: 'inline-flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 0 15px #E040FB'
+                }}
+              >
+                <span style={{ fontSize: '24px' }}>🎲</span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#E040FB',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    fontFamily: 'var(--font-body)',
+                    transform: 'skewX(10deg)',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  AI Pick
+                </span>
+              </button>
+            </div>
+          )}
+
+        {duelResult &&
+          isFinishDuel &&
+          Math.min(team1Players.length, team2Players.length) > 0 && (
+            <div style={{ marginTop: '15px' }}>
+              <button
+                onClick={() => nextRound(team1Players, team2Players)}
+                className="rpg-button"
+                style={{
+                  fontSize: '18px',
+                  padding: '10px 40px',
+                  animation: 'pulse-glow 2s infinite'
+                }}
+              >
+                {t('game.nextRound')}
+              </button>
+            </div>
+          )}
 
         <div style={{ marginTop: '12px' }}>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-
-            {
-              canUndo && <button
+            {canUndo && (
+              <button
                 onClick={onUndo}
                 className="rpg-button secondary"
                 style={{
@@ -444,10 +483,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               >
                 {t('game.undo')}
               </button>
-
-            }
-            {
-              canRedo &&
+            )}
+            {canRedo && (
               <button
                 onClick={onRedo}
                 className="rpg-button secondary"
@@ -460,8 +497,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               >
                 {t('game.redo')}
               </button>
-
-            }
+            )}
           </div>
         </div>
       </div>

@@ -48,4 +48,9 @@ export default interface DuelData {
    * Each team can use it at most once per duel.
    */
   secondChanceUsedByTeams?: TeamName[];
+  /**
+   * Tracks which teams have used AI Recommendation in this duel.
+   * Unlimited uses per duel — tracked for display in match history.
+   */
+  aiRecommendationUsedByTeams?: TeamName[];
 }

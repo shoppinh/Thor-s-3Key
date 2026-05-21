@@ -19,6 +19,7 @@ export default {
     revealTwo: 'Reveal Two',
     lifeShield: 'Life Shield',
     removeWorst: 'Remove Worst',
+    aiRecommendation: 'AI Pick',
     total: 'Total',
     note: 'Each team must have a total of 4 power-ups, with no more than 2 of the same type.',
     powerUpsGuide: '⚡ POWER-UPS GUIDE ⚡',
@@ -74,7 +75,33 @@ export default {
     rosterLoadFailed: 'Failed to load roster from Google Sheets.',
     rosterTeamEmpty: 'Each team must have at least one member.',
     rosterBlankName: 'Member names cannot be blank.',
-    rosterDuplicateName: 'Member names must be unique across both teams.'
+    rosterDuplicateName: 'Member names must be unique across both teams.',
+    shareResult: 'SHARE RESULT',
+    shareDownload: 'Download PNG',
+    shareTweet: 'Tweet Result',
+    shareMvp: 'MVP',
+    sharePowerUps: 'Power-Ups Used',
+    shareDuration: 'Duration',
+    shareDate: 'Date',
+    shareFooter: 'Play at thors3key.app',
+    audioMute: 'Mute',
+    audioUnmute: 'Unmute',
+    enableAi: 'Enable AI Integration',
+    enableAiHint: 'Adds an AI Pick button that selects best cards for you.'
+  },
+  tournament: {
+    title: 'TOURNAMENT MODE',
+    team1Name: 'Team 1 Name',
+    team2Name: 'Team 2 Name',
+    bestOf: 'Best of',
+    singleMatch: 'Single Match',
+    singleElim: 'Single Elimination',
+    startTournament: 'START TOURNAMENT',
+    playMatch: 'PLAY MATCH',
+    played: 'PLAYED',
+    champion: 'CHAMPION',
+    tournamentComplete: 'Tournament Complete!',
+    backToBracket: 'BACK TO BRACKET'
   },
   powerups: {
     secondChanceTitle: 'Second Chance',
@@ -88,6 +115,9 @@ export default {
       'Prevents a player from being eliminated if they lose the duel.',
     removeWorstTitle: 'Remove Worst',
     removeWorstDesc: 'Removes the worst available card group from the board.',
+    aiRecommendationTitle: 'AI Pick',
+    aiRecommendationDesc:
+      'Randomly selects one of the four card groups for you. Unlimited uses — let fate decide!',
     confirmTitle: 'Confirm Power-Up',
     confirmMessage: 'Are you sure you want to use',
     title: 'You scared to use it?'

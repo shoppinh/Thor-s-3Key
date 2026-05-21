@@ -35,6 +35,7 @@ type GameArenaScreenProps = {
   onUndo: () => void;
   canRedo: boolean;
   onRedo: () => void;
+  onAiPick?: () => void;
 };
 
 const GameArenaScreen = ({
@@ -53,7 +54,8 @@ const GameArenaScreen = ({
   canUndo,
   onUndo,
   canRedo,
-  onRedo
+  onRedo,
+  onAiPick
 }: GameArenaScreenProps) => {
   const { t } = useLanguage();
   const player1EquityName = duelData.player1Name;
@@ -390,6 +392,7 @@ const GameArenaScreen = ({
         onUndo={onUndo}
         canRedo={canRedo}
         onRedo={onRedo}
+        onAiPick={onAiPick}
       />
     </>
   );

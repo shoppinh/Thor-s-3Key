@@ -19,6 +19,7 @@ export default {
     revealTwo: 'Ti hí mắt nai',
     lifeShield: 'Tao có khiên',
     removeWorst: 'Bài xấu vào hang',
+    aiRecommendation: 'AI chọn',
     total: 'Tổng cộng',
     note: 'Mỗi đội phải có tổng cộng 4 quyền năng, tối đa 2 quyền năng cùng loại.',
     powerUpsGuide: '⚡ HƯỚNG DẪN QUYỀN NĂNG ⚡',
@@ -73,7 +74,33 @@ export default {
     rosterLoadFailed: 'Không tải được đội hình từ Google Sheets.',
     rosterTeamEmpty: 'Mỗi đội phải có ít nhất một thành viên.',
     rosterBlankName: 'Tên thành viên không được để trống.',
-    rosterDuplicateName: 'Tên thành viên không được trùng giữa hai đội.'
+    rosterDuplicateName: 'Tên thành viên không được trùng giữa hai đội.',
+    shareResult: 'CHIA SẺ KẾT QUẢ',
+    shareDownload: 'Tải PNG',
+    shareTweet: 'Tweet Kết Quả',
+    shareMvp: 'MVP',
+    sharePowerUps: 'Power-Ups Đã Dùng',
+    shareDuration: 'Thời Gian',
+    shareDate: 'Ngày',
+    shareFooter: 'Chơi tại thors3key.app',
+    audioMute: 'Tắt tiếng',
+    audioUnmute: 'Bật tiếng',
+    enableAi: 'Bật AI chọn bài',
+    enableAiHint: 'Thêm nút AI Pick giúp chọn lá bài ngon nhất.'
+  },
+  tournament: {
+    title: 'CHẾ ĐỘ GIẢI ĐẤU',
+    team1Name: 'Tên Đội 1',
+    team2Name: 'Tên Đội 2',
+    bestOf: 'Đấu',
+    singleMatch: '1 Trận',
+    singleElim: 'Loại Trực Tiếp',
+    startTournament: 'BẮT ĐẦU GIẢI',
+    playMatch: 'ĐẤU',
+    played: 'ĐÃ ĐẤU',
+    champion: 'VÔ ĐỊCH',
+    tournamentComplete: 'Giải Đấu Kết Thúc!',
+    backToBracket: 'VỀ SƠ ĐỒ'
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
@@ -84,6 +111,9 @@ export default {
     lifeShieldDesc: 'Bảo vệ người chơi khỏi bị loại nếu thua trong trận đấu.',
     removeWorstTitle: 'Bài xấu vào hang',
     removeWorstDesc: 'Loại bỏ tụ bài xấu nhất đang có trên bàn.',
+    aiRecommendationTitle: 'AI chọn',
+    aiRecommendationDesc:
+      'Ngẫu nhiên chọn một trong bốn tụ bài giúp bạn. Dùng không giới hạn — để vận may quyết định!',
     confirmTitle: 'Xác Nhận Dùng',
     confirmMessage: 'Bạn có chắc muốn sử dụng',
     title: 'Sợ à mà dùng?'

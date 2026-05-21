@@ -9,6 +9,7 @@ export interface PowerUpsUsed {
   lifeShield?: TeamName;
   removeWorst?: TeamName[];
   secondChance?: TeamName[];
+  aiRecommendation?: TeamName[];
 }
 
 export interface LocalDuelEvent {
