@@ -1,5 +1,12 @@
 import type { LocalDuelEvent } from '~/features/dashboard/types';
 
+export const POWERUP_LABELS: Record<string, string> = {
+  revealTwo: 'Reveal Two',
+  lifeShield: 'Life Shield',
+  removeWorst: 'Remove Worst',
+  secondChance: 'Second Chance'
+};
+
 export interface MvpInfo {
   name: string;
   kills: number;
@@ -54,19 +61,25 @@ export function summarizePowerUps(events: LocalDuelEvent[]): PowerUpSummary[] {
   for (const event of events) {
     const p = event.powerUpsUsed;
     if (p.revealTwo)
-      counts.set('Reveal Two', (counts.get('Reveal Two') || 0) + 1);
+      counts.set(
+        POWERUP_LABELS.revealTwo,
+        (counts.get(POWERUP_LABELS.revealTwo) || 0) + 1
+      );
     if (p.lifeShield)
-      counts.set('Life Shield', (counts.get('Life Shield') || 0) + 1);
+      counts.set(
+        POWERUP_LABELS.lifeShield,
+        (counts.get(POWERUP_LABELS.lifeShield) || 0) + 1
+      );
     if (p.removeWorst?.length) {
       counts.set(
-        'Remove Worst',
-        (counts.get('Remove Worst') || 0) + p.removeWorst.length
+        POWERUP_LABELS.removeWorst,
+        (counts.get(POWERUP_LABELS.removeWorst) || 0) + p.removeWorst.length
       );
     }
     if (p.secondChance?.length) {
       counts.set(
-        'Second Chance',
-        (counts.get('Second Chance') || 0) + p.secondChance.length
+        POWERUP_LABELS.secondChance,
+        (counts.get(POWERUP_LABELS.secondChance) || 0) + p.secondChance.length
       );
     }
   }
@@ -83,6 +96,14 @@ export interface MatchCardData {
   mvpName: string;
   powerUps: PowerUpSummary[];
   durationSeconds: number;
+  date: string;
+  labels: {
+    title: string;
+    mvpLabel: string;
+    powerUpsLabel: string;
+    durationLabel: string;
+    footer: string;
+  };
 }
 
 export function renderMatchCardToCanvas(
@@ -103,7 +124,7 @@ export function renderMatchCardToCanvas(
   ctx.fillStyle = '#ffd700';
   ctx.font = 'bold 24px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText("THOR'S 3KEY", 300, 50);
+  ctx.fillText(data.labels.title, 300, 50);
 
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 28px monospace';
@@ -120,14 +141,14 @@ export function renderMatchCardToCanvas(
   if (data.mvpName) {
     ctx.fillStyle = '#00ff88';
     ctx.font = '16px monospace';
-    ctx.fillText(`MVP: ${data.mvpName}`, 300, 180);
+    ctx.fillText(`${data.labels.mvpLabel} ${data.mvpName}`, 300, 180);
   }
 
   let y = 220;
   if (data.powerUps.length > 0) {
     ctx.fillStyle = '#aaa';
     ctx.font = '14px monospace';
-    ctx.fillText('Power-Ups Used', 300, y);
+    ctx.fillText(data.labels.powerUpsLabel, 300, y);
     y += 24;
     ctx.fillStyle = '#ccc';
     ctx.font = '13px monospace';
@@ -143,14 +164,14 @@ export function renderMatchCardToCanvas(
   ctx.fillStyle = '#888';
   ctx.font = '12px monospace';
   ctx.fillText(
-    `Duration: ${mins}m ${secs}s  |  ${new Date().toLocaleDateString()}`,
+    `${data.labels.durationLabel} ${mins}m ${secs}s  |  ${data.date}`,
     300,
     y
   );
 
   ctx.fillStyle = '#666';
   ctx.font = '11px monospace';
-  ctx.fillText('Play at thors3key.app', 300, y + 24);
+  ctx.fillText(data.labels.footer, 300, y + 24);
 
   return canvas;
 }
