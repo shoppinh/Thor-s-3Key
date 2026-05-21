@@ -2711,8 +2711,18 @@ const CardGame = () => {
       {gameState == 'gameOver' && (
         <GameOverScreen
           teamWinner={teamWinner}
+          team1Name={team1Data.name}
+          team2Name={team2Data.name}
+          team1Score={team1Data.score}
+          team2Score={team2Data.score}
           saveStatus={saveStatus}
           onRetrySave={handleRetrySave}
+          duelEvents={duelEvents}
+          durationSeconds={
+            gameStartTime != null
+              ? Math.floor((Date.now() - gameStartTime) / 1000)
+              : 0
+          }
         />
       )}
 
