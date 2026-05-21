@@ -5,6 +5,9 @@ import type { LocalDuelEvent } from '~/features/dashboard/types';
 import { getSupabaseClient } from '~/lib/supabase';
 import { saveMatch } from '~/features/dashboard/services/matchService';
 import { useTheme } from '~/contexts/ThemeContext';
+import { useAudio } from '~/features/audio/hooks/useAudio';
+import { AudioControls } from '~/features/audio/components/AudioControls';
+import type { BgmTrack } from '~/features/audio/soundRegistry';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen, {
   type SaveStatus
@@ -90,6 +93,7 @@ type RootContext = {
 const CardGame = () => {
   const { t, language, setLanguage } = useLanguage();
   const { theme } = useTheme();
+  const audio = useAudio();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>(
     createInitialTeamData(1, t('common.team'))
@@ -153,6 +157,21 @@ const CardGame = () => {
       return () => clearTimeout(timer);
     }
   }, [duelResult, duelData.isFinishDuel]);
+
+  // Start/stop BGM based on game state and theme
+  useEffect(() => {
+    if (gameState !== 'gamePlaying') {
+      audio.stopBgm();
+      return;
+    }
+    const trackMap: Record<string, BgmTrack> = {
+      summer: 'bgm_summer',
+      christmas: 'bgm_xmas',
+      jrpg: 'bgm_jrpg'
+    };
+    audio.playBgm(trackMap[theme] || 'bgm_summer');
+  }, [gameState, theme]);
+
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>(
     createAllocationFromTeam(createInitialTeamData(1, t('common.team')))
@@ -377,6 +396,8 @@ const CardGame = () => {
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
     nextRound(team1Players, team2Players, false);
+    audio.ensureAudioResumed();
+    audio.playSfx('game_start');
   };
 
   /**
@@ -467,6 +488,8 @@ const CardGame = () => {
             : `${t('common.team')} 1 ${t('game.isWinner')}`
         );
         setGameState('gameOver');
+        audio.playSfx('game_over');
+        audio.stopBgm();
         return;
       }
 
@@ -516,6 +539,7 @@ const CardGame = () => {
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
+      audio.playSfx('round_start');
     },
     [recordHistorySnapshot, roundNumber, t]
   );
@@ -548,6 +572,7 @@ const CardGame = () => {
       };
 
       setDuelData((prev) => ({ ...prev, ...updates }));
+      audio.playSfx('group_pick');
     } else {
       const updates: Partial<DuelData> = applyPlayerSelectionToDuel({
         duelData,
@@ -991,6 +1016,7 @@ const CardGame = () => {
 
     if (teamName && chanceType) {
       recordHistorySnapshot();
+      audio.playSfx('powerup_activate');
 
       switch (chanceType) {
         case 'secondChance': {
@@ -1277,6 +1303,18 @@ const CardGame = () => {
       }
 
       setDuelResult(resultMessage);
+
+      // Play duel outcome sound
+      if (shouldPreventElimination) {
+        audio.playSfx('powerup_activate');
+      } else {
+        audio.playSfx('duel_win');
+      }
+
+      // Play streak sound for winner
+      if (newStreak >= 3 && newStreak <= 8) {
+        audio.playSfx(`kill_streak_${Math.min(newStreak, 8)}` as any);
+      }
 
       // Get the current team arrays
       const currentTeam1Players = team1Data.players;
@@ -2680,6 +2718,14 @@ const CardGame = () => {
 
   return (
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
+      <AudioControls
+        isMuted={audio.isMuted}
+        sfxVolume={audio.sfxVolume}
+        bgmVolume={audio.bgmVolume}
+        onToggleMute={audio.toggleMute}
+        onSfxVolumeChange={audio.setSfxVolume}
+        onBgmVolumeChange={audio.setBgmVolume}
+      />
       {renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}
