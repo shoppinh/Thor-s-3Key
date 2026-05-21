@@ -9,17 +9,24 @@ declare global {
 export class AudioManager {
   private static instance: AudioManager;
   private ctx: AudioContext | null = null;
-  private bgmElement: HTMLAudioElement | null = null;
-  private _isMuted = false;
-  private _sfxVolume = 0.5;
-  private _bgmVolume = 0.3;
-  private _bgmOscillators: { osc: OscillatorNode; gain: GainNode }[] = [];
+  private muted = false;
+  private sfxVolume = 0.5;
+  private bgmVolume = 0.3;
+  private bgmOscillators: { osc: OscillatorNode; gain: GainNode }[] = [];
+  private currentBgmTrack: BgmTrack | null = null;
 
   static getInstance(): AudioManager {
     if (!AudioManager.instance) {
       AudioManager.instance = new AudioManager();
     }
     return AudioManager.instance;
+  }
+
+  ensureAudioResumed(): void {
+    const ctx = this.getContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
   }
 
   private getContext(): AudioContext | null {
@@ -36,17 +43,15 @@ export class AudioManager {
   }
 
   get isMuted(): boolean {
-    return this._isMuted;
+    return this.muted;
   }
 
   setMuted(muted: boolean): void {
-    this._isMuted = muted;
-    if (this.bgmElement) {
-      if (muted) {
-        this.bgmElement.pause();
-      } else {
-        this.bgmElement.play().catch(() => {});
-      }
+    this.muted = muted;
+    if (muted) {
+      this.stopBgm();
+    } else if (this.currentBgmTrack) {
+      this.startBgmOscillator(this.currentBgmTrack);
     }
     try {
       localStorage.setItem('thors3key_audio_muted', String(muted));
@@ -56,54 +61,62 @@ export class AudioManager {
   }
 
   getSfxVolume(): number {
-    return this._sfxVolume;
+    return this.sfxVolume;
   }
 
   setSfxVolume(v: number): void {
-    this._sfxVolume = Math.max(0, Math.min(1, v));
+    this.sfxVolume = Math.max(0, Math.min(1, v));
+    try {
+      localStorage.setItem('thors3key_sfx_volume', String(this.sfxVolume));
+    } catch {
+      // storage unavailable
+    }
   }
 
   getBgmVolume(): number {
-    return this._bgmVolume;
+    return this.bgmVolume;
   }
 
   setBgmVolume(v: number): void {
-    this._bgmVolume = Math.max(0, Math.min(1, v));
-    if (this.bgmElement) {
-      this.bgmElement.volume = this._bgmVolume;
+    this.bgmVolume = Math.max(0, Math.min(1, v));
+    try {
+      localStorage.setItem('thors3key_bgm_volume', String(this.bgmVolume));
+    } catch {
+      // storage unavailable
     }
   }
 
   play(event: SoundEvent): void {
-    if (this._isMuted) return;
+    if (this.muted) return;
     const ctx = this.getContext();
     const def = SFX_REGISTRY[event];
     if (!ctx || !def) return;
+
+    ctx.resume().catch(() => {});
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = def.type;
     osc.frequency.value = def.frequency;
-    gain.gain.value = this._sfxVolume * 0.3;
+    gain.gain.value = this.sfxVolume * 0.3;
     osc.connect(gain);
     gain.connect(ctx.destination);
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + def.duration);
   }
 
   playBgm(track: BgmTrack): void {
     this.stopBgm();
-
-    const audio = new Audio();
-    audio.volume = this._bgmVolume;
-    audio.loop = true;
-    this.bgmElement = audio;
-
-    this._startBgmOscillator(track);
+    this.currentBgmTrack = track;
+    this.startBgmOscillator(track);
   }
 
-  private _startBgmOscillator(track: BgmTrack): void {
-    if (this._isMuted) return;
+  private startBgmOscillator(track: BgmTrack): void {
+    if (this.muted) return;
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -115,39 +128,44 @@ export class AudioManager {
 
     const [f1, f2] = freqs[track];
     const gain = ctx.createGain();
-    gain.gain.value = this._bgmVolume * 0.05;
+    gain.gain.value = this.bgmVolume * 0.05;
+    gain.connect(ctx.destination);
 
     for (const freq of [f1, f2]) {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
       osc.connect(gain);
-      gain.connect(ctx.destination);
       osc.start();
-      this._bgmOscillators.push({ osc, gain });
+      this.bgmOscillators.push({ osc, gain });
     }
   }
 
   stopBgm(): void {
-    for (const { osc } of this._bgmOscillators) {
+    for (const { osc } of this.bgmOscillators) {
       try {
         osc.stop();
       } catch {
         // oscillator already stopped
       }
     }
-    this._bgmOscillators = [];
-    if (this.bgmElement) {
-      this.bgmElement.pause();
-      this.bgmElement = null;
-    }
+    this.bgmOscillators = [];
+    this.currentBgmTrack = null;
   }
 
   initFromStorage(): void {
     try {
       const muted = localStorage.getItem('thors3key_audio_muted');
       if (muted === 'true') {
-        this._isMuted = true;
+        this.muted = true;
+      }
+      const sfx = localStorage.getItem('thors3key_sfx_volume');
+      if (sfx !== null) {
+        this.sfxVolume = Math.max(0, Math.min(1, parseFloat(sfx)));
+      }
+      const bgm = localStorage.getItem('thors3key_bgm_volume');
+      if (bgm !== null) {
+        this.bgmVolume = Math.max(0, Math.min(1, parseFloat(bgm)));
       }
     } catch {
       // storage unavailable
