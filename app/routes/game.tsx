@@ -586,34 +586,11 @@ const CardGame = () => {
           t
         );
 
-        const secondPlayerTeam = newData.player2Team;
-        const secondTeamData =
-          secondPlayerTeam === 'team1' ? team1Data : team2Data;
-        const secondTeamAlreadyUsedSecondChance =
-          secondTeamData.powerUps.secondChance <= 0;
-        const secondTeamIsWinning =
-          (secondPlayerTeam === newData.player1Team && isPlayer1Winner) ||
-          (secondPlayerTeam === newData.player2Team && !isPlayer1Winner);
-
-        const secondTeamHasSecondChance =
-          !secondTeamAlreadyUsedSecondChance && !secondTeamIsWinning;
-        const availableCount = getAvailableSelectableGroupCount(newData);
-        const secondChanceUsedThisDuel = (
-          newData.secondChanceUsedByTeams || []
-        ).includes(secondPlayerTeam as 'team1' | 'team2');
-        const canSecondTeamUseSecondChance =
-          secondTeamHasSecondChance &&
-          availableCount > 0 &&
-          !secondChanceUsedThisDuel;
-
-        const shouldRevealAllCards = !canSecondTeamUseSecondChance;
-
         const updatedData = {
           ...newData,
           topLeftPlayerData:
-            (newData.topLeftPlayerData.cards.length == 0 ||
-              !newData.topLeftRevealed) &&
-            shouldRevealAllCards
+            newData.topLeftPlayerData.cards.length == 0 ||
+            !newData.topLeftRevealed
               ? {
                   ...newData.topLeftPlayerData,
                   cards: newData.topLeftCards,
@@ -621,9 +598,8 @@ const CardGame = () => {
                 }
               : newData.topLeftPlayerData,
           bottomLeftPlayerData:
-            (newData.bottomLeftPlayerData.cards.length == 0 ||
-              !newData.bottomLeftRevealed) &&
-            shouldRevealAllCards
+            newData.bottomLeftPlayerData.cards.length == 0 ||
+            !newData.bottomLeftRevealed
               ? {
                   ...newData.bottomLeftPlayerData,
                   cards: newData.bottomLeftCards,
@@ -631,9 +607,8 @@ const CardGame = () => {
                 }
               : newData.bottomLeftPlayerData,
           topRightPlayerData:
-            (newData.topRightPlayerData.cards.length == 0 ||
-              !newData.topRightRevealed) &&
-            shouldRevealAllCards
+            newData.topRightPlayerData.cards.length == 0 ||
+            !newData.topRightRevealed
               ? {
                   ...newData.topRightPlayerData,
                   cards: newData.topRightCards,
@@ -641,9 +616,8 @@ const CardGame = () => {
                 }
               : newData.topRightPlayerData,
           bottomRightPlayerData:
-            (newData.bottomRightPlayerData.cards.length == 0 ||
-              !newData.bottomRightRevealed) &&
-            shouldRevealAllCards
+            newData.bottomRightPlayerData.cards.length == 0 ||
+            !newData.bottomRightRevealed
               ? {
                   ...newData.bottomRightPlayerData,
                   cards: newData.bottomRightCards,
