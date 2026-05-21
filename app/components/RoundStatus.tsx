@@ -381,8 +381,7 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
               </>
             ) : (
               <>
-                {onAiPick &&
-                  currentPlayerName &&
+                {currentPlayerName &&
                   Math.min(team1Players.length, team2Players.length) > 0 && (
                     <>
                       <div
@@ -424,18 +423,24 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
                   background: 'rgba(0,0,0,0.6)',
                   border: '3px solid #E040FB',
                   display: 'inline-flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
+                  gap: '5px',
                   transition: 'all 0.2s ease',
                   boxShadow: '0 0 15px #E040FB'
                 }}
               >
-                <span style={{ fontSize: '24px' }}>🎲</span>
+                <img
+                  src={`/images/gen-ai.png`}
+                  alt=""
+                  width={18}
+                  height={18}
+                  style={{ display: 'inline-block' }}
+                />
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '16px',
                     color: '#E040FB',
                     fontWeight: 'bold',
                     textTransform: 'uppercase',
