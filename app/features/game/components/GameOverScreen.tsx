@@ -5,8 +5,7 @@ import VictoryCrown from '~/components/VictoryCrown';
 import { MatchCardShare } from '~/features/share/components/MatchCardShare';
 import {
   calculateMvp,
-  summarizePowerUps,
-  POWERUP_LABELS
+  summarizePowerUps
 } from '~/features/share/renderMatchCard';
 import type { LocalDuelEvent } from '~/features/dashboard/types';
 
