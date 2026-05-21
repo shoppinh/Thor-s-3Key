@@ -1199,3 +1199,47 @@ input[type='text']:disabled {
   justify-content: center;
   margin-top: 16px;
 }
+
+.audio-controls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audio-mute-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-secondary);
+  color: #fff;
+  font-size: 20px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.audio-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-secondary);
+}
+
+.audio-sliders label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ccc;
+  font-size: 12px;
+  font-family: var(--font-body);
+}
+
+.audio-sliders input[type='range'] {
+  width: 80px;
+  accent-color: var(--color-accent);
+}
