@@ -15,10 +15,12 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({
 
   const GuideItem = ({
     icon,
+    emoji,
     title,
     desc
   }: {
-    icon: string;
+    icon?: string;
+    emoji?: string;
     title: string;
     desc: string;
   }) => (
@@ -33,16 +35,30 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({
         border: '1px solid rgba(255, 255, 255, 0.1)'
       }}
     >
-      <img
-        src={icon}
-        alt={title}
-        width={64}
-        height={64}
-        style={{
-          transform: 'skewX(10deg)', // Counter skew
-          filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3))'
-        }}
-      />
+      {icon ? (
+        <img
+          src={icon}
+          alt={title}
+          width={64}
+          height={64}
+          style={{
+            transform: 'skewX(10deg)',
+            filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3))'
+          }}
+        />
+      ) : (
+        <span
+          style={{
+            fontSize: '48px',
+            width: 64,
+            textAlign: 'center',
+            transform: 'skewX(10deg)',
+            filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3))'
+          }}
+        >
+          {emoji || '🎲'}
+        </span>
+      )}
       <div style={{ transform: 'skewX(10deg)', textAlign: 'left' }}>
         <div
           style={{
@@ -138,6 +154,11 @@ const PowerupGuideModal: React.FC<PowerupGuideModalProps> = ({
             icon="/images/chance_remove.png"
             title={t('powerups.removeWorstTitle')}
             desc={t('powerups.removeWorstDesc')}
+          />
+          <GuideItem
+            emoji="🎲"
+            title={t('powerups.aiRecommendationTitle')}
+            desc={t('powerups.aiRecommendationDesc')}
           />
         </div>
 

@@ -176,6 +176,7 @@ const CardGame = () => {
   const [setupMode, setSetupMode] = useState<SetupMode>('per-team');
   const [undoEnabled, setUndoEnabled] = useState(false);
   const [redoEnabled, setRedoEnabled] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(false);
   const [historyStack, setHistoryStack] = useState<GameSnapshot[]>([]);
   const [redoStack, setRedoStack] = useState<GameSnapshot[]>([]);
   const shouldGuardNavigation = gameState === 'gamePlaying';
@@ -708,6 +709,71 @@ const CardGame = () => {
    * @param teamName - Which team clicked the chance
    * @param chanceType - Type of chance (secondChance or revealTwo)
    */
+  const handleAiPick = () => {
+    if (duelData.isFinishDuel || !duelData.currentPlayerName) return;
+
+    const teamName: TeamName = team1Data.players.includes(
+      duelData.currentPlayerName
+    )
+      ? 'team1'
+      : 'team2';
+
+    const disabledGroups = new Set(duelData.removedWorstGroups || []);
+    const availableSides: Side[] = (
+      [
+        {
+          side: 'top-left' as Side,
+          available:
+            !disabledGroups.has('top-left') &&
+            !duelData.topLeftRevealed &&
+            duelData.topLeftPlayerData.cards.length === 0
+        },
+        {
+          side: 'bottom-left' as Side,
+          available:
+            !disabledGroups.has('bottom-left') &&
+            !duelData.bottomLeftRevealed &&
+            duelData.bottomLeftPlayerData.cards.length === 0
+        },
+        {
+          side: 'top-right' as Side,
+          available:
+            !disabledGroups.has('top-right') &&
+            !duelData.topRightRevealed &&
+            duelData.topRightPlayerData.cards.length === 0
+        },
+        {
+          side: 'bottom-right' as Side,
+          available:
+            !disabledGroups.has('bottom-right') &&
+            !duelData.bottomRightRevealed &&
+            duelData.bottomRightPlayerData.cards.length === 0
+        }
+      ] as const
+    )
+      .filter((g) => g.available)
+      .map((g) => g.side);
+
+    if (availableSides.length === 0) return;
+
+    const chosen =
+      availableSides[Math.floor(Math.random() * availableSides.length)];
+
+    setDuelData((prev) => ({
+      ...prev,
+      aiRecommendationUsedByTeams: [
+        ...(prev.aiRecommendationUsedByTeams || []),
+        teamName
+      ]
+    }));
+    playerSelect(chosen);
+  };
+
+  /**
+   * Handles chance item clicks - shows confirmation popup
+   * @param teamName - Which team clicked the chance
+   * @param chanceType - Type of chance (secondChance or revealTwo)
+   */
   const handleChanceClick = (teamName: TeamName, chanceType: ChanceType) => {
     const chanceItemName =
       chanceType === 'secondChance'
@@ -1150,6 +1216,9 @@ const CardGame = () => {
           }),
           ...(duelData.secondChanceUsedByTeams?.length && {
             secondChance: duelData.secondChanceUsedByTeams
+          }),
+          ...(duelData.aiRecommendationUsedByTeams?.length && {
+            aiRecommendation: duelData.aiRecommendationUsedByTeams
           })
         }
       };
@@ -1485,10 +1554,7 @@ const CardGame = () => {
             >
               {/* Left: Setup UI */}
               <div style={{ flex: 1 }}>
-                <div
-                  data-summer-wave-safe-bottom
-                  
-                >
+                <div data-summer-wave-safe-bottom>
                   <h2
                     className="text-glow"
                     style={{
@@ -1780,6 +1846,59 @@ const CardGame = () => {
                         {t('game.enableRedoHint')}
                       </span>
                     </div>
+                  </div>
+                  <div
+                    className="rpg-panel"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 20,
+                      marginTop: 6,
+                      marginBottom: 15,
+                      padding: '16px 20px',
+                      background: 'rgba(15, 12, 41, 0.8)',
+                      border: '2px solid #E040FB'
+                    }}
+                  >
+                    <label
+                      htmlFor="enable-ai"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '1.1rem',
+                        cursor: 'pointer',
+                        color: aiEnabled ? '#E040FB' : '#fff'
+                      }}
+                    >
+                      <input
+                        id="enable-ai"
+                        type="checkbox"
+                        checked={aiEnabled}
+                        onChange={(event) => {
+                          setAiEnabled(event.target.checked);
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: '#E040FB',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      🎲 {t('game.enableAi')}
+                    </label>
+                    <span
+                      style={{
+                        color: '#ccc',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '0.95rem',
+                        textAlign: 'right'
+                      }}
+                    >
+                      {t('game.enableAiHint')}
+                    </span>
                   </div>
                   <div
                     className="setup-grid"
@@ -2611,6 +2730,7 @@ const CardGame = () => {
           onUndo={undoLastAction}
           canRedo={canRedo}
           onRedo={redoLastAction}
+          onAiPick={aiEnabled ? handleAiPick : undefined}
         />
       )}
 
