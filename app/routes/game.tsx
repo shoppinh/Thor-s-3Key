@@ -9,6 +9,9 @@ import { useAudio } from '~/features/audio/hooks/useAudio';
 import { AudioControls } from '~/features/audio/components/AudioControls';
 import { SFX_REGISTRY } from '~/features/audio/soundRegistry';
 import type { BgmTrack, SoundEvent } from '~/features/audio/soundRegistry';
+import { useTournament } from '~/features/tournament/hooks/useTournament';
+import { TournamentSetup } from '~/features/tournament/components/TournamentSetup';
+import { BracketView } from '~/features/tournament/components/BracketView';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen, {
   type SaveStatus
@@ -122,6 +125,15 @@ const CardGame = () => {
   const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
   const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
+  const tournament = useTournament();
+  const [isTournamentSetup, setIsTournamentSetup] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tournament') === 'setup') {
+      setIsTournamentSetup(true);
+    }
+  }, []);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -368,6 +380,30 @@ const CardGame = () => {
     if (gameState !== 'gameOver') return;
     if (saveStatus !== 'idle') return;
     performSave();
+
+    if (
+      tournament.hasActiveTournament &&
+      tournament.currentSlotId &&
+      tournament.bracket
+    ) {
+      const bracket = tournament.bracket;
+      const winnerTeam: TeamName =
+        team1Data.players.length === 0 ? 'team2' : 'team1';
+      const winnerName =
+        winnerTeam === 'team1'
+          ? bracket.config.teamNames[0]
+          : bracket.config.teamNames[1];
+      const loserName =
+        winnerTeam === 'team1'
+          ? bracket.config.teamNames[1]
+          : bracket.config.teamNames[0];
+      tournament.finishMatch(
+        winnerName,
+        loserName,
+        winnerTeam === 'team1' ? team1Data.score : team2Data.score,
+        winnerTeam === 'team1' ? team2Data.score : team1Data.score
+      );
+    }
   }, [gameState, saveStatus, performSave]);
 
   const handleRetrySave = useCallback(() => {
@@ -1545,6 +1581,38 @@ const CardGame = () => {
       </label>
     );
   };
+
+  function renderTournament() {
+    if (!isTournamentSetup) return null;
+
+    if (!tournament.hasActiveTournament) {
+      return (
+        <TournamentSetup
+          onStart={(config) => {
+            tournament.startTournament(config);
+          }}
+        />
+      );
+    }
+
+    if (!tournament.bracket) return null;
+
+    return (
+      <BracketView
+        bracket={tournament.bracket}
+        onPlaySlot={(slotId) => {
+          tournament.beginMatch(slotId);
+          const slot = tournament.bracket!.slots.find((s) => s.id === slotId);
+          if (!slot) return;
+          setGameState('setup');
+        }}
+        onReset={() => {
+          tournament.resetTournament();
+          setIsTournamentSetup(false);
+        }}
+      />
+    );
+  }
 
   /**
    * Renders the combined Welcome (right) and Setup (left) UI in a two-column layout
@@ -2734,6 +2802,7 @@ const CardGame = () => {
         onSfxVolumeChange={audio.setSfxVolume}
         onBgmVolumeChange={audio.setBgmVolume}
       />
+      {isTournamentSetup && renderTournament()}
       {renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}

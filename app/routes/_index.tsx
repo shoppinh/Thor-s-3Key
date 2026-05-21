@@ -43,6 +43,17 @@ export default function IndexRoute() {
           >
             DASHBOARD
           </Link>
+          <Link
+            to="/game?tournament=setup"
+            className="rpg-button"
+            style={{
+              ...styles.ctaSecondary,
+              background: 'var(--color-accent)',
+              borderColor: 'var(--color-accent)'
+            }}
+          >
+            TOURNAMENT
+          </Link>
         </div>
 
         <div className="rpg-panel" style={styles.mediaFrame}>

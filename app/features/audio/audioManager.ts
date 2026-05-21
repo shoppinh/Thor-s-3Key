@@ -6,13 +6,19 @@ declare global {
   }
 }
 
+const BGM_SOURCES: Record<BgmTrack, string> = {
+  bgm_summer: '/audio/bgm_summer.mp3',
+  bgm_xmas: '/audio/bgm_xmas.mp3',
+  bgm_jrpg: '/audio/bgm_jrpg.mp3'
+};
+
 export class AudioManager {
   private static instance: AudioManager;
   private ctx: AudioContext | null = null;
   private muted = false;
   private sfxVolume = 0.5;
   private bgmVolume = 0.3;
-  private bgmOscillators: { osc: OscillatorNode; gain: GainNode }[] = [];
+  private bgmElement: HTMLAudioElement | null = null;
   private currentBgmTrack: BgmTrack | null = null;
 
   static getInstance(): AudioManager {
@@ -26,6 +32,9 @@ export class AudioManager {
     const ctx = this.getContext();
     if (ctx && ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
+    }
+    if (this.bgmElement && this.bgmElement.paused && !this.muted) {
+      this.bgmElement.play().catch(() => {});
     }
   }
 
@@ -49,9 +58,11 @@ export class AudioManager {
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (muted) {
-      this.stopBgm();
+      if (this.bgmElement) {
+        this.bgmElement.pause();
+      }
     } else if (this.currentBgmTrack) {
-      this.startBgmOscillator(this.currentBgmTrack);
+      this.playBgm(this.currentBgmTrack);
     }
     try {
       localStorage.setItem('thors3key_audio_muted', String(muted));
@@ -79,6 +90,9 @@ export class AudioManager {
 
   setBgmVolume(v: number): void {
     this.bgmVolume = Math.max(0, Math.min(1, v));
+    if (this.bgmElement) {
+      this.bgmElement.volume = this.bgmVolume;
+    }
     try {
       localStorage.setItem('thors3key_bgm_volume', String(this.bgmVolume));
     } catch {
@@ -112,44 +126,22 @@ export class AudioManager {
   playBgm(track: BgmTrack): void {
     this.stopBgm();
     this.currentBgmTrack = track;
-    this.startBgmOscillator(track);
-  }
 
-  private startBgmOscillator(track: BgmTrack): void {
     if (this.muted) return;
-    const ctx = this.getContext();
-    if (!ctx) return;
 
-    const freqs: Record<BgmTrack, [number, number]> = {
-      bgm_summer: [261, 329],
-      bgm_xmas: [294, 370],
-      bgm_jrpg: [220, 277]
-    };
-
-    const [f1, f2] = freqs[track];
-    const gain = ctx.createGain();
-    gain.gain.value = this.bgmVolume * 0.05;
-    gain.connect(ctx.destination);
-
-    for (const freq of [f1, f2]) {
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      osc.start();
-      this.bgmOscillators.push({ osc, gain });
-    }
+    const audio = new Audio(BGM_SOURCES[track]);
+    audio.volume = this.bgmVolume;
+    audio.loop = true;
+    audio.play().catch(() => {});
+    this.bgmElement = audio;
   }
 
   stopBgm(): void {
-    for (const { osc } of this.bgmOscillators) {
-      try {
-        osc.stop();
-      } catch {
-        // oscillator already stopped
-      }
+    if (this.bgmElement) {
+      this.bgmElement.pause();
+      this.bgmElement.src = '';
+      this.bgmElement = null;
     }
-    this.bgmOscillators = [];
     this.currentBgmTrack = null;
   }
 
