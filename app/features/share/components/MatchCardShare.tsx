@@ -16,6 +16,7 @@ export function MatchCardShare({ isOpen, data, onClose }: MatchCardShareProps) {
   const { t } = useLanguage();
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [pngUrl, setPngUrl] = useState('');
+  const pngUrlRef = useRef('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -26,10 +27,15 @@ export function MatchCardShare({ isOpen, data, onClose }: MatchCardShareProps) {
       container.appendChild(canvas);
     }
     canvasToPngBlob(canvas).then((blob) => {
-      setPngUrl(URL.createObjectURL(blob));
+      const url = URL.createObjectURL(blob);
+      pngUrlRef.current = url;
+      setPngUrl(url);
     });
     return () => {
-      if (pngUrl) URL.revokeObjectURL(pngUrl);
+      if (pngUrlRef.current) {
+        URL.revokeObjectURL(pngUrlRef.current);
+        pngUrlRef.current = '';
+      }
     };
   }, [isOpen]);
 
