@@ -7,7 +7,8 @@ import { saveMatch } from '~/features/dashboard/services/matchService';
 import { useTheme } from '~/contexts/ThemeContext';
 import { useAudio } from '~/features/audio/hooks/useAudio';
 import { AudioControls } from '~/features/audio/components/AudioControls';
-import type { BgmTrack } from '~/features/audio/soundRegistry';
+import { SFX_REGISTRY } from '~/features/audio/soundRegistry';
+import type { BgmTrack, SoundEvent } from '~/features/audio/soundRegistry';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen, {
   type SaveStatus
@@ -170,6 +171,9 @@ const CardGame = () => {
       jrpg: 'bgm_jrpg'
     };
     audio.playBgm(trackMap[theme] || 'bgm_summer');
+    return () => {
+      audio.stopBgm();
+    };
   }, [gameState, theme]);
 
   // Local allocations for setup screen
@@ -1313,7 +1317,10 @@ const CardGame = () => {
 
       // Play streak sound for winner
       if (newStreak >= 3 && newStreak <= 8) {
-        audio.playSfx(`kill_streak_${Math.min(newStreak, 8)}` as any);
+        const streakKey = `kill_streak_${Math.min(newStreak, 8)}`;
+        if (streakKey in SFX_REGISTRY) {
+          audio.playSfx(streakKey as SoundEvent);
+        }
       }
 
       // Get the current team arrays
@@ -1358,7 +1365,8 @@ const CardGame = () => {
       duelData.secondChanceUsedByTeams,
       winStreaks,
       t,
-      roundNumber
+      roundNumber,
+      audio
     ]
   );
 
