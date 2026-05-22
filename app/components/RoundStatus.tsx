@@ -28,6 +28,19 @@ interface RoundStatusProps {
   onAiPick?: () => void;
 }
 
+const AI_THINKING_MESSAGES = [
+  'game.aiThinking',
+  'game.aiPlanning',
+  'game.aiAnalyzing',
+  'game.aiCalculating',
+  'game.aiConsulting',
+  'game.aiScheming',
+  'game.aiPondering',
+  'game.aiSimulating',
+  'game.aiReading',
+  'game.aiDeciding'
+] as const;
+
 const RoundStatus: React.FC<RoundStatusProps> = ({
   duelResult,
   isFirstTurn,
@@ -48,6 +61,31 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   onAiPick
 }) => {
   const { t } = useLanguage();
+  const [isAiThinking, setIsAiThinking] = React.useState(false);
+  const [aiMessageIndex, setAiMessageIndex] = React.useState(0);
+
+  // Randomly switch AI thinking messages while thinking
+  React.useEffect(() => {
+    if (!isAiThinking) return;
+    const interval = setInterval(() => {
+      setAiMessageIndex(() =>
+        Math.floor(Math.random() * AI_THINKING_MESSAGES.length)
+      );
+    }, 800);
+    return () => clearInterval(interval);
+  }, [isAiThinking]);
+
+  const handleAiPickClick = React.useCallback(() => {
+    if (!onAiPick || isAiThinking) return;
+    setIsAiThinking(true);
+    setAiMessageIndex(Math.floor(Math.random() * AI_THINKING_MESSAGES.length));
+    const delay = 1000 + Math.random() * 3000; // 1-4 seconds
+    const timer = setTimeout(() => {
+      setIsAiThinking(false);
+      onAiPick();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [onAiPick, isAiThinking]);
 
   // Auto-advance logic (kept from original)
   React.useEffect(() => {
@@ -415,41 +453,50 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
           Math.min(team1Players.length, team2Players.length) > 0 && (
             <div style={{ marginTop: '12px' }}>
               <button
-                onClick={onAiPick ?? undefined}
+                onClick={handleAiPickClick}
+                disabled={isAiThinking}
                 className="rpg-skewed"
                 style={{
-                  width: '110px',
+                  width: isAiThinking ? 'auto' : '110px',
+                  minWidth: '110px',
                   height: '70px',
                   background: 'rgba(0,0,0,0.6)',
-                  border: '3px solid #E040FB',
+                  border: `3px solid ${isAiThinking ? '#888' : '#E040FB'}`,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: isAiThinking ? 'not-allowed' : 'pointer',
                   gap: '5px',
                   transition: 'all 0.2s ease',
-                  boxShadow: '0 0 15px #E040FB'
+                  boxShadow: isAiThinking ? 'none' : '0 0 15px #E040FB',
+                  padding: isAiThinking ? '0 16px' : '0',
+                  opacity: isAiThinking ? 0.7 : 1
                 }}
               >
-                <img
-                  src={`/images/gen-ai.png`}
-                  alt=""
-                  width={18}
-                  height={18}
-                  style={{ display: 'inline-block' }}
-                />
+                {!isAiThinking && (
+                  <img
+                    src={`/images/gen-ai.png`}
+                    alt=""
+                    width={18}
+                    height={18}
+                    style={{ display: 'inline-block' }}
+                  />
+                )}
                 <span
                   style={{
-                    fontSize: '16px',
-                    color: '#E040FB',
+                    fontSize: isAiThinking ? '14px' : '16px',
+                    color: isAiThinking ? '#aaa' : '#E040FB',
                     fontWeight: 'bold',
                     textTransform: 'uppercase',
                     fontFamily: 'var(--font-body)',
                     transform: 'skewX(10deg)',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  AI Pick
+                  {isAiThinking
+                    ? t(AI_THINKING_MESSAGES[aiMessageIndex])
+                    : 'AI Pick'}
                 </span>
               </button>
             </div>
