@@ -86,7 +86,17 @@ export default {
     audioMute: 'Tắt tiếng',
     audioUnmute: 'Bật tiếng',
     enableAi: 'Bật AI chọn bài',
-    enableAiHint: 'Thêm nút AI Pick giúp chọn lá bài ngon nhất.'
+    enableAiHint: 'Thêm nút AI Pick giúp chọn lá bài ngon nhất.',
+    aiThinking: 'Đang suy nghĩ...',
+    aiPlanning: 'Lập kế hoạch...',
+    aiAnalyzing: 'Phân tích bàn cờ...',
+    aiCalculating: 'Tính toán xác suất...',
+    aiConsulting: 'Hỏi ý kiến tiên tri...',
+    aiScheming: 'Đang mưu mô...',
+    aiPondering: 'Suy ngẫm vận mệnh...',
+    aiSimulating: 'Mô phỏng tương lai...',
+    aiReading: 'Đọc bài...',
+    aiDeciding: 'Quyết định vận mệnh...'
   },
   tournament: {
     title: 'CHẾ ĐỘ GIẢI ĐẤU',

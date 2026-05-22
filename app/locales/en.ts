@@ -87,7 +87,17 @@ export default {
     audioMute: 'Mute',
     audioUnmute: 'Unmute',
     enableAi: 'Enable AI Integration',
-    enableAiHint: 'Adds an AI Pick button that selects best cards for you.'
+    enableAiHint: 'Adds an AI Pick button that selects best cards for you.',
+    aiThinking: 'Thinking...',
+    aiPlanning: 'Planning next move...',
+    aiAnalyzing: 'Analyzing board...',
+    aiCalculating: 'Calculating odds...',
+    aiConsulting: 'Consulting the oracle...',
+    aiScheming: 'Scheming...',
+    aiPondering: 'Pondering destiny...',
+    aiSimulating: 'Simulating timelines...',
+    aiReading: 'Reading the cards...',
+    aiDeciding: 'Deciding your fate...'
   },
   tournament: {
     title: 'TOURNAMENT MODE',
