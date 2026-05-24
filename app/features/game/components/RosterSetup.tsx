@@ -20,6 +20,8 @@ type RosterSetupProps = SetupRosters & {
     toTeam: TeamName,
     toIndex: number
   ) => void;
+  onShuffleTeam: (team: TeamName) => void;
+  shuffleLabel: string;
 };
 
 const teamLabels: Record<TeamName, 'team1' | 'team2'> = {
@@ -36,7 +38,9 @@ export function RosterSetup({
   errors,
   onAddMember,
   onRemoveMember,
-  onMoveMember
+  onMoveMember,
+  onShuffleTeam,
+  shuffleLabel
 }: RosterSetupProps) {
   const [newMemberNames, setNewMemberNames] = useState<
     Record<TeamName, string>
@@ -68,7 +72,18 @@ export function RosterSetup({
     <section className={`roster-card roster-card--${teamLabels[team]}`}>
       <div className="roster-card__header">
         <h3>{title}</h3>
-        <span>{roster.length}</span>
+        <div className="roster-card__header-actions">
+          <span>{roster.length}</span>
+          <button
+            aria-label={`${shuffleLabel} ${title}`}
+            className="rpg-button secondary roster-shuffle-btn"
+            disabled={isLoading || roster.length < 2}
+            onClick={() => onShuffleTeam(team)}
+            type="button"
+          >
+            {shuffleLabel}
+          </button>
+        </div>
       </div>
 
       <ol

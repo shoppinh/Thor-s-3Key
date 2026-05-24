@@ -156,8 +156,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           className={'drawCardsContainer'}
           style={{
             position: 'relative',
-            minHeight: '60px',
-            height: '60px',
+            minHeight: '70px',
             display: 'flex',
             justifyContent: 'center'
           }}

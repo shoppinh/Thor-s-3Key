@@ -76,6 +76,7 @@ export default {
     rosterTeamEmpty: 'Each team must have at least one member.',
     rosterBlankName: 'Member names cannot be blank.',
     rosterDuplicateName: 'Member names must be unique across both teams.',
+    shuffleRoster: 'SHUFFLE',
     shareResult: 'SHARE RESULT',
     shareDownload: 'Download PNG',
     shareTweet: 'Tweet Result',

@@ -44,6 +44,15 @@ export function removeRosterMember(roster: string[], index: number): string[] {
   return roster.filter((_, currentIndex) => currentIndex !== index);
 }
 
+export function shuffleRoster(roster: string[]): string[] {
+  const shuffled = [...roster];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export function moveRosterMember({
   team1,
   team2,
