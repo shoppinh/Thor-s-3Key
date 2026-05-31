@@ -15,6 +15,7 @@ import {
   addRosterMember,
   moveRosterMember,
   removeRosterMember,
+  shuffleRoster,
   validateRosterSetup
 } from '~/features/game/services/rosterSetup';
 import {
@@ -1470,6 +1471,16 @@ const CardGame = () => {
     setSetupTeam2Roster(result.team2);
   };
 
+  const shuffleSetupRoster = (team: TeamName) => {
+    setRosterLoadError('');
+    if (team === 'team1') {
+      setSetupTeam1Roster((prev) => shuffleRoster(prev));
+      return;
+    }
+
+    setSetupTeam2Roster((prev) => shuffleRoster(prev));
+  };
+
   /**
    * Renders a label with a small preview icon positioned to the left of the text.
    * Used in the combined 'setup' screen for power-up labels.
@@ -2460,6 +2471,8 @@ const CardGame = () => {
                     onAddMember={addSetupRosterMember}
                     onRemoveMember={removeSetupRosterMember}
                     onMoveMember={moveSetupRosterMember}
+                    onShuffleTeam={shuffleSetupRoster}
+                    shuffleLabel={t('game.shuffleRoster')}
                   />
                 </div>
               </div>
