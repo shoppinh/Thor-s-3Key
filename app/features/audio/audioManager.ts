@@ -12,6 +12,11 @@ const BGM_SOURCES: Record<BgmTrack, string> = {
   bgm_jrpg: '/audio/bgm_jrpg.mp3'
 };
 
+function clampVolume(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(1, v));
+}
+
 export class AudioManager {
   private static instance: AudioManager;
   private ctx: AudioContext | null = null;
@@ -76,7 +81,7 @@ export class AudioManager {
   }
 
   setSfxVolume(v: number): void {
-    this.sfxVolume = Math.max(0, Math.min(1, v));
+    this.sfxVolume = clampVolume(v);
     try {
       localStorage.setItem('thors3key_sfx_volume', String(this.sfxVolume));
     } catch {
@@ -89,7 +94,7 @@ export class AudioManager {
   }
 
   setBgmVolume(v: number): void {
-    this.bgmVolume = Math.max(0, Math.min(1, v));
+    this.bgmVolume = clampVolume(v);
     if (this.bgmElement) {
       this.bgmElement.volume = this.bgmVolume;
     }
@@ -136,6 +141,13 @@ export class AudioManager {
     this.bgmElement = audio;
   }
 
+  preloadBgm(track: BgmTrack): void {
+    if (this.muted) return;
+    const audio = new Audio(BGM_SOURCES[track]);
+    audio.preload = 'auto';
+    audio.load();
+  }
+
   stopBgm(): void {
     if (this.bgmElement) {
       this.bgmElement.pause();
@@ -153,11 +165,11 @@ export class AudioManager {
       }
       const sfx = localStorage.getItem('thors3key_sfx_volume');
       if (sfx !== null) {
-        this.sfxVolume = Math.max(0, Math.min(1, parseFloat(sfx)));
+        this.sfxVolume = clampVolume(parseFloat(sfx));
       }
       const bgm = localStorage.getItem('thors3key_bgm_volume');
       if (bgm !== null) {
-        this.bgmVolume = Math.max(0, Math.min(1, parseFloat(bgm)));
+        this.bgmVolume = clampVolume(parseFloat(bgm));
       }
     } catch {
       // storage unavailable

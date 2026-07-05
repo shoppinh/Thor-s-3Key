@@ -12,6 +12,7 @@ import type { BgmTrack, SoundEvent } from '~/features/audio/soundRegistry';
 import { useTournament } from '~/features/tournament/hooks/useTournament';
 import { TournamentSetup } from '~/features/tournament/components/TournamentSetup';
 import { BracketView } from '~/features/tournament/components/BracketView';
+import type { TournamentConfig } from '~/features/tournament/types';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen, {
   type SaveStatus
@@ -26,7 +27,6 @@ import {
 } from '~/features/game/services/rosterSetup';
 import {
   applyPlayerSelectionToDuel,
-  getAvailableSelectableGroupCount,
   getCardsBySide,
   getPlayerDataBySide
 } from '~/features/game/engine/duelEngine';
@@ -127,13 +127,27 @@ const CardGame = () => {
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
   const tournament = useTournament();
   const [isTournamentSetup, setIsTournamentSetup] = useState(false);
+  const [tournamentView, setTournamentView] = useState<
+    'setup' | 'bracket' | 'match'
+  >('setup');
+  const [tournamentMatchRecorded, setTournamentMatchRecorded] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('tournament') === 'setup') {
       setIsTournamentSetup(true);
+      setTournamentView('setup');
     }
   }, []);
+
+  const currentBgmTrack = useMemo<BgmTrack>(() => {
+    const trackMap: Record<string, BgmTrack> = {
+      summer: 'bgm_summer',
+      christmas: 'bgm_xmas',
+      jrpg: 'bgm_jrpg'
+    };
+    return trackMap[theme] || 'bgm_summer';
+  }, [theme]);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -177,16 +191,11 @@ const CardGame = () => {
       audio.stopBgm();
       return;
     }
-    const trackMap: Record<string, BgmTrack> = {
-      summer: 'bgm_summer',
-      christmas: 'bgm_xmas',
-      jrpg: 'bgm_jrpg'
-    };
-    audio.playBgm(trackMap[theme] || 'bgm_summer');
+    audio.playBgm(currentBgmTrack);
     return () => {
       audio.stopBgm();
     };
-  }, [gameState, theme]);
+  }, [audio, currentBgmTrack, gameState]);
 
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>(
@@ -341,6 +350,55 @@ const CardGame = () => {
     })
   ];
 
+  const applyTournamentConfig = useCallback(
+    (config: TournamentConfig) => {
+      const [team1Name, team2Name] = config.teamNames;
+      setTeam1Data((prev) => ({ ...prev, name: team1Name }));
+      setTeam2Data((prev) => ({ ...prev, name: team2Name }));
+    },
+    []
+  );
+
+  const resetMatchForSetup = useCallback(() => {
+    setDuelData(createInitialDuelData());
+    setTeamWinner('');
+    setDuelResult('');
+    setIsFirstTurn(true);
+    setRoundNumber(0);
+    setWinStreaks({});
+    setDuelEvents([]);
+    setSaveStatus('idle');
+    setShowWinnerAnnouncement(false);
+    setGameStartTime(null);
+    setTournamentMatchRecorded(false);
+    setHistoryStack([]);
+    setRedoStack([]);
+    setConfirmPopup({
+      isVisible: false,
+      teamName: undefined,
+      chanceType: undefined,
+      chanceItemName: ''
+    });
+    setTeam1Data((prev) => ({
+      ...prev,
+      score: 0,
+      scoreClass: '',
+      players: []
+    }));
+    setTeam2Data((prev) => ({
+      ...prev,
+      score: 0,
+      scoreClass: '',
+      players: []
+    }));
+  }, []);
+
+  const returnToTournamentBracket = useCallback(() => {
+    resetMatchForSetup();
+    setGameState('setup');
+    setTournamentView('bracket');
+  }, [resetMatchForSetup]);
+
   const performSave = useCallback(() => {
     const url = clientSecrets?.SUPABASE_URL;
     const key = clientSecrets?.SUPABASE_ANON_KEY;
@@ -380,7 +438,11 @@ const CardGame = () => {
     if (gameState !== 'gameOver') return;
     if (saveStatus !== 'idle') return;
     performSave();
+  }, [gameState, saveStatus, performSave]);
 
+  useEffect(() => {
+    if (gameState !== 'gameOver') return;
+    if (tournamentMatchRecorded) return;
     if (
       tournament.hasActiveTournament &&
       tournament.currentSlotId &&
@@ -403,8 +465,16 @@ const CardGame = () => {
         winnerTeam === 'team1' ? team1Data.score : team2Data.score,
         winnerTeam === 'team1' ? team2Data.score : team1Data.score
       );
+      setTournamentMatchRecorded(true);
     }
-  }, [gameState, saveStatus, performSave]);
+  }, [
+    gameState,
+    team1Data.players.length,
+    team1Data.score,
+    team2Data.score,
+    tournament,
+    tournamentMatchRecorded
+  ]);
 
   const handleRetrySave = useCallback(() => {
     performSave();
@@ -472,6 +542,7 @@ const CardGame = () => {
     }
 
     setGameState('gameLoading');
+    audio.preloadBgm(currentBgmTrack);
     try {
       await preloadGameImages(getThemeExtraCardBacks(theme));
     } catch (error) {
@@ -486,22 +557,30 @@ const CardGame = () => {
     if (setupMode === 'both' || setupMode === 'random') {
       setTeam1Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team1Players,
         powerUps: { ...team1Alloc }
       }));
       setTeam2Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team2Players,
         powerUps: { ...team1Alloc }
       }));
     } else {
       setTeam1Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team1Players,
         powerUps: { ...team1Alloc }
       }));
       setTeam2Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team2Players,
         powerUps: { ...team2Alloc }
       }));
@@ -524,8 +603,8 @@ const CardGame = () => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
           inputTeam1.length === 0
-            ? `${t('common.team')} 2 ${t('game.isWinner')}`
-            : `${t('common.team')} 1 ${t('game.isWinner')}`
+            ? `${team2Data.name} ${t('game.isWinner')}`
+            : `${team1Data.name} ${t('game.isWinner')}`
         );
         setGameState('gameOver');
         audio.playSfx('game_over');
@@ -579,9 +658,17 @@ const CardGame = () => {
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
+      audio.playSfx('card_deal');
       audio.playSfx('round_start');
     },
-    [recordHistorySnapshot, roundNumber, t]
+    [
+      audio,
+      recordHistorySnapshot,
+      roundNumber,
+      t,
+      team1Data.name,
+      team2Data.name
+    ]
   );
 
   const playerSelect = (side: Side) => {
@@ -614,6 +701,7 @@ const CardGame = () => {
       setDuelData((prev) => ({ ...prev, ...updates }));
       audio.playSfx('group_pick');
     } else {
+      audio.playSfx('card_flip');
       const updates: Partial<DuelData> = applyPlayerSelectionToDuel({
         duelData,
         side,
@@ -631,25 +719,8 @@ const CardGame = () => {
         if (!newData.player1SideSelected || !newData.player2SideSelected) {
           return newData;
         }
-
-        const firstPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player1SideSelected
-        );
-        const secondPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player2SideSelected
-        );
-
-        const { isPlayer1Winner } = determineWinner(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          t
-        );
+        const player1SideSelected = newData.player1SideSelected;
+        const player2SideSelected = newData.player2SideSelected;
 
         const updatedData = {
           ...newData,
@@ -690,6 +761,14 @@ const CardGame = () => {
                 }
               : newData.bottomRightPlayerData
         };
+        const firstPlayerData = getPlayerDataBySide(
+          updatedData,
+          player1SideSelected
+        );
+        const secondPlayerData = getPlayerDataBySide(
+          updatedData,
+          player2SideSelected
+        );
 
         calculateResult(
           firstPlayerData.sum,
@@ -1347,8 +1426,11 @@ const CardGame = () => {
       // Play duel outcome sound
       if (shouldPreventElimination) {
         audio.playSfx('powerup_activate');
+      } else if (p1Sum === p2Sum) {
+        audio.playSfx('duel_tie');
       } else {
         audio.playSfx('duel_win');
+        audio.playSfx('duel_lose');
       }
 
       // Play streak sound for winner
@@ -1399,6 +1481,7 @@ const CardGame = () => {
       duelData.revealTwoUsedBy,
       duelData.removeWorstUsedByTeams,
       duelData.secondChanceUsedByTeams,
+      duelData.aiRecommendationUsedByTeams,
       winStreaks,
       t,
       roundNumber,
@@ -1585,17 +1668,19 @@ const CardGame = () => {
   function renderTournament() {
     if (!isTournamentSetup) return null;
 
-    if (!tournament.hasActiveTournament) {
+    if (!tournament.hasActiveTournament && tournamentView === 'setup') {
       return (
         <TournamentSetup
           onStart={(config) => {
             tournament.startTournament(config);
+            applyTournamentConfig(config);
+            setTournamentView('bracket');
           }}
         />
       );
     }
 
-    if (!tournament.bracket) return null;
+    if (tournamentView !== 'bracket' || !tournament.bracket) return null;
 
     return (
       <BracketView
@@ -1604,11 +1689,17 @@ const CardGame = () => {
           tournament.beginMatch(slotId);
           const slot = tournament.bracket!.slots.find((s) => s.id === slotId);
           if (!slot) return;
+          resetMatchForSetup();
+          setTeam1Data((prev) => ({ ...prev, name: slot.team1 }));
+          setTeam2Data((prev) => ({ ...prev, name: slot.team2 }));
           setGameState('setup');
+          setTournamentView('match');
         }}
         onReset={() => {
           tournament.resetTournament();
           setIsTournamentSetup(false);
+          setTournamentView('setup');
+          resetMatchForSetup();
         }}
       />
     );
@@ -2802,8 +2893,9 @@ const CardGame = () => {
         onSfxVolumeChange={audio.setSfxVolume}
         onBgmVolumeChange={audio.setBgmVolume}
       />
-      {isTournamentSetup && renderTournament()}
-      {renderGameInput()}
+      {isTournamentSetup && tournamentView !== 'match'
+        ? renderTournament()
+        : renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}
         onClose={() => setIsPowerupGuideOpen(false)}
@@ -2846,6 +2938,8 @@ const CardGame = () => {
               ? Math.floor((Date.now() - gameStartTime) / 1000)
               : 0
           }
+          isTournamentMatch={isTournamentSetup && tournamentView === 'match'}
+          onReturnToTournament={returnToTournamentBracket}
         />
       )}
 

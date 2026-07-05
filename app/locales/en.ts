@@ -79,6 +79,7 @@ export default {
     shareResult: 'SHARE RESULT',
     shareDownload: 'Download PNG',
     shareTweet: 'Tweet Result',
+    shareRenderFailed: 'Could not render share image.',
     shareMvp: 'MVP',
     sharePowerUps: 'Power-Ups Used',
     shareDuration: 'Duration',

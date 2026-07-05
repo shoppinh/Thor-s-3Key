@@ -21,6 +21,8 @@ type GameOverScreenProps = {
   onRetrySave: () => void;
   duelEvents: LocalDuelEvent[];
   durationSeconds: number;
+  isTournamentMatch?: boolean;
+  onReturnToTournament?: () => void;
 };
 
 const GameOverScreen = ({
@@ -32,7 +34,9 @@ const GameOverScreen = ({
   saveStatus,
   onRetrySave,
   duelEvents,
-  durationSeconds
+  durationSeconds,
+  isTournamentMatch = false,
+  onReturnToTournament
 }: GameOverScreenProps) => {
   const { t } = useLanguage();
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -45,7 +49,12 @@ const GameOverScreen = ({
       team2Score,
       winnerName: teamWinner,
       mvpName: calculateMvp(duelEvents),
-      powerUps: summarizePowerUps(duelEvents),
+      powerUps: summarizePowerUps(duelEvents, {
+        secondChance: t('game.secondChance'),
+        revealTwo: t('game.revealTwo'),
+        lifeShield: t('game.lifeShield'),
+        removeWorst: t('game.removeWorst')
+      }),
       durationSeconds,
       date: new Date().toISOString().split('T')[0],
       labels: {
@@ -182,6 +191,18 @@ const GameOverScreen = ({
             >
               {t('game.returnHome')}
             </Link>
+            {isTournamentMatch && onReturnToTournament && (
+              <button
+                onClick={onReturnToTournament}
+                className="rpg-button secondary"
+                style={{
+                  fontSize: '18px',
+                  padding: '10px 36px'
+                }}
+              >
+                {t('tournament.backToBracket')}
+              </button>
+            )}
             <Link
               to="/dashboard"
               className="rpg-button"
