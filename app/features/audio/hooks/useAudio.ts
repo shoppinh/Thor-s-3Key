@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AudioManager } from '../audioManager';
 import type { SoundEvent, BgmTrack } from '../soundRegistry';
 
@@ -12,21 +12,36 @@ export function useAudio() {
   const [sfxVolume, setSfxVolumeState] = useState(mgr.getSfxVolume());
   const [bgmVolume, setBgmVolumeState] = useState(mgr.getBgmVolume());
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     const next = !mgr.isMuted;
     mgr.setMuted(next);
     setIsMuted(next);
-  };
+  }, [mgr]);
 
-  const setSfxVolume = (v: number) => {
-    mgr.setSfxVolume(v);
-    setSfxVolumeState(v);
-  };
+  const setSfxVolume = useCallback(
+    (v: number) => {
+      mgr.setSfxVolume(v);
+      setSfxVolumeState(mgr.getSfxVolume());
+    },
+    [mgr]
+  );
 
-  const setBgmVolume = (v: number) => {
-    mgr.setBgmVolume(v);
-    setBgmVolumeState(v);
-  };
+  const setBgmVolume = useCallback(
+    (v: number) => {
+      mgr.setBgmVolume(v);
+      setBgmVolumeState(mgr.getBgmVolume());
+    },
+    [mgr]
+  );
+
+  const ensureAudioResumed = useCallback(() => mgr.ensureAudioResumed(), [mgr]);
+  const playSfx = useCallback((event: SoundEvent) => mgr.play(event), [mgr]);
+  const playBgm = useCallback((track: BgmTrack) => mgr.playBgm(track), [mgr]);
+  const preloadBgm = useCallback(
+    (track: BgmTrack) => mgr.preloadBgm(track),
+    [mgr]
+  );
+  const stopBgm = useCallback(() => mgr.stopBgm(), [mgr]);
 
   return {
     isMuted,
@@ -35,9 +50,10 @@ export function useAudio() {
     toggleMute,
     setSfxVolume,
     setBgmVolume,
-    ensureAudioResumed: () => mgr.ensureAudioResumed(),
-    playSfx: (event: SoundEvent) => mgr.play(event),
-    playBgm: (track: BgmTrack) => mgr.playBgm(track),
-    stopBgm: () => mgr.stopBgm()
+    ensureAudioResumed,
+    playSfx,
+    playBgm,
+    preloadBgm,
+    stopBgm
   };
 }

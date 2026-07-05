@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Link } from '@remix-run/react';
 import ShareButtons from '~/components/ShareButtons';
 import VictoryCrown from '~/components/VictoryCrown';
@@ -12,14 +11,6 @@ export const meta: MetaFunction = () => {
 };
 
 export default function IndexRoute() {
-  const ctaHref = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const search = window.location.search;
-      return `/game${search || ''}`;
-    }
-    return '/game';
-  }, []);
-
   return (
     <main style={styles.wrapper}>
       <div style={styles.overlay} />
@@ -33,7 +24,7 @@ export default function IndexRoute() {
         </p>
 
         <div style={styles.ctaRow}>
-          <Link to={ctaHref} className="rpg-button" style={styles.ctaPrimary}>
+          <Link to="/game" className="rpg-button" style={styles.ctaPrimary}>
             START GAME
           </Link>
           <Link
