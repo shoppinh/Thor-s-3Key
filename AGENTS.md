@@ -1,14 +1,12 @@
-@RTK.md
-
 ## Agent skills
 
 ### Issue tracker
 
-Issues and PRDs are tracked in GitHub Issues for `shoppinh/Thor-s-3Key`. See `docs/agents/issue-tracker.md`.
+Issues and PRDs are tracked in GitHub Issues for `shoppinh/Thor-s-3Key` with external PRs enabled as a triage surface. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Use the default five-label triage vocabulary. See `docs/agents/triage-labels.md`.
+Use the default five-label triage vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
