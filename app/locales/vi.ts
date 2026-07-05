@@ -79,6 +79,7 @@ export default {
     shareResult: 'CHIA SẺ KẾT QUẢ',
     shareDownload: 'Tải PNG',
     shareTweet: 'Tweet Kết Quả',
+    shareRenderFailed: 'Không tạo được ảnh chia sẻ.',
     shareMvp: 'MVP',
     sharePowerUps: 'Power-Ups Đã Dùng',
     shareDuration: 'Thời Gian',

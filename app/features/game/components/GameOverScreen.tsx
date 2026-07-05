@@ -1,21 +1,81 @@
+import { useState, useMemo } from 'react';
 import { Link } from '@remix-run/react';
 import { useLanguage } from '~/contexts/LanguageContext';
 import VictoryCrown from '~/components/VictoryCrown';
+import { MatchCardShare } from '~/features/share/components/MatchCardShare';
+import {
+  calculateMvp,
+  summarizePowerUps
+} from '~/features/share/renderMatchCard';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type GameOverScreenProps = {
   teamWinner: string;
+  team1Name: string;
+  team2Name: string;
+  team1Score: number;
+  team2Score: number;
   saveStatus: SaveStatus;
   onRetrySave: () => void;
+  duelEvents: LocalDuelEvent[];
+  durationSeconds: number;
+  isTournamentMatch?: boolean;
+  onReturnToTournament?: () => void;
 };
 
 const GameOverScreen = ({
   teamWinner,
+  team1Name,
+  team2Name,
+  team1Score,
+  team2Score,
   saveStatus,
-  onRetrySave
+  onRetrySave,
+  duelEvents,
+  durationSeconds,
+  isTournamentMatch = false,
+  onReturnToTournament
 }: GameOverScreenProps) => {
   const { t } = useLanguage();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
+  const shareData = useMemo(
+    () => ({
+      team1Name,
+      team2Name,
+      team1Score,
+      team2Score,
+      winnerName: teamWinner,
+      mvpName: calculateMvp(duelEvents),
+      powerUps: summarizePowerUps(duelEvents, {
+        secondChance: t('game.secondChance'),
+        revealTwo: t('game.revealTwo'),
+        lifeShield: t('game.lifeShield'),
+        removeWorst: t('game.removeWorst')
+      }),
+      durationSeconds,
+      date: new Date().toISOString().split('T')[0],
+      labels: {
+        title: "THOR'S 3KEY",
+        mvpLabel: t('game.shareMvp') || 'MVP',
+        powerUpsLabel: t('game.sharePowerUps') || 'Power-Ups Used',
+        durationLabel: t('game.shareDuration') || 'Duration',
+        footer: t('game.shareFooter') || 'Play at thors3key.app'
+      }
+    }),
+    [
+      team1Name,
+      team2Name,
+      team1Score,
+      team2Score,
+      teamWinner,
+      duelEvents,
+      durationSeconds,
+      t
+    ]
+  );
 
   const saveStatusText =
     saveStatus === 'saving'
@@ -27,123 +87,153 @@ const GameOverScreen = ({
           : '';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
-        gap: '30px'
-      }}
-    >
+    <>
       <div
-        className="rpg-panel"
         style={{
-          padding: '40px 60px',
-          textAlign: 'center',
-          background: 'var(--color-panel-bg)',
-          border: '3px solid var(--color-accent)'
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+          gap: '30px'
         }}
       >
-        <h2
-          className="text-glow"
-          style={{
-            color: 'var(--color-primary)',
-            margin: '0 0 20px 0',
-            fontSize: '32px',
-            letterSpacing: '3px'
-          }}
-        >
-          {t('game.battleComplete')}
-        </h2>
-        <h1
-          className="text-gradient"
-          style={{
-            fontSize: '64px',
-            fontWeight: 'bold',
-            margin: '20px 0',
-            textShadow: '0 0 20px var(--color-accent)'
-          }}
-        >
-          {teamWinner}
-        </h1>
-
-        {saveStatusText && (
-          <div
-            style={{
-              marginTop: '16px',
-              fontSize: '18px',
-              color:
-                saveStatus === 'error'
-                  ? '#ff4d4d'
-                  : saveStatus === 'saved'
-                    ? '#4dff88'
-                    : '#ccc'
-            }}
-          >
-            {saveStatusText}
-            {saveStatus === 'error' && (
-              <button
-                onClick={onRetrySave}
-                className="rpg-button secondary"
-                style={{
-                  marginLeft: '12px',
-                  fontSize: '14px',
-                  padding: '6px 16px'
-                }}
-              >
-                {t('game.retrySave')}
-              </button>
-            )}
-          </div>
-        )}
-
         <div
           className="rpg-panel"
           style={{
-            marginTop: '30px',
-            padding: '20px',
-            background: 'rgba(0,0,0,0.3)'
+            padding: '40px 60px',
+            textAlign: 'center',
+            background: 'var(--color-panel-bg)',
+            border: '3px solid var(--color-accent)'
           }}
         >
-          <VictoryCrown />
-        </div>
-        <div
-          style={{
-            marginTop: '24px',
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center'
-          }}
-        >
-          <Link
-            to="/"
-            className="rpg-button secondary"
+          <h2
+            className="text-glow"
             style={{
-              fontSize: '18px',
-              padding: '10px 36px',
-              textDecoration: 'none',
-              textAlign: 'center'
+              color: 'var(--color-primary)',
+              margin: '0 0 20px 0',
+              fontSize: '32px',
+              letterSpacing: '3px'
             }}
           >
-            {t('game.returnHome')}
-          </Link>
-          <Link
-            to="/dashboard"
-            className="rpg-button"
+            {t('game.battleComplete')}
+          </h2>
+          <h1
+            className="text-gradient"
             style={{
-              fontSize: '18px',
-              padding: '10px 36px',
-              textDecoration: 'none',
-              textAlign: 'center'
+              fontSize: '64px',
+              fontWeight: 'bold',
+              margin: '20px 0',
+              textShadow: '0 0 20px var(--color-accent)'
             }}
           >
-            {t('game.viewDashboard')}
-          </Link>
+            {teamWinner}
+          </h1>
+
+          {saveStatusText && (
+            <div
+              style={{
+                marginTop: '16px',
+                fontSize: '18px',
+                color:
+                  saveStatus === 'error'
+                    ? '#ff4d4d'
+                    : saveStatus === 'saved'
+                      ? '#4dff88'
+                      : '#ccc'
+              }}
+            >
+              {saveStatusText}
+              {saveStatus === 'error' && (
+                <button
+                  onClick={onRetrySave}
+                  className="rpg-button secondary"
+                  style={{
+                    marginLeft: '12px',
+                    fontSize: '14px',
+                    padding: '6px 16px'
+                  }}
+                >
+                  {t('game.retrySave')}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div
+            className="rpg-panel"
+            style={{
+              marginTop: '30px',
+              padding: '20px',
+              background: 'rgba(0,0,0,0.3)'
+            }}
+          >
+            <VictoryCrown />
+          </div>
+          <div
+            style={{
+              marginTop: '24px',
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}
+          >
+            <Link
+              to="/"
+              className="rpg-button secondary"
+              style={{
+                fontSize: '18px',
+                padding: '10px 36px',
+                textDecoration: 'none',
+                textAlign: 'center'
+              }}
+            >
+              {t('game.returnHome')}
+            </Link>
+            {isTournamentMatch && onReturnToTournament && (
+              <button
+                onClick={onReturnToTournament}
+                className="rpg-button secondary"
+                style={{
+                  fontSize: '18px',
+                  padding: '10px 36px'
+                }}
+              >
+                {t('tournament.backToBracket')}
+              </button>
+            )}
+            <Link
+              to="/dashboard"
+              className="rpg-button"
+              style={{
+                fontSize: '18px',
+                padding: '10px 36px',
+                textDecoration: 'none',
+                textAlign: 'center'
+              }}
+            >
+              {t('game.viewDashboard')}
+            </Link>
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="rpg-button"
+              style={{
+                fontSize: '18px',
+                padding: '10px 36px'
+              }}
+            >
+              {t('game.shareResult')}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+      <MatchCardShare
+        isOpen={isShareOpen}
+        data={shareData}
+        onClose={() => setIsShareOpen(false)}
+      />
+    </>
   );
 };
 

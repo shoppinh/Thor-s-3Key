@@ -5,6 +5,14 @@ import type { LocalDuelEvent } from '~/features/dashboard/types';
 import { getSupabaseClient } from '~/lib/supabase';
 import { saveMatch } from '~/features/dashboard/services/matchService';
 import { useTheme } from '~/contexts/ThemeContext';
+import { useAudio } from '~/features/audio/hooks/useAudio';
+import { AudioControls } from '~/features/audio/components/AudioControls';
+import { SFX_REGISTRY } from '~/features/audio/soundRegistry';
+import type { BgmTrack, SoundEvent } from '~/features/audio/soundRegistry';
+import { useTournament } from '~/features/tournament/hooks/useTournament';
+import { TournamentSetup } from '~/features/tournament/components/TournamentSetup';
+import { BracketView } from '~/features/tournament/components/BracketView';
+import type { TournamentConfig } from '~/features/tournament/types';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
 import GameOverScreen, {
   type SaveStatus
@@ -20,7 +28,6 @@ import {
 } from '~/features/game/services/rosterSetup';
 import {
   applyPlayerSelectionToDuel,
-  getAvailableSelectableGroupCount,
   getCardsBySide,
   getPlayerDataBySide
 } from '~/features/game/engine/duelEngine';
@@ -91,6 +98,7 @@ type RootContext = {
 const CardGame = () => {
   const { t, language, setLanguage } = useLanguage();
   const { theme } = useTheme();
+  const audio = useAudio();
   const clientSecrets = useOutletContext<RootContext>();
   const [team1Data, setTeam1Data] = useState<TeamData>(
     createInitialTeamData(1, t('common.team'))
@@ -118,6 +126,29 @@ const CardGame = () => {
   const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
   const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
+  const tournament = useTournament();
+  const [isTournamentSetup, setIsTournamentSetup] = useState(false);
+  const [tournamentView, setTournamentView] = useState<
+    'setup' | 'bracket' | 'match'
+  >('setup');
+  const [tournamentMatchRecorded, setTournamentMatchRecorded] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tournament') === 'setup') {
+      setIsTournamentSetup(true);
+      setTournamentView('setup');
+    }
+  }, []);
+
+  const currentBgmTrack = useMemo<BgmTrack>(() => {
+    const trackMap: Record<string, BgmTrack> = {
+      summer: 'bgm_summer',
+      christmas: 'bgm_xmas',
+      jrpg: 'bgm_jrpg'
+    };
+    return trackMap[theme] || 'bgm_summer';
+  }, [theme]);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -154,6 +185,19 @@ const CardGame = () => {
       return () => clearTimeout(timer);
     }
   }, [duelResult, duelData.isFinishDuel]);
+
+  // Start/stop BGM based on game state and theme
+  useEffect(() => {
+    if (gameState !== 'gamePlaying') {
+      audio.stopBgm();
+      return;
+    }
+    audio.playBgm(currentBgmTrack);
+    return () => {
+      audio.stopBgm();
+    };
+  }, [audio, currentBgmTrack, gameState]);
+
   // Local allocations for setup screen
   const [team1Alloc, setTeam1Alloc] = useState<PowerUpsAllocation>(
     createAllocationFromTeam(createInitialTeamData(1, t('common.team')))
@@ -307,6 +351,55 @@ const CardGame = () => {
     })
   ];
 
+  const applyTournamentConfig = useCallback(
+    (config: TournamentConfig) => {
+      const [team1Name, team2Name] = config.teamNames;
+      setTeam1Data((prev) => ({ ...prev, name: team1Name }));
+      setTeam2Data((prev) => ({ ...prev, name: team2Name }));
+    },
+    []
+  );
+
+  const resetMatchForSetup = useCallback(() => {
+    setDuelData(createInitialDuelData());
+    setTeamWinner('');
+    setDuelResult('');
+    setIsFirstTurn(true);
+    setRoundNumber(0);
+    setWinStreaks({});
+    setDuelEvents([]);
+    setSaveStatus('idle');
+    setShowWinnerAnnouncement(false);
+    setGameStartTime(null);
+    setTournamentMatchRecorded(false);
+    setHistoryStack([]);
+    setRedoStack([]);
+    setConfirmPopup({
+      isVisible: false,
+      teamName: undefined,
+      chanceType: undefined,
+      chanceItemName: ''
+    });
+    setTeam1Data((prev) => ({
+      ...prev,
+      score: 0,
+      scoreClass: '',
+      players: []
+    }));
+    setTeam2Data((prev) => ({
+      ...prev,
+      score: 0,
+      scoreClass: '',
+      players: []
+    }));
+  }, []);
+
+  const returnToTournamentBracket = useCallback(() => {
+    resetMatchForSetup();
+    setGameState('setup');
+    setTournamentView('bracket');
+  }, [resetMatchForSetup]);
+
   const performSave = useCallback(() => {
     const url = clientSecrets?.SUPABASE_URL;
     const key = clientSecrets?.SUPABASE_ANON_KEY;
@@ -348,6 +441,42 @@ const CardGame = () => {
     performSave();
   }, [gameState, saveStatus, performSave]);
 
+  useEffect(() => {
+    if (gameState !== 'gameOver') return;
+    if (tournamentMatchRecorded) return;
+    if (
+      tournament.hasActiveTournament &&
+      tournament.currentSlotId &&
+      tournament.bracket
+    ) {
+      const bracket = tournament.bracket;
+      const winnerTeam: TeamName =
+        team1Data.players.length === 0 ? 'team2' : 'team1';
+      const winnerName =
+        winnerTeam === 'team1'
+          ? bracket.config.teamNames[0]
+          : bracket.config.teamNames[1];
+      const loserName =
+        winnerTeam === 'team1'
+          ? bracket.config.teamNames[1]
+          : bracket.config.teamNames[0];
+      tournament.finishMatch(
+        winnerName,
+        loserName,
+        winnerTeam === 'team1' ? team1Data.score : team2Data.score,
+        winnerTeam === 'team1' ? team2Data.score : team1Data.score
+      );
+      setTournamentMatchRecorded(true);
+    }
+  }, [
+    gameState,
+    team1Data.players.length,
+    team1Data.score,
+    team2Data.score,
+    tournament,
+    tournamentMatchRecorded
+  ]);
+
   const handleRetrySave = useCallback(() => {
     performSave();
   }, [performSave]);
@@ -378,6 +507,8 @@ const CardGame = () => {
     // setTotalRound(Math.max(team1Data.length, team2Data.length));
     // Start the first round
     nextRound(team1Players, team2Players, false);
+    audio.ensureAudioResumed();
+    audio.playSfx('game_start');
   };
 
   /**
@@ -412,6 +543,7 @@ const CardGame = () => {
     }
 
     setGameState('gameLoading');
+    audio.preloadBgm(currentBgmTrack);
     try {
       await preloadGameImages(getThemeExtraCardBacks(theme));
     } catch (error) {
@@ -426,22 +558,30 @@ const CardGame = () => {
     if (setupMode === 'both' || setupMode === 'random') {
       setTeam1Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team1Players,
         powerUps: { ...team1Alloc }
       }));
       setTeam2Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team2Players,
         powerUps: { ...team1Alloc }
       }));
     } else {
       setTeam1Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team1Players,
         powerUps: { ...team1Alloc }
       }));
       setTeam2Data((prev) => ({
         ...prev,
+        score: 0,
+        scoreClass: '',
         players: team2Players,
         powerUps: { ...team2Alloc }
       }));
@@ -464,10 +604,12 @@ const CardGame = () => {
       if (inputTeam1.length === 0 || inputTeam2.length === 0) {
         setTeamWinner(
           inputTeam1.length === 0
-            ? `${t('common.team')} 2 ${t('game.isWinner')}`
-            : `${t('common.team')} 1 ${t('game.isWinner')}`
+            ? `${team2Data.name} ${t('game.isWinner')}`
+            : `${team1Data.name} ${t('game.isWinner')}`
         );
         setGameState('gameOver');
+        audio.playSfx('game_over');
+        audio.stopBgm();
         return;
       }
 
@@ -517,8 +659,17 @@ const CardGame = () => {
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
+      audio.playSfx('card_deal');
+      audio.playSfx('round_start');
     },
-    [recordHistorySnapshot, roundNumber, t]
+    [
+      audio,
+      recordHistorySnapshot,
+      roundNumber,
+      t,
+      team1Data.name,
+      team2Data.name
+    ]
   );
 
   const playerSelect = (side: Side) => {
@@ -549,7 +700,9 @@ const CardGame = () => {
       };
 
       setDuelData((prev) => ({ ...prev, ...updates }));
+      audio.playSfx('group_pick');
     } else {
+      audio.playSfx('card_flip');
       const updates: Partial<DuelData> = applyPlayerSelectionToDuel({
         duelData,
         side,
@@ -567,25 +720,8 @@ const CardGame = () => {
         if (!newData.player1SideSelected || !newData.player2SideSelected) {
           return newData;
         }
-
-        const firstPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player1SideSelected
-        );
-        const secondPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player2SideSelected
-        );
-
-        const { isPlayer1Winner } = determineWinner(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          t
-        );
+        const player1SideSelected = newData.player1SideSelected;
+        const player2SideSelected = newData.player2SideSelected;
 
         const updatedData = {
           ...newData,
@@ -626,6 +762,14 @@ const CardGame = () => {
                 }
               : newData.bottomRightPlayerData
         };
+        const firstPlayerData = getPlayerDataBySide(
+          updatedData,
+          player1SideSelected
+        );
+        const secondPlayerData = getPlayerDataBySide(
+          updatedData,
+          player2SideSelected
+        );
 
         calculateResult(
           firstPlayerData.sum,
@@ -992,6 +1136,7 @@ const CardGame = () => {
 
     if (teamName && chanceType) {
       recordHistorySnapshot();
+      audio.playSfx('powerup_activate');
 
       switch (chanceType) {
         case 'secondChance': {
@@ -1279,6 +1424,24 @@ const CardGame = () => {
 
       setDuelResult(resultMessage);
 
+      // Play duel outcome sound
+      if (shouldPreventElimination) {
+        audio.playSfx('powerup_activate');
+      } else if (p1Sum === p2Sum) {
+        audio.playSfx('duel_tie');
+      } else {
+        audio.playSfx('duel_win');
+        audio.playSfx('duel_lose');
+      }
+
+      // Play streak sound for winner
+      if (newStreak >= 3 && newStreak <= 8) {
+        const streakKey = `kill_streak_${Math.min(newStreak, 8)}`;
+        if (streakKey in SFX_REGISTRY) {
+          audio.playSfx(streakKey as SoundEvent);
+        }
+      }
+
       // Get the current team arrays
       const currentTeam1Players = team1Data.players;
       const currentTeam2Players = team2Data.players;
@@ -1319,9 +1482,11 @@ const CardGame = () => {
       duelData.revealTwoUsedBy,
       duelData.removeWorstUsedByTeams,
       duelData.secondChanceUsedByTeams,
+      duelData.aiRecommendationUsedByTeams,
       winStreaks,
       t,
-      roundNumber
+      roundNumber,
+      audio
     ]
   );
 
@@ -1510,6 +1675,46 @@ const CardGame = () => {
       </label>
     );
   };
+
+  function renderTournament() {
+    if (!isTournamentSetup) return null;
+
+    if (!tournament.hasActiveTournament && tournamentView === 'setup') {
+      return (
+        <TournamentSetup
+          onStart={(config) => {
+            tournament.startTournament(config);
+            applyTournamentConfig(config);
+            setTournamentView('bracket');
+          }}
+        />
+      );
+    }
+
+    if (tournamentView !== 'bracket' || !tournament.bracket) return null;
+
+    return (
+      <BracketView
+        bracket={tournament.bracket}
+        onPlaySlot={(slotId) => {
+          tournament.beginMatch(slotId);
+          const slot = tournament.bracket!.slots.find((s) => s.id === slotId);
+          if (!slot) return;
+          resetMatchForSetup();
+          setTeam1Data((prev) => ({ ...prev, name: slot.team1 }));
+          setTeam2Data((prev) => ({ ...prev, name: slot.team2 }));
+          setGameState('setup');
+          setTournamentView('match');
+        }}
+        onReset={() => {
+          tournament.resetTournament();
+          setIsTournamentSetup(false);
+          setTournamentView('setup');
+          resetMatchForSetup();
+        }}
+      />
+    );
+  }
 
   /**
    * Renders the combined Welcome (right) and Setup (left) UI in a two-column layout
@@ -2693,7 +2898,17 @@ const CardGame = () => {
 
   return (
     <div style={{ textAlign: 'center', padding: '0 20px', height: '100%' }}>
-      {renderGameInput()}
+      <AudioControls
+        isMuted={audio.isMuted}
+        sfxVolume={audio.sfxVolume}
+        bgmVolume={audio.bgmVolume}
+        onToggleMute={audio.toggleMute}
+        onSfxVolumeChange={audio.setSfxVolume}
+        onBgmVolumeChange={audio.setBgmVolume}
+      />
+      {isTournamentSetup && tournamentView !== 'match'
+        ? renderTournament()
+        : renderGameInput()}
       <PowerupGuideModal
         isOpen={isPowerupGuideOpen}
         onClose={() => setIsPowerupGuideOpen(false)}
@@ -2724,8 +2939,20 @@ const CardGame = () => {
       {gameState == 'gameOver' && (
         <GameOverScreen
           teamWinner={teamWinner}
+          team1Name={team1Data.name}
+          team2Name={team2Data.name}
+          team1Score={team1Data.score}
+          team2Score={team2Data.score}
           saveStatus={saveStatus}
           onRetrySave={handleRetrySave}
+          duelEvents={duelEvents}
+          durationSeconds={
+            gameStartTime != null
+              ? Math.floor((Date.now() - gameStartTime) / 1000)
+              : 0
+          }
+          isTournamentMatch={isTournamentSetup && tournamentView === 'match'}
+          onReturnToTournament={returnToTournamentBracket}
         />
       )}
 

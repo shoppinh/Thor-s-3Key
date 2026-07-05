@@ -1,5 +1,22 @@
 # ⚡ Thor's 3Key
 
+<!--toc:start-->
+- [⚡ Thor's 3Key](#thor-s-3key)
+  - [🎮 What Is It?](#🎮-what-is-it)
+  - [⚔️ How Duels Work](#️-how-duels-work)
+  - [🛡️ Power-Ups (The Chaos Engine)](#🛡️-power-ups-the-chaos-engine)
+  - [🏆 Win Streaks](#🏆-win-streaks)
+  - [📊 Dashboard & Match History](#📊-dashboard-match-history)
+  - [🎨 Three Visual Themes](#🎨-three-visual-themes)
+  - [🌍 Bilingual (EN / VI)](#🌍-bilingual-en-vi)
+  - [🚀 Quick Start](#🚀-quick-start)
+    - [For Players](#for-players)
+    - [For Developers](#for-developers)
+    - [Environment Variables](#environment-variables)
+  - [🃏 Made For](#🃏-made-for)
+  - [Tech Stack](#tech-stack)
+<!--toc:end-->
+
 **CHAOTIC TEAM CARD BATTLES // POWER-UPS // RNG GLORY**
 
 Fast, silly, team-based card chaos. Load players from a Google Sheet, slam power-ups, and trash talk your way to victory.
