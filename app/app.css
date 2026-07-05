@@ -29,40 +29,43 @@
 
 [data-theme='christmas'] {
   /* Theme Colors - Christmas */
-  --color-bg: #1a0f0f;
-  --color-bg-gradient: linear-gradient(135deg, #2c0a0a, #1a472a, #0f2b1d);
-  --color-primary: #d42426; /* Christmas Red */
-  --color-primary-dark: #a01214;
-  --color-secondary: #2f9e44; /* Bright Evergreen */
-  --color-secondary-dark: #165b33;
-  --color-accent: #f8b229; /* Gold */
-  --color-text: #f0f0f0; /* Snow White */
-  --color-text-muted: #e0e0e0;
-  --color-panel-bg: rgba(40, 10, 10, 0.9);
-  --color-border: rgba(248, 178, 41, 0.5);
+  --color-bg: #091a10;
+  --color-bg-gradient: linear-gradient(135deg, #091a10 0%, #1c0505 50%, #05140b 100%);
+  --color-primary: #f87171; /* Soft red for Team 2 text */
+  --color-primary-dark: #b91c1c;
+  --color-secondary: #4ade80; /* Bright mint green for Team 1 text */
+  --color-secondary-dark: #15803d;
+  --color-accent: #facc15; /* Gold */
+  --color-text: #fffaf2; /* Soft white */
+  --color-text-muted: #d1d5db;
+  --color-panel-bg: rgba(30, 8, 8, 0.85);
+  --color-border: rgba(248, 113, 113, 0.4);
 
   /* Fonts */
-  --font-header: 'Mountains of Christmas', cursive;
-  --font-body: 'Rajdhani', sans-serif;
+  --font-header: 'Cinzel', serif;
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
 
   /* Effects */
   --glow-primary:
-    0 0 15px rgba(212, 36, 38, 0.8), 0 0 30px rgba(212, 36, 38, 0.4);
+    0 0 15px rgba(248, 113, 113, 0.8), 0 0 30px rgba(248, 113, 113, 0.4);
   --glow-secondary:
-    0 0 15px rgba(47, 158, 68, 0.8), 0 0 30px rgba(47, 158, 68, 0.4);
+    0 0 15px rgba(74, 222, 128, 0.8), 0 0 30px rgba(74, 222, 128, 0.4);
   --glow-accent:
-    0 0 15px rgba(248, 178, 41, 0.8), 0 0 30px rgba(248, 178, 41, 0.4);
+    0 0 15px rgba(250, 204, 21, 0.8), 0 0 30px rgba(250, 204, 21, 0.4);
   --skew-angle: 0deg; /* No skew for cozy feel */
-  --border-width: 4px;
+  --border-width: 2px;
 }
 
 /* Christmas Theme Overrides */
 [data-theme='christmas'] .rpg-panel {
   border-radius: 12px;
-  border: 4px solid var(--color-accent);
+  border: 2px solid var(--color-border);
+  background: var(--color-panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow:
-    0 0 20px rgba(212, 36, 38, 0.3),
-    inset 0 0 20px rgba(0, 0, 0, 0.5);
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 15px rgba(248, 113, 113, 0.15);
 }
 
 [data-theme='christmas'] .rpg-panel::before,
@@ -105,16 +108,14 @@
 [data-theme='christmas'] h1,
 [data-theme='christmas'] h2,
 [data-theme='christmas'] h3 {
-  letter-spacing: 2px;
-  text-shadow:
-    2px 2px 0 #000,
-    0 0 10px var(--color-accent);
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 [data-theme='summer'] {
   /* Theme Colors - Summer */
-  --color-bg: #ffcf8b;
-  --color-bg-gradient: linear-gradient(135deg, #ff8a6b, #ffc875 48%, #ff9a74);
+  --color-bg: #1b0a22;
+  --color-bg-gradient: linear-gradient(135deg, #1b0a22 0%, #3e122b 50%, #632238 100%);
   --color-primary: #ff5f6d; /* Hibiscus coral */
   --color-primary-dark: #d83d4d;
   --color-secondary: #10d8e8; /* Lagoon cyan */
@@ -133,8 +134,8 @@
   --color-on-team-2: #06242a;
 
   /* Fonts */
-  --font-header: 'Pacifico', cursive;
-  --font-body: 'Atkinson Hyperlegible', 'Rajdhani', sans-serif;
+  --font-header: 'Outfit', sans-serif;
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
 
   /* Effects */
   --glow-primary:
@@ -143,7 +144,7 @@
     0 0 15px rgba(0, 242, 255, 0.8), 0 0 30px rgba(0, 242, 255, 0.4);
   --glow-accent:
     0 0 15px rgba(255, 221, 0, 0.8), 0 0 30px rgba(255, 221, 0, 0.4);
-  --skew-angle: -5deg;
+  --skew-angle: 0deg; /* No skew for modern feel */
   --border-width: 3px;
 }
 
@@ -194,11 +195,8 @@
 [data-theme='summer'] h1,
 [data-theme='summer'] h2,
 [data-theme='summer'] h3 {
-  letter-spacing: 1px;
-  text-transform: none; /* Pacifico looks better with natural casing */
-  text-shadow:
-    0 2px 0 rgba(58, 24, 35, 0.85),
-    0 0 10px rgba(255, 212, 59, 0.5);
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 [data-theme='summer'] .text-glow {

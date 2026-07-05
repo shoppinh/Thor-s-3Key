@@ -118,6 +118,8 @@ const CardGame = () => {
   const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
   const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
+  const [isAiThinking, setIsAiThinking] = useState(false);
+  const [aiMessageIndex, setAiMessageIndex] = useState(0);
 
   // Effect to handle score blinking for Team 1
   useEffect(() => {
@@ -522,6 +524,7 @@ const CardGame = () => {
   );
 
   const playerSelect = (side: Side) => {
+    if (isAiThinking) return;
     recordHistorySnapshot();
 
     const currentPlayer = duelData.currentPlayerName; // Capture current player before any updates
@@ -659,6 +662,9 @@ const CardGame = () => {
    * 2. Player has used Second Chance (name is "?" and team is "") and it's their turn
    */
   const isPlayerCardDrawerDisabled = (playerData: PlayerData) => {
+    if (isAiThinking) {
+      return true;
+    }
     // If duel is finished, disable all interactions
     if (duelData.isFinishDuel) {
       return true;
@@ -739,6 +745,10 @@ const CardGame = () => {
       aiRecommendationUsedByTeams: [
         ...(prev.aiRecommendationUsedByTeams || []),
         teamName
+      ],
+      aiSelectedSides: [
+        ...(prev.aiSelectedSides || []),
+        chosen
       ]
     }));
     playerSelect(chosen);
@@ -772,25 +782,72 @@ const CardGame = () => {
    * When a team activates this item, it allows them to have another chance in the duel
    * This can be used after both players have made their selections
    */
-  const implementSecondChance = () => {
+  const implementSecondChance = (teamName: TeamName) => {
     setDuelData((prev) => {
       const currentDuelData = { ...prev };
 
-      // Check if this is the first or second player in the duel
-      if (currentDuelData.duelIndex === 1) {
-        // First player activated Second Chance
-        // Reset their selection to reveal cards (player name is "?", team name is "")
+      // Revert the calculated result (reduce winning team's score by 1)
+      if (currentDuelData.winningTeam) {
+        if (currentDuelData.winningTeam === 'team1') {
+          setTeam1Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
+        } else {
+          setTeam2Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
+        }
+      }
+
+      // Revert player elimination - add the losing player back to their team
+      const firstPlayerName = currentDuelData.player1Name;
+      const firstPlayerTeam = currentDuelData.player1Team;
+      const secondPlayerName = currentDuelData.player2Name;
+      const secondPlayerTeam = currentDuelData.player2Team;
+
+      // Determine who the losing player was based on the winning team
+      let losingPlayer = '';
+      let losingTeam: TeamName | undefined;
+
+      if (currentDuelData.winningTeam === firstPlayerTeam) {
+        // First player won, so second player was eliminated
+        losingPlayer = secondPlayerName;
+        losingTeam = secondPlayerTeam;
+      } else {
+        // Second player won, so first player was eliminated
+        losingPlayer = firstPlayerName;
+        losingTeam = firstPlayerTeam;
+      }
+
+      // Add the losing player back to their team if they're not already there
+      if (losingPlayer && losingTeam) {
+        if (losingTeam === 'team1') {
+          setTeam1Data((prevTeam) => {
+            if (!prevTeam.players.includes(losingPlayer)) {
+              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
+            }
+            return prevTeam;
+          });
+        } else {
+          setTeam2Data((prevTeam) => {
+            if (!prevTeam.players.includes(losingPlayer)) {
+              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
+            }
+            return prevTeam;
+          });
+        }
+      }
+
+      // Determine which player in the duel belongs to the team that used Second Chance
+      const isFirstPlayerUsingIt = firstPlayerTeam === teamName;
+
+      // Create updated player data based on current state
+      const updatedPlayerData = {
+        topLeftPlayerData: currentDuelData.topLeftPlayerData,
+        bottomLeftPlayerData: currentDuelData.bottomLeftPlayerData,
+        topRightPlayerData: currentDuelData.topRightPlayerData,
+        bottomRightPlayerData: currentDuelData.bottomRightPlayerData
+      };
+
+      if (isFirstPlayerUsingIt) {
+        // Reset only the first player's selection to reveal cards (player name is "?", team name is "")
         const firstPlayerSide = currentDuelData.player1SideSelected;
-
-        // Create updated player data based on the first player's actual selection
-        const updatedPlayerData = {
-          topLeftPlayerData: currentDuelData.topLeftPlayerData,
-          bottomLeftPlayerData: currentDuelData.bottomLeftPlayerData,
-          topRightPlayerData: currentDuelData.topRightPlayerData,
-          bottomRightPlayerData: currentDuelData.bottomRightPlayerData
-        };
-
-        // Reset only the position that the first player actually selected
         if (firstPlayerSide === 'top-left') {
           updatedPlayerData.topLeftPlayerData = {
             name: '?',
@@ -821,10 +878,42 @@ const CardGame = () => {
           };
         }
 
+        // Also reset the second player's selection since they must pick again after first player's new selection
+        const secondPlayerSide = currentDuelData.player2SideSelected;
+        if (secondPlayerSide === 'top-left') {
+          updatedPlayerData.topLeftPlayerData = {
+            name: '',
+            team: '',
+            sum: 0,
+            cards: []
+          };
+        } else if (secondPlayerSide === 'bottom-left') {
+          updatedPlayerData.bottomLeftPlayerData = {
+            name: '',
+            team: '',
+            sum: 0,
+            cards: []
+          };
+        } else if (secondPlayerSide === 'top-right') {
+          updatedPlayerData.topRightPlayerData = {
+            name: '',
+            team: '',
+            sum: 0,
+            cards: []
+          };
+        } else if (secondPlayerSide === 'bottom-right') {
+          updatedPlayerData.bottomRightPlayerData = {
+            name: '',
+            team: '',
+            sum: 0,
+            cards: []
+          };
+        }
+
         return {
           ...currentDuelData,
           // Reset the current player to allow new selection
-          currentPlayerName: currentDuelData.player1Name,
+          currentPlayerName: firstPlayerName,
           // Reset first player's data to reveal cards
           player1Name: '?',
           player1Team: undefined,
@@ -832,7 +921,7 @@ const CardGame = () => {
           player2Team: undefined,
           // Reset duel index to allow new selection
           duelIndex: 0,
-          // Update only the position that was actually selected
+          // Update the player positions
           ...updatedPlayerData,
           // Reset reveal flags
           topLeftRevealed: false,
@@ -843,68 +932,13 @@ const CardGame = () => {
           player1SideSelected: undefined,
           player2SideSelected: undefined,
           // Reset winning team
-          winningTeam: undefined
+          winningTeam: undefined,
+          // Reset finish duel flag so player can make new selection
+          isFinishDuel: false
         };
-      } else if (currentDuelData.duelIndex === 2) {
-        // Second player activated Second Chance
-        // Revert the calculated result (reduce winning team's score by 1)
-        if (currentDuelData.winningTeam) {
-          if (currentDuelData.winningTeam === 'team1') {
-            setTeam1Data((prev) => ({ ...prev, score: prev.score - 1 }));
-          } else {
-            setTeam2Data((prev) => ({ ...prev, score: prev.score - 1 }));
-          }
-        }
-
+      } else {
         // Reset only the second player's selection to reveal cards (player name is "?", team name is "")
         const secondPlayerSide = currentDuelData.player2SideSelected;
-        const secondPlayerName = currentDuelData.player2Name;
-
-        // Revert player elimination - add the losing player back to their team
-        const firstPlayerName = currentDuelData.player1Name;
-        const firstPlayerTeam = currentDuelData.player1Team;
-
-        // Determine who the losing player was based on the winning team
-        let losingPlayer = '';
-        let losingTeam: TeamName | undefined;
-
-        if (currentDuelData.winningTeam === firstPlayerTeam) {
-          // First player won, so second player was eliminated
-          losingPlayer = secondPlayerName;
-          losingTeam = currentDuelData.player2Team;
-        } else {
-          // Second player won, so first player was eliminated
-          losingPlayer = firstPlayerName;
-          losingTeam = firstPlayerTeam;
-        }
-
-        // Add the losing player back to their team if they're not already there
-        if (losingPlayer && losingTeam) {
-          if (losingTeam === 'team1') {
-            setTeam1Data((prev) => {
-              if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer, ...prev.players] };
-              }
-              return prev;
-            });
-          } else {
-            setTeam2Data((prev) => {
-              if (!prev.players.includes(losingPlayer)) {
-                return { ...prev, players: [losingPlayer, ...prev.players] };
-              }
-              return prev;
-            });
-          }
-        }
-
-        // Create updated player data based on current state
-        const updatedPlayerData = {
-          topLeftPlayerData: currentDuelData.topLeftPlayerData,
-          bottomLeftPlayerData: currentDuelData.bottomLeftPlayerData,
-          topRightPlayerData: currentDuelData.topRightPlayerData,
-          bottomRightPlayerData: currentDuelData.bottomRightPlayerData
-        };
-
         if (secondPlayerSide === 'top-left') {
           updatedPlayerData.topLeftPlayerData = {
             name: '?',
@@ -944,7 +978,7 @@ const CardGame = () => {
           // Reset second player's data
           player2Name: '',
           player2Team: undefined,
-          // Update only the second player's position
+          // Update the player positions
           ...updatedPlayerData,
           // Reset only the second player's side selection
           player2SideSelected: undefined,
@@ -954,9 +988,6 @@ const CardGame = () => {
           isFinishDuel: false
         };
       }
-
-      // If duelIndex is not 1 or 2, return unchanged
-      return currentDuelData;
     });
   };
 
@@ -1015,7 +1046,7 @@ const CardGame = () => {
             }));
           }
 
-          implementSecondChance();
+          implementSecondChance(teamName);
           setDuelData((prev) => ({
             ...prev,
             secondChanceUsedByTeams: [
@@ -2718,6 +2749,10 @@ const CardGame = () => {
           canRedo={canRedo}
           onRedo={redoLastAction}
           onAiPick={aiEnabled ? handleAiPick : undefined}
+          isAiThinking={isAiThinking}
+          aiMessageIndex={aiMessageIndex}
+          setIsAiThinking={setIsAiThinking}
+          setAiMessageIndex={setAiMessageIndex}
         />
       )}
 

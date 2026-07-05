@@ -26,6 +26,10 @@ interface RoundStatusProps {
   canRedo: boolean;
   onRedo: () => void;
   onAiPick?: () => void;
+  isAiThinking: boolean;
+  aiMessageIndex: number;
+  setIsAiThinking: (thinking: boolean) => void;
+  setAiMessageIndex: (index: number) => void;
 }
 
 const AI_THINKING_MESSAGES = [
@@ -58,34 +62,34 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   onUndo,
   canRedo,
   onRedo,
-  onAiPick
+  onAiPick,
+  isAiThinking,
+  aiMessageIndex,
+  setIsAiThinking,
+  setAiMessageIndex
 }) => {
   const { t } = useLanguage();
-  const [isAiThinking, setIsAiThinking] = React.useState(false);
-  const [aiMessageIndex, setAiMessageIndex] = React.useState(0);
 
   // Randomly switch AI thinking messages while thinking
   React.useEffect(() => {
     if (!isAiThinking) return;
     const interval = setInterval(() => {
-      setAiMessageIndex(() =>
+      setAiMessageIndex(
         Math.floor(Math.random() * AI_THINKING_MESSAGES.length)
       );
     }, 800);
     return () => clearInterval(interval);
-  }, [isAiThinking]);
+  }, [isAiThinking, setAiMessageIndex]);
 
   const handleAiPickClick = React.useCallback(() => {
     if (!onAiPick || isAiThinking) return;
     setIsAiThinking(true);
     setAiMessageIndex(Math.floor(Math.random() * AI_THINKING_MESSAGES.length));
-    const delay = 1000 + Math.random() * 3000; // 1-4 seconds
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       setIsAiThinking(false);
       onAiPick();
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [onAiPick, isAiThinking]);
+    }, 2000);
+  }, [onAiPick, isAiThinking, setIsAiThinking, setAiMessageIndex]);
 
   // Auto-advance logic (kept from original)
   React.useEffect(() => {
@@ -141,8 +145,6 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     };
 
     const isSecondChanceEnabled = () => {
-      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-      const currentTurnTeam = getCurrentTurnTeam();
       if ((duelData.secondChanceUsedByTeams || []).includes(teamKey))
         return false;
 
@@ -164,14 +166,29 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       ].filter(Boolean).length;
       if (availableCount === 0) return false;
 
-      if (duelData.player1SideSelected && !duelData.player2SideSelected)
-        return teamKey === firstPlayerTeam;
-      if (duelData.player1SideSelected && duelData.player2SideSelected) {
-        if (teamKey === secondPlayerTeam)
+      const currentTurnTeam = getCurrentTurnTeam();
+
+      // If duel finished, the losing team can use second chance
+      if (isFinishDuel) {
+        const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+        if (teamKey === secondPlayerTeam) {
           return duelData.winningTeam !== secondPlayerTeam;
+        }
+        if (teamKey === firstPlayerTeam) {
+          return duelData.winningTeam !== firstPlayerTeam;
+        }
         return false;
       }
+
+      // During active turns, Second Chance is disabled for the team whose turn it is NOT
       if (currentTurnTeam !== teamKey) return false;
+
+      // A player cannot use Second Chance if they haven't selected yet
+      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
+      const isFirstPlayerSelected = teamKey === firstPlayerTeam && duelData.player1SideSelected;
+      const isSecondPlayerSelected = teamKey === secondPlayerTeam && duelData.player2SideSelected;
+      if (isFirstPlayerSelected || isSecondPlayerSelected) return false;
+
       return false;
     };
 

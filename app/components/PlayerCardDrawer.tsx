@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { PlayerData } from '~/models/PlayerData';
 import DuelData from '~/models/DuelData';
@@ -32,13 +33,15 @@ export const getPlayerCardDrawerDisplayState = ({
   coveredCards,
   fullCards,
   isFinishDuel,
-  disabledByRemoveWorst
+  disabledByRemoveWorst,
+  isAiThinking = false
 }: {
   playerCards: Card[];
   coveredCards: Card[];
   fullCards: Card[];
   isFinishDuel: boolean;
   disabledByRemoveWorst: boolean;
+  isAiThinking?: boolean;
 }) => {
   const isBlankHand = playerCards.length === 0;
   const cards =
@@ -51,7 +54,7 @@ export const getPlayerCardDrawerDisplayState = ({
   return {
     cards,
     shouldShowDrawButton: isBlankHand && !isFinishDuel,
-    canClickCards: isBlankHand && !isFinishDuel && !disabledByRemoveWorst
+    canClickCards: isBlankHand && !isFinishDuel && !disabledByRemoveWorst && !isAiThinking
   };
 };
 
@@ -67,7 +70,9 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   side,
   disabled,
   renderTheCards,
-  CARDS_COVER
+  CARDS_COVER,
+  isAiThinking = false,
+  isAiSelected = false
 }) => {
   const { t } = useLanguage();
   // Helper function to determine if player can make a selection
@@ -99,9 +104,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     coveredCards: CARDS_COVER,
     fullCards,
     isFinishDuel: duelData.isFinishDuel,
-    disabledByRemoveWorst
+    disabledByRemoveWorst,
+    isAiThinking
   });
-  const isDrawDisabled = disabled || disabledByRemoveWorst;
+  const isDrawDisabled = disabled || disabledByRemoveWorst || isAiThinking;
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -123,7 +129,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
         padding: '10px',
         margin: '5px',
         background: 'var(--color-surface, rgba(15, 12, 41, 0.6))',
-        border: '1px solid rgba(0, 242, 255, 0.3)',
+        border: isAiSelected
+          ? '2px solid var(--color-accent)'
+          : '1px solid rgba(0, 242, 255, 0.3)',
+        boxShadow: isAiSelected ? '0 0 18px var(--color-accent)' : undefined,
         opacity: isDrawDisabled && !playerData.name ? 0.64 : 1
       }}
     >

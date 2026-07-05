@@ -53,4 +53,8 @@ export default interface DuelData {
    * Unlimited uses per duel — tracked for display in match history.
    */
   aiRecommendationUsedByTeams?: TeamName[];
+  /**
+   * Tracks which sides were selected via AI Recommendation.
+   */
+  aiSelectedSides?: Side[];
 }

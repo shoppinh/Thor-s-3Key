@@ -36,6 +36,10 @@ type GameArenaScreenProps = {
   canRedo: boolean;
   onRedo: () => void;
   onAiPick?: () => void;
+  isAiThinking: boolean;
+  aiMessageIndex: number;
+  setIsAiThinking: (thinking: boolean) => void;
+  setAiMessageIndex: (index: number) => void;
 };
 
 const GameArenaScreen = ({
@@ -55,7 +59,11 @@ const GameArenaScreen = ({
   onUndo,
   canRedo,
   onRedo,
-  onAiPick
+  onAiPick,
+  isAiThinking,
+  aiMessageIndex,
+  setIsAiThinking,
+  setAiMessageIndex
 }: GameArenaScreenProps) => {
   const { t } = useLanguage();
   const player1EquityName = duelData.player1Name;
@@ -241,6 +249,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.topLeft
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('top-left')}
               />
               <PlayerCardDrawer
                 className={''}
@@ -258,6 +268,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.bottomLeft
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('bottom-left')}
               />
             </div>
             <div
@@ -279,6 +291,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.topRight
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('top-right')}
               />
               <PlayerCardDrawer
                 className={''}
@@ -296,6 +310,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.bottomRight
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('bottom-right')}
               />
             </div>
           </div>
@@ -393,6 +409,10 @@ const GameArenaScreen = ({
         canRedo={canRedo}
         onRedo={onRedo}
         onAiPick={onAiPick}
+        isAiThinking={isAiThinking}
+        aiMessageIndex={aiMessageIndex}
+        setIsAiThinking={setIsAiThinking}
+        setAiMessageIndex={setAiMessageIndex}
       />
     </>
   );
