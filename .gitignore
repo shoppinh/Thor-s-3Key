@@ -10,3 +10,4 @@ node_modules
 .github/prompts
 .vscode
 .opencode
+.session/
