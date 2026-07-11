@@ -20,9 +20,9 @@ describe('gameStore', () => {
     const t = (key: string) => key;
 
     const { initialize, setSheetId, setSetupMode } = useGameStore.getState();
-    
+
     initialize({ matchRepository: mockRepo, rosterLoader: mockLoader, t });
-    
+
     setSheetId('test-sheet-id');
     setSetupMode('both');
 

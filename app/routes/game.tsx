@@ -4,22 +4,14 @@ import { useLanguage } from '~/contexts/LanguageContext';
 import { getSupabaseClient } from '~/lib/supabase';
 import { useTheme } from '~/contexts/ThemeContext';
 import GameArenaScreen from '~/features/game/components/GameArenaScreen';
-import GameOverScreen, {
-  type SaveStatus
-} from '~/features/game/components/GameOverScreen';
+import GameOverScreen from '~/features/game/components/GameOverScreen';
 import WinnerAnnouncement from '~/features/game/components/WinnerAnnouncement';
 import { RosterSetup } from '~/features/game/components/RosterSetup';
 import {
   getThemeExtraCardBacks,
   preloadGameImages
 } from '~/features/game/services/assetService';
-import {
-  Side,
-  TeamName,
-  PowerUpsAllocation
-} from '~/features/game/types/gameTypes';
 import { PlayerData } from '~/models/PlayerData';
-import { ChanceType } from '~/models/TeamData';
 import { getCardImage } from '~/utils/gameUtil';
 import useNavigationGuard from '~/utils/hooks/useNavigationGuard';
 import ConfirmPopup from '../components/ConfirmPopup';
@@ -61,7 +53,7 @@ const CardGame = () => {
   const initialize = useGameStore((state) => state.initialize);
 
   useEffect(() => {
-    if (matchRepository && rosterLoader) {
+    if (rosterLoader) {
       initialize({ matchRepository, rosterLoader, t });
     }
   }, [initialize, matchRepository, rosterLoader, t]);
@@ -85,9 +77,6 @@ const CardGame = () => {
     duelResult,
     isFirstTurn,
     gameState,
-    roundNumber,
-    winStreaks,
-    duelEvents,
     saveStatus,
     showWinnerAnnouncement,
     team1Alloc,
@@ -96,7 +85,7 @@ const CardGame = () => {
     isPowerupGuideOpen,
     historyStack,
     redoStack,
-    
+
     setSheetId,
     setSheetRange,
     setSetupMode,
@@ -105,6 +94,7 @@ const CardGame = () => {
     setRedoEnabled,
     setAiEnabled,
     setPowerupGuideOpen,
+    setGameState,
     addSetupRosterMember,
     removeSetupRosterMember,
     moveSetupRosterMember,
@@ -114,7 +104,6 @@ const CardGame = () => {
     randomizeBothAlloc,
     randomizeEachAlloc,
     startGame: triggerStartGameStore,
-    resetGame,
     nextRound,
     playerSelect,
     handleAiPick,
@@ -123,7 +112,6 @@ const CardGame = () => {
     handleCancelChance,
     undoLastAction,
     redoLastAction,
-    setShowWinnerAnnouncement,
     performSave
   } = useGameStore();
 
@@ -159,30 +147,14 @@ const CardGame = () => {
       return;
     }
 
-    useGameStore.setState({ gameState: 'gameLoading' });
+    setGameState('gameLoading');
     try {
       await preloadGameImages(getThemeExtraCardBacks(theme));
     } catch (error) {
-      useGameStore.setState({ gameState: 'setup' });
+      setGameState('setup');
       console.error('Error preloading images:', error);
       return;
     }
-
-    useGameStore.setState((state) => {
-      const isBothOrRandom = state.setupMode === 'both' || state.setupMode === 'random';
-      return {
-        team1Data: {
-          ...state.team1Data,
-          players: [...state.setupTeam1Roster],
-          powerUps: { ...state.team1Alloc }
-        },
-        team2Data: {
-          ...state.team2Data,
-          players: [...state.setupTeam2Roster],
-          powerUps: isBothOrRandom ? { ...state.team1Alloc } : { ...state.team2Alloc }
-        }
-      };
-    });
 
     triggerStartGameStore();
   };

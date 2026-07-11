@@ -1,11 +1,9 @@
 import { create } from 'zustand';
-import type Card from '~/models/Card';
 import type DuelData from '~/models/DuelData';
 import type { TeamData, ChanceType } from '~/models/TeamData';
 import type ConfirmPopupData from '~/models/ConfirmPopupData';
-import type { LocalDuelEvent, PowerUpsUsed } from '~/features/dashboard/types';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
 import type { GameSnapshot } from '~/features/game/state/historyStack';
-import type { SetupRosters } from '~/features/game/services/rosterSetup';
 import {
   GameState,
   PowerUpsAllocation,
@@ -51,8 +49,7 @@ import {
   addRosterMember,
   removeRosterMember,
   moveRosterMember,
-  shuffleRoster,
-  validateRosterSetup
+  shuffleRoster
 } from '~/features/game/services/rosterSetup';
 
 const DECKS = createDeck();
@@ -108,7 +105,7 @@ export interface GameStoreState {
 
 export interface GameStoreActions {
   initialize: (deps: {
-    matchRepository: MatchRepository;
+    matchRepository: MatchRepository | null;
     rosterLoader: RosterLoader;
     t: (key: string, options?: Record<string, unknown>) => string;
   }) => void;
@@ -120,7 +117,8 @@ export interface GameStoreActions {
   setRedoEnabled: (val: boolean) => void;
   setAiEnabled: (val: boolean) => void;
   setPowerupGuideOpen: (val: boolean) => void;
-  
+  setGameState: (state: GameState) => void;
+
   // Roster setup actions
   addSetupRosterMember: (team: TeamName, name: string) => void;
   removeSetupRosterMember: (team: TeamName, index: number) => void;
@@ -142,11 +140,11 @@ export interface GameStoreActions {
   handleChanceClick: (teamName: TeamName, chanceType: ChanceType) => void;
   handleConfirmChance: () => void;
   handleCancelChance: () => void;
-  
+
   // Save actions
   performSave: () => Promise<void>;
   setSaveStatus: (status: 'idle' | 'saving' | 'saved' | 'error') => void;
-  
+
   // Undo/Redo
   undoLastAction: () => void;
   redoLastAction: () => void;
@@ -170,7 +168,7 @@ const defaultT = (key: string, options?: Record<string, unknown>) => {
 const getInitialState = (): Omit<GameStoreState, 'matchRepository' | 'rosterLoader' | 't'> => {
   const initialTeam1 = createInitialTeamData(1, 'Team');
   const initialTeam2 = createInitialTeamData(2, 'Team');
-  
+
   return {
     sheetId: '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM',
     sheetRange: '3Key Game!A1:B30',
@@ -275,13 +273,13 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
       }
       return { setupForBothTeams };
     }),
-    setUndoEnabled: (undoEnabled) => set((state) => {
+    setUndoEnabled: (undoEnabled) => set(() => {
       if (!undoEnabled) {
         return { undoEnabled, redoEnabled: false, historyStack: [], redoStack: [] };
       }
       return { undoEnabled };
     }),
-    setRedoEnabled: (redoEnabled) => set((state) => {
+    setRedoEnabled: (redoEnabled) => set(() => {
       if (!redoEnabled) {
         return { redoEnabled, redoStack: [] };
       }
@@ -289,6 +287,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
     }),
     setAiEnabled: (aiEnabled) => set({ aiEnabled }),
     setPowerupGuideOpen: (isPowerupGuideOpen) => set({ isPowerupGuideOpen }),
+    setGameState: (gameState) => set({ gameState }),
 
     addSetupRosterMember: (team, name) => set((state) => {
       if (team === 'team1') {
@@ -357,9 +356,10 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
           setupTeam2Roster: team2,
           isRosterLoading: false
         });
-      } catch (err: any) {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load roster';
         set({
-          rosterLoadError: err?.message || 'Failed to load roster',
+          rosterLoadError: message,
           isRosterLoading: false
         });
       }
@@ -394,12 +394,24 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
     },
 
     startGame: () => {
-      const { setupTeam1Roster, setupTeam2Roster } = get();
+      const { setupTeam1Roster, setupTeam2Roster, setupMode, team1Alloc, team2Alloc } = get();
       if (setupTeam1Roster.length === 0 || setupTeam2Roster.length === 0) {
         return;
       }
 
-      set({
+      const isBothOrRandom = setupMode === 'both' || setupMode === 'random';
+
+      set((state) => ({
+        team1Data: {
+          ...state.team1Data,
+          players: [...setupTeam1Roster],
+          powerUps: { ...team1Alloc }
+        },
+        team2Data: {
+          ...state.team2Data,
+          players: [...setupTeam2Roster],
+          powerUps: isBothOrRandom ? { ...team1Alloc } : { ...team2Alloc }
+        },
         initialTeam1Roster: [...setupTeam1Roster],
         initialTeam2Roster: [...setupTeam2Roster],
         gameStartTime: Date.now(),
@@ -410,7 +422,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
         saveStatus: 'idle',
         gameState: 'gamePlaying',
         teamWinner: ''
-      });
+      }));
 
       get().nextRound(setupTeam1Roster, setupTeam2Roster, false);
     },
@@ -440,6 +452,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
               : `${t('common.team')} 1 ${t('game.isWinner')}`,
           gameState: 'gameOver'
         });
+        get().performSave();
         return;
       }
 
@@ -504,7 +517,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
       const newDuelIndex = duelData.duelIndex + 1;
       const opponent = getDuelOpponent(duelData, team1Data.players, team2Data.players);
       const teamName = team1Data.players.includes(currentPlayer) ? 'team1' : 'team2';
-      
+
       const selectedCards = getCardsBySide(duelData, side);
       const selectedSum = calculateSum(selectedCards);
 
@@ -708,7 +721,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
           const isTeam1ScoreUpdate =
             (isPlayer1Winner && firstPlayerTeam === 'team1') ||
             (!isPlayer1Winner && secondPlayerTeam === 'team1');
-            
+
           const activeTeamKey = isTeam1ScoreUpdate ? 'team1Data' : 'team2Data';
 
           set((state) => ({
@@ -846,7 +859,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>((set, get)
             // Implement second chance
             set((state) => {
               const currentDuelData = { ...state.duelData };
-              
+
               if (currentDuelData.duelIndex === 1) {
                 const firstPlayerSide = currentDuelData.player1SideSelected;
                 const updatedPlayerData = {
