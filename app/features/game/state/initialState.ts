@@ -47,7 +47,8 @@ export const createInitialDuelData = (): DuelData => ({
   secondChanceUsedByTeams: [],
   player1SideSelected: undefined,
   player2SideSelected: undefined,
-  winningTeam: undefined
+  winningTeam: undefined,
+  aiSelectedSides: []
 });
 
 export const createAllocationFromTeam = (
