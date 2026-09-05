@@ -26,8 +26,6 @@ interface PlayerCardDrawerProps {
     disabled?: boolean
   ) => React.ReactNode;
   CARDS_COVER: Card[];
-  isAiThinking?: boolean;
-  isAiSelected?: boolean;
 }
 
 export const getPlayerCardDrawerDisplayState = ({
@@ -72,9 +70,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
   side,
   disabled,
   renderTheCards,
-  CARDS_COVER,
-  isAiThinking = false,
-  isAiSelected = false
+  CARDS_COVER
 }) => {
   const { t } = useLanguage();
   // Helper function to determine if player can make a selection
@@ -106,10 +102,9 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     coveredCards: CARDS_COVER,
     fullCards,
     isFinishDuel: duelData.isFinishDuel,
-    disabledByRemoveWorst,
-    isAiThinking
+    disabledByRemoveWorst
   });
-  const isDrawDisabled = disabled || disabledByRemoveWorst || isAiThinking;
+  const isDrawDisabled = disabled || disabledByRemoveWorst;
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -131,10 +126,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
         padding: '10px',
         margin: '5px',
         background: 'var(--color-surface, rgba(15, 12, 41, 0.6))',
-        border: isAiSelected
-          ? '2px solid var(--color-accent)'
-          : '1px solid rgba(0, 242, 255, 0.3)',
-        boxShadow: isAiSelected ? '0 0 18px var(--color-accent)' : undefined,
+        border: '1px solid rgba(0, 242, 255, 0.3)',
         opacity: isDrawDisabled && !playerData.name ? 0.64 : 1
       }}
     >

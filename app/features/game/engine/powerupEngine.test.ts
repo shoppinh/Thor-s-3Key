@@ -66,22 +66,22 @@ describe('countAvailableSecondChanceSides', () => {
 describe('canUseSecondChance', () => {
   it('denies before any selection', () => {
     const duel = createInitialDuelData();
-    expect(canUseSecondChance({ teamKey: 'team1', duelData: duel })).toBe(
-      false
-    );
-    expect(canUseSecondChance({ teamKey: 'team2', duelData: duel })).toBe(
-      false
-    );
+    expect(
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
+    expect(
+      canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
   });
 
   it('enables first player team only after first pick when free sides remain', () => {
     const duel = afterFirstPick();
-    expect(canUseSecondChance({ teamKey: 'team1', duelData: duel })).toBe(
-      true
-    );
-    expect(canUseSecondChance({ teamKey: 'team2', duelData: duel })).toBe(
-      false
-    );
+    expect(
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: false })
+    ).toBe(true);
+    expect(
+      canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
   });
 
   it('denies first-pick redo when no free sides remain', () => {
@@ -93,16 +93,16 @@ describe('canUseSecondChance', () => {
     });
     // top-left already filled; force the other three filled → 0 free
     expect(countAvailableSecondChanceSides(duel)).toBe(0);
-    expect(canUseSecondChance({ teamKey: 'team1', duelData: duel })).toBe(
-      false
-    );
+    expect(
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
   });
 
   it('denies team that already used Second Chance this duel', () => {
     const duel = afterFirstPick({ secondChanceUsedByTeams: ['team1'] });
-    expect(canUseSecondChance({ teamKey: 'team1', duelData: duel })).toBe(
-      false
-    );
+    expect(
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
   });
 
   it('enables losing second player after resolve even when availableCount is 0', () => {
