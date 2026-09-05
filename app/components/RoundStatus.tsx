@@ -2,6 +2,7 @@ import React from 'react';
 import { ChanceType, TeamData } from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { canUseSecondChance } from '~/features/game/engine/powerupEngine';
 import { TeamName } from '~/features/game/types/gameTypes';
 
 interface RoundStatusProps {
@@ -95,17 +96,21 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   React.useEffect(() => {
     const noPlayersLeft =
       Math.min(team1Players.length, team2Players.length) === 0;
-    const bothSelected =
-      !!duelData.player1SideSelected && !!duelData.player2SideSelected;
-    const secondPlayerTeam = duelData.player2Team;
-    const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
-    const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
-    const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
-    const canSecondChanceNow =
-      bothSelected &&
-      !!secondPlayerTeam &&
-      secondTeamHasSecondChance &&
-      !secondTeamIsWinner;
+    const team1CanSecondChance =
+      team1Data.powerUps?.secondChance > 0 &&
+      canUseSecondChance({
+        teamKey: 'team1',
+        duelData,
+        isFinishDuel
+      });
+    const team2CanSecondChance =
+      team2Data.powerUps?.secondChance > 0 &&
+      canUseSecondChance({
+        teamKey: 'team2',
+        duelData,
+        isFinishDuel
+      });
+    const canSecondChanceNow = team1CanSecondChance || team2CanSecondChance;
 
     if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
       const timerId = setTimeout(() => {
@@ -144,53 +149,8 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       return null;
     };
 
-    const isSecondChanceEnabled = () => {
-      if ((duelData.secondChanceUsedByTeams || []).includes(teamKey))
-        return false;
-
-      // Check available groups
-      const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
-      const availableCount = [
-        !disabledByRemoveWorst.has('top-left') &&
-          !duelData.topLeftRevealed &&
-          duelData.topLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-left') &&
-          !duelData.bottomLeftRevealed &&
-          duelData.bottomLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('top-right') &&
-          !duelData.topRightRevealed &&
-          duelData.topRightPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-right') &&
-          !duelData.bottomRightRevealed &&
-          duelData.bottomRightPlayerData.cards.length === 0
-      ].filter(Boolean).length;
-      if (availableCount === 0) return false;
-
-      const currentTurnTeam = getCurrentTurnTeam();
-
-      // If duel finished, the losing team can use second chance
-      if (isFinishDuel) {
-        const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-        if (teamKey === secondPlayerTeam) {
-          return duelData.winningTeam !== secondPlayerTeam;
-        }
-        if (teamKey === firstPlayerTeam) {
-          return duelData.winningTeam !== firstPlayerTeam;
-        }
-        return false;
-      }
-
-      // During active turns, Second Chance is disabled for the team whose turn it is NOT
-      if (currentTurnTeam !== teamKey) return false;
-
-      // A player cannot use Second Chance if they haven't selected yet
-      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-      const isFirstPlayerSelected = teamKey === firstPlayerTeam && duelData.player1SideSelected;
-      const isSecondPlayerSelected = teamKey === secondPlayerTeam && duelData.player2SideSelected;
-      if (isFirstPlayerSelected || isSecondPlayerSelected) return false;
-
-      return false;
-    };
+    const isSecondChanceEnabled = () =>
+      canUseSecondChance({ teamKey, duelData, isFinishDuel });
 
     const isRevealTwoEnabled = () => {
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();

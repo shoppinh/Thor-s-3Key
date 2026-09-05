@@ -92,3 +92,86 @@ export const withRemoveWorstUsage = (
   removedWorstGroups: [...(duelData.removedWorstGroups || []), worstGroup],
   removeWorstUsedByTeams: [...(duelData.removeWorstUsedByTeams || []), teamName]
 });
+
+const SIDE_AVAILABILITY: {
+  side: Side;
+  isRevealed: (duelData: DuelData) => boolean;
+  cardsLength: (duelData: DuelData) => number;
+}[] = [
+  {
+    side: 'top-left',
+    isRevealed: (d) => d.topLeftRevealed,
+    cardsLength: (d) => d.topLeftPlayerData.cards.length
+  },
+  {
+    side: 'bottom-left',
+    isRevealed: (d) => d.bottomLeftRevealed,
+    cardsLength: (d) => d.bottomLeftPlayerData.cards.length
+  },
+  {
+    side: 'top-right',
+    isRevealed: (d) => d.topRightRevealed,
+    cardsLength: (d) => d.topRightPlayerData.cards.length
+  },
+  {
+    side: 'bottom-right',
+    isRevealed: (d) => d.bottomRightRevealed,
+    cardsLength: (d) => d.bottomRightPlayerData.cards.length
+  }
+];
+
+/** Unpicked, unrevealed sides still free for a Second Chance re-pick. */
+export const countAvailableSecondChanceSides = (duelData: DuelData): number => {
+  const disabled = new Set(duelData.removedWorstGroups || []);
+  return SIDE_AVAILABILITY.filter(
+    ({ side, isRevealed, cardsLength }) =>
+      !disabled.has(side) && !isRevealed(duelData) && cardsLength(duelData) === 0
+  ).length;
+};
+
+/**
+ * Whether a team may activate Second Chance in the current duel phase.
+ *
+ * Phases:
+ * - after first pick only → first player team, if a free side remains
+ * - after both picks / duel resolved → losing participant team(s)
+ *   (empty-side count is ignored; implementSecondChance resets selections)
+ */
+export const canUseSecondChance = ({
+  teamKey,
+  duelData,
+  isFinishDuel
+}: {
+  teamKey: TeamName;
+  duelData: DuelData;
+  isFinishDuel?: boolean;
+}): boolean => {
+  if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) {
+    return false;
+  }
+
+  const firstPlayerTeam = duelData.player1Team;
+  const secondPlayerTeam = duelData.player2Team;
+  const finished = isFinishDuel ?? duelData.isFinishDuel;
+  const bothSelected =
+    !!duelData.player1SideSelected && !!duelData.player2SideSelected;
+
+  if (finished || bothSelected) {
+    if (teamKey !== firstPlayerTeam && teamKey !== secondPlayerTeam) {
+      return false;
+    }
+    if (!duelData.winningTeam) {
+      return true;
+    }
+    return duelData.winningTeam !== teamKey;
+  }
+
+  if (duelData.player1SideSelected && !duelData.player2SideSelected) {
+    if (teamKey !== firstPlayerTeam) {
+      return false;
+    }
+    return countAvailableSecondChanceSides(duelData) > 0;
+  }
+
+  return false;
+};

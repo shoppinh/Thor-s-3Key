@@ -26,6 +26,8 @@ interface PlayerCardDrawerProps {
     disabled?: boolean
   ) => React.ReactNode;
   CARDS_COVER: Card[];
+  isAiThinking?: boolean;
+  isAiSelected?: boolean;
 }
 
 export const getPlayerCardDrawerDisplayState = ({
