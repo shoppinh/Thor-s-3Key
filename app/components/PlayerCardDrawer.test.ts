@@ -20,4 +20,18 @@ describe('getPlayerCardDrawerDisplayState', () => {
     expect(displayState.shouldShowDrawButton).toBe(false);
     expect(displayState.canClickCards).toBe(false);
   });
+
+  it('disables clicking cards when isAiThinking is true', () => {
+    const displayState = getPlayerCardDrawerDisplayState({
+      playerCards: [],
+      coveredCards: [card(0, '')],
+      fullCards: [card(1, '♦')],
+      isFinishDuel: false,
+      disabledByRemoveWorst: false,
+      isAiThinking: true
+    });
+
+    expect(displayState.shouldShowDrawButton).toBe(true);
+    expect(displayState.canClickCards).toBe(false);
+  });
 });

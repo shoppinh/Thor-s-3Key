@@ -96,18 +96,23 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   React.useEffect(() => {
     const noPlayersLeft =
       Math.min(team1Players.length, team2Players.length) === 0;
-    const secondPlayerTeam = duelData.player2Team;
-    const secondTeamHasSecondChance = secondPlayerTeam
-      ? (secondPlayerTeam === 'team1' ? team1Data : team2Data).powerUps
-          ?.secondChance > 0 &&
-        canUseSecondChance({
-          teamKey: secondPlayerTeam,
-          duelData,
-          isFinishDuel
-        })
-      : false;
+    const team1CanSecondChance =
+      (team1Data.powerUps?.secondChance ?? 0) > 0 &&
+      canUseSecondChance({
+        teamKey: 'team1',
+        duelData,
+        isFinishDuel
+      });
+    const team2CanSecondChance =
+      (team2Data.powerUps?.secondChance ?? 0) > 0 &&
+      canUseSecondChance({
+        teamKey: 'team2',
+        duelData,
+        isFinishDuel
+      });
+    const canSecondChanceNow = team1CanSecondChance || team2CanSecondChance;
 
-    if (duelResult && isFinishDuel && noPlayersLeft && !secondTeamHasSecondChance) {
+    if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
       const timerId = setTimeout(() => {
         nextRound(team1Players, team2Players);
       }, 3000);

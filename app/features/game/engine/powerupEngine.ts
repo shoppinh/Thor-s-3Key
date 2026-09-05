@@ -144,7 +144,7 @@ export const canUseSecondChance = ({
 }: {
   teamKey: TeamName;
   duelData: DuelData;
-  isFinishDuel: boolean;
+  isFinishDuel?: boolean;
 }): boolean => {
   if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) {
     return false;
@@ -152,7 +152,7 @@ export const canUseSecondChance = ({
 
   const firstPlayerTeam = duelData.player1Team;
   const secondPlayerTeam = duelData.player2Team;
-  const finished = isFinishDuel;
+  const finished = isFinishDuel ?? duelData.isFinishDuel;
   const bothSelected =
     !!duelData.player1SideSelected && !!duelData.player2SideSelected;
 

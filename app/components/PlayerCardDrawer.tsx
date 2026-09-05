@@ -56,7 +56,8 @@ export const getPlayerCardDrawerDisplayState = ({
   return {
     cards,
     shouldShowDrawButton: isBlankHand && !isFinishDuel,
-    canClickCards: isBlankHand && !isFinishDuel && !disabledByRemoveWorst && !isAiThinking
+    canClickCards:
+      isBlankHand && !isFinishDuel && !disabledByRemoveWorst && !isAiThinking
   };
 };
 
