@@ -249,6 +249,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.topLeft
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('top-left')}
               />
               <PlayerCardDrawer
                 className={''}
@@ -266,6 +268,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.bottomLeft
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('bottom-left')}
               />
             </div>
             <div
@@ -287,6 +291,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.topRight
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('top-right')}
               />
               <PlayerCardDrawer
                 className={''}
@@ -304,6 +310,8 @@ const GameArenaScreen = ({
                     ? duelData.revealedCards.bottomRight
                     : CARDS_COVER
                 }
+                isAiThinking={isAiThinking}
+                isAiSelected={duelData.aiSelectedSides?.includes('bottom-right')}
               />
             </div>
           </div>
