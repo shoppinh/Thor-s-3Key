@@ -2,6 +2,7 @@ import React from 'react';
 import { ChanceType, TeamData } from '~/models/TeamData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { canUseSecondChance } from '~/features/game/engine/powerupEngine';
 import { TeamName } from '~/features/game/types/gameTypes';
 
 interface RoundStatusProps {
@@ -95,34 +96,14 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
   React.useEffect(() => {
     const noPlayersLeft =
       Math.min(team1Players.length, team2Players.length) === 0;
-    const bothSelected =
-      !!duelData.player1SideSelected && !!duelData.player2SideSelected;
-    const secondPlayerTeam = duelData.player2Team;
-    const secondTeamData = secondPlayerTeam === 'team1' ? team1Data : team2Data;
-    const secondTeamHasSecondChance = secondTeamData.powerUps?.secondChance > 0;
-    const secondTeamIsWinner = duelData.winningTeam === secondPlayerTeam;
-    const canSecondChanceNow =
-      bothSelected &&
-      !!secondPlayerTeam &&
-      secondTeamHasSecondChance &&
-      !secondTeamIsWinner;
 
-    if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
+    if (duelResult && isFinishDuel && noPlayersLeft) {
       const timerId = setTimeout(() => {
         nextRound(team1Players, team2Players);
       }, 3000);
       return () => clearTimeout(timerId);
     }
-  }, [
-    duelResult,
-    isFinishDuel,
-    team1Players,
-    team2Players,
-    nextRound,
-    duelData,
-    team1Data,
-    team2Data
-  ]);
+  }, [duelResult, isFinishDuel, team1Players, team2Players, nextRound]);
 
   const renderTeamChances = (teamData: TeamData, teamKey: TeamName) => {
     const isTeam1 = teamKey === 'team1';
@@ -144,55 +125,16 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       return null;
     };
 
-    const isSecondChanceEnabled = () => {
-      if ((duelData.secondChanceUsedByTeams || []).includes(teamKey))
-        return false;
-
-      // Check available groups
-      const disabledByRemoveWorst = new Set(duelData.removedWorstGroups || []);
-      const availableCount = [
-        !disabledByRemoveWorst.has('top-left') &&
-          !duelData.topLeftRevealed &&
-          duelData.topLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-left') &&
-          !duelData.bottomLeftRevealed &&
-          duelData.bottomLeftPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('top-right') &&
-          !duelData.topRightRevealed &&
-          duelData.topRightPlayerData.cards.length === 0,
-        !disabledByRemoveWorst.has('bottom-right') &&
-          !duelData.bottomRightRevealed &&
-          duelData.bottomRightPlayerData.cards.length === 0
-      ].filter(Boolean).length;
-      if (availableCount === 0) return false;
-
-      const currentTurnTeam = getCurrentTurnTeam();
-
-      // If duel finished, the losing team can use second chance
-      if (isFinishDuel) {
-        const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-        if (teamKey === secondPlayerTeam) {
-          return duelData.winningTeam !== secondPlayerTeam;
-        }
-        if (teamKey === firstPlayerTeam) {
-          return duelData.winningTeam !== firstPlayerTeam;
-        }
-        return false;
-      }
-
-      // During active turns, Second Chance is disabled for the team whose turn it is NOT
-      if (currentTurnTeam !== teamKey) return false;
-
-      // A player cannot use Second Chance if they haven't selected yet
-      const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
-      const isFirstPlayerSelected = teamKey === firstPlayerTeam && duelData.player1SideSelected;
-      const isSecondPlayerSelected = teamKey === secondPlayerTeam && duelData.player2SideSelected;
-      if (isFirstPlayerSelected || isSecondPlayerSelected) return false;
-
-      return false;
-    };
+    const isSecondChanceEnabled = () =>
+      canUseSecondChance({
+        teamKey,
+        duelData,
+        isFinishDuel,
+        isAiThinking
+      });
 
     const isRevealTwoEnabled = () => {
+      if (isAiThinking) return false;
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey) return false;
@@ -212,11 +154,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     };
 
     const isLifeShieldEnabled = () => {
+      if (isAiThinking) return false;
       const currentTurnTeam = getCurrentTurnTeam();
       return currentTurnTeam === teamKey && !isFinishDuel;
     };
 
     const isRemoveWorstEnabled = () => {
+      if (isAiThinking) return false;
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey || isFinishDuel) return false;
       if ((duelData.removeWorstUsedByTeams || []).includes(teamKey))
@@ -259,72 +203,78 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       icon: string;
       label: string;
       color: string;
-    }) =>
-      count > 0 && (
-        <div style={{ position: 'relative', margin: '0 8px', width: '100px' }}>
-          <button
-            onClick={() => enabled && onChanceClick(teamKey, type)}
-            disabled={!enabled}
-            className="rpg-skewed"
-            style={{
-              width: '100px',
-              height: '100px',
-              background: enabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
-              border: `3px solid ${enabled ? color : '#555'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: enabled ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s ease',
-              boxShadow: enabled ? `0 0 15px ${color}` : 'none'
-            }}
+    }) => {
+      const isEnabled = enabled && !isAiThinking;
+      return (
+        count > 0 && (
+          <div
+            style={{ position: 'relative', margin: '0 8px', width: '100px' }}
           >
-            <img
-              src={icon}
-              alt={label}
+            <button
+              onClick={() => isEnabled && onChanceClick(teamKey, type)}
+              disabled={!isEnabled}
+              className="rpg-skewed"
               style={{
-                width: '75px',
-                height: '75px',
-                filter: enabled ? 'none' : 'grayscale(100%)',
-                transform: 'skewX(5deg)'
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                background: color,
-                color: '#000',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                lineHeight: '28px',
-                transform: 'skewX(5deg)',
-                boxShadow: `0 0 10px ${color}`
+                width: '100px',
+                height: '100px',
+                background: isEnabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
+                border: `3px solid ${isEnabled ? color : '#555'}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: isEnabled ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s ease',
+                boxShadow: isEnabled ? `0 0 15px ${color}` : 'none'
               }}
             >
-              {count}
+              <img
+                src={icon}
+                alt={label}
+                style={{
+                  width: '75px',
+                  height: '75px',
+                  filter: isEnabled ? 'none' : 'grayscale(100%)',
+                  transform: 'skewX(5deg)'
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  background: isEnabled ? color : '#666',
+                  color: '#000',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  lineHeight: '28px',
+                  transform: 'skewX(5deg)',
+                  boxShadow: isEnabled ? `0 0 10px ${color}` : 'none'
+                }}
+              >
+                {count}
+              </div>
+            </button>
+            <div
+              style={{
+                fontSize: '20px',
+                marginTop: '5px',
+                color: isEnabled ? '#fff' : '#777',
+                textAlign: 'center',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-body)',
+                letterSpacing: '0.5px',
+                fontWeight: 'bold'
+              }}
+            >
+              {label}
             </div>
-          </button>
-          <div
-            style={{
-              fontSize: '20px',
-              marginTop: '5px',
-              color: enabled ? '#fff' : '#777',
-              textAlign: 'center',
-              textTransform: 'uppercase',
-              fontFamily: 'var(--font-body)',
-              letterSpacing: '0.5px',
-              fontWeight: 'bold'
-            }}
-          >
-            {label}
           </div>
-        </div>
+        )
       );
+    };
 
     return (
       <div
@@ -519,35 +469,36 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             </div>
           )}
 
-        {duelResult &&
-          isFinishDuel &&
-          Math.min(team1Players.length, team2Players.length) > 0 && (
-            <div style={{ marginTop: '15px' }}>
-              <button
-                onClick={() => nextRound(team1Players, team2Players)}
-                className="rpg-button"
-                style={{
-                  fontSize: '18px',
-                  padding: '10px 40px',
-                  animation: 'pulse-glow 2s infinite'
-                }}
-              >
-                {t('game.nextRound')}
-              </button>
-            </div>
-          )}
+        {duelResult && isFinishDuel && (
+          <div style={{ marginTop: '15px' }}>
+            <button
+              onClick={() => nextRound(team1Players, team2Players)}
+              className="rpg-button"
+              style={{
+                fontSize: '18px',
+                padding: '10px 40px',
+                animation: 'pulse-glow 2s infinite'
+              }}
+            >
+              {Math.min(team1Players.length, team2Players.length) === 0
+                ? t('game.endMatch')
+                : t('game.nextRound')}
+            </button>
+          </div>
+        )}
 
         <div style={{ marginTop: '12px' }}>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             {canUndo && (
               <button
                 onClick={onUndo}
+                disabled={!canUndo || isAiThinking}
                 className="rpg-button secondary"
                 style={{
                   fontSize: '16px',
                   padding: '8px 28px',
-                  opacity: canUndo ? 1 : 0.45,
-                  cursor: canUndo ? 'pointer' : 'not-allowed'
+                  opacity: canUndo && !isAiThinking ? 1 : 0.45,
+                  cursor: canUndo && !isAiThinking ? 'pointer' : 'not-allowed'
                 }}
               >
                 {t('game.undo')}
@@ -556,12 +507,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             {canRedo && (
               <button
                 onClick={onRedo}
+                disabled={!canRedo || isAiThinking}
                 className="rpg-button secondary"
                 style={{
                   fontSize: '16px',
                   padding: '8px 28px',
-                  opacity: canRedo ? 1 : 0.45,
-                  cursor: canRedo ? 'pointer' : 'not-allowed'
+                  opacity: canRedo && !isAiThinking ? 1 : 0.45,
+                  cursor: canRedo && !isAiThinking ? 'pointer' : 'not-allowed'
                 }}
               >
                 {t('game.redo')}

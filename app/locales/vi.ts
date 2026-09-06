@@ -41,6 +41,7 @@ export default {
     usePowerUp: 'Dùng Quyền Năng',
     challengerApproaching: 'Múc đê mấy má ơi!!!',
     nextRound: 'Vòng tiếp theo',
+    endMatch: 'Kết Thúc Trận',
     nextTurn: 'Lượt tiếp theo',
     roundResult: 'Kết quả vòng',
     currentTurn: 'Lượt hiện tại',
@@ -75,6 +76,8 @@ export default {
     rosterTeamEmpty: 'Mỗi đội phải có ít nhất một thành viên.',
     rosterBlankName: 'Tên thành viên không được để trống.',
     rosterDuplicateName: 'Tên thành viên không được trùng giữa hai đội.',
+    rosterTeamLengthMismatch:
+      'Số lượng thành viên của hai đội phải bằng nhau.',
     shuffleRoster: 'XÁO TRỘN',
     shareResult: 'CHIA SẺ KẾT QUẢ',
     shareDownload: 'Tải PNG',
@@ -115,7 +118,8 @@ export default {
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
-    secondChanceDesc: 'Cho phép đội chơi rút lại bài hoặc đấu lại nếu thua.',
+    secondChanceDesc:
+      'Cho phép người chơi đầu rút lại bài từ các nhóm còn lại.',
     revealTwoTitle: 'Ti hí mắt nai',
     revealTwoDesc: 'Lật mở 2 lá bài đầu tiên của tất cả các tụ để xem trước.',
     lifeShieldTitle: 'Tao có khiên',

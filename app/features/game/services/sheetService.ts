@@ -1,7 +1,7 @@
 import { parseSheetRowsToRosters, type SetupRosters } from './rosterSetup';
 
 type LoadPlayersParams = {
-  apiKey: string;
+  apiKey?: string;
   sheetId: string;
   sheetRange: string;
 };
@@ -11,7 +11,9 @@ export const loadPlayersFromSheet = async ({
   sheetId,
   sheetRange
 }: LoadPlayersParams): Promise<SetupRosters> => {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
+  const url = apiKey
+    ? `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`
+    : `/api/sheet?sheetId=${encodeURIComponent(sheetId)}&sheetRange=${encodeURIComponent(sheetRange)}`;
   const response = await fetch(url);
 
   if (!response.ok) {

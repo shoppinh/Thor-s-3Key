@@ -19,7 +19,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      const storedTheme = localStorage.getItem('thor3key-theme') as Theme | null;
+      const storedTheme = localStorage.getItem(
+        'thor3key-theme'
+      ) as Theme | null;
       return storedTheme || 'summer';
     }
     return 'summer';

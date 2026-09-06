@@ -35,7 +35,6 @@ export const links: LinksFunction = () => [
 
 export async function loader() {
   return json({
-    API_KEY: process.env.API_KEY ?? '',
     SITE_URL: process.env.SITE_URL ?? 'http://localhost:5173',
     ANALYTICS_DOMAIN: process.env.PLAUSIBLE_DOMAIN ?? '',
     TWITTER_HANDLE: process.env.TWITTER_HANDLE ?? 'thor3key',
@@ -71,7 +70,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export default function App() {
   const clientSecrets = useLoaderData<typeof loader>() ?? {
-    API_KEY: '',
     SITE_URL: 'http://localhost:5173',
     ANALYTICS_DOMAIN: '',
     TWITTER_HANDLE: 'thor3key',

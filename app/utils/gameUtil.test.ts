@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareHands } from '~/utils/gameUtil';
+import { compareHands, calculateWinStreaksFromEvents } from '~/utils/gameUtil';
 
 describe('compareHands', () => {
   it('chooses the hand with the higher calculated sum', () => {
@@ -68,5 +68,38 @@ describe('compareHands', () => {
         ]
       )
     ).toBe('player2');
+  });
+});
+
+describe('calculateWinStreaksFromEvents', () => {
+  it('returns empty object when events list is empty', () => {
+    expect(calculateWinStreaksFromEvents([])).toEqual({});
+  });
+
+  it('accurately accumulates winner streaks and resets loser streaks', () => {
+    const events = [
+      { winnerName: 'Alice', loserName: 'Bob' },
+      { winnerName: 'Alice', loserName: 'Charlie' },
+      { winnerName: 'Bob', loserName: 'Alice' }
+    ];
+
+    expect(calculateWinStreaksFromEvents(events)).toEqual({
+      Bob: 1,
+      Alice: 0,
+      Charlie: 0
+    });
+  });
+
+  it('restores previous streak when an invalidated duel event is removed', () => {
+    const events = [
+      { winnerName: 'Alice', loserName: 'Bob' },
+      { winnerName: 'Alice', loserName: 'Charlie' }
+    ];
+
+    expect(calculateWinStreaksFromEvents(events)).toEqual({
+      Alice: 2,
+      Bob: 0,
+      Charlie: 0
+    });
   });
 });

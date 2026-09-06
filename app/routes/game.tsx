@@ -20,7 +20,6 @@ import {
 } from '~/features/game/services/rosterSetup';
 import {
   applyPlayerSelectionToDuel,
-  getAvailableSelectableGroupCount,
   getCardsBySide,
   getPlayerDataBySide
 } from '~/features/game/engine/duelEngine';
@@ -80,7 +79,6 @@ import Card from '../models/Card';
 const DECKS = createDeck();
 
 type RootContext = {
-  API_KEY: string;
   SITE_URL?: string;
   ANALYTICS_DOMAIN?: string;
   TWITTER_HANDLE?: string;
@@ -114,6 +112,7 @@ const CardGame = () => {
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
   const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [matchId, setMatchId] = useState<string>('');
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
   const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
   const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
@@ -166,7 +165,6 @@ const CardGame = () => {
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
   const SHEET_RANGE = '3Key Game!A1:B30';
-  const API_KEY = clientSecrets?.API_KEY ?? '';
 
   const [sheetId, setSheetId] = useState(SHEET_ID);
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
@@ -241,7 +239,7 @@ const CardGame = () => {
   }, [createCurrentSnapshot, gameState, undoEnabled]);
 
   const undoLastAction = useCallback(() => {
-    if (!undoEnabled) return;
+    if (!undoEnabled || isAiThinking) return;
 
     const transition = createUndoTransition({
       historyStack,
@@ -258,13 +256,14 @@ const CardGame = () => {
     applyGameSnapshot,
     createCurrentSnapshot,
     historyStack,
+    isAiThinking,
     redoEnabled,
     redoStack,
     undoEnabled
   ]);
 
   const redoLastAction = useCallback(() => {
-    if (!undoEnabled || !redoEnabled) return;
+    if (!undoEnabled || !redoEnabled || isAiThinking) return;
 
     const transition = createRedoTransition({
       historyStack,
@@ -280,6 +279,7 @@ const CardGame = () => {
     applyGameSnapshot,
     createCurrentSnapshot,
     historyStack,
+    isAiThinking,
     redoEnabled,
     redoStack,
     undoEnabled
@@ -305,6 +305,9 @@ const CardGame = () => {
       if (error === 'Member names must be unique across both teams.') {
         return t('game.rosterDuplicateName');
       }
+      if (error === 'Both teams must have an equal number of members.') {
+        return t('game.rosterTeamLengthMismatch');
+      }
       return error;
     })
   ];
@@ -313,6 +316,9 @@ const CardGame = () => {
     const url = clientSecrets?.SUPABASE_URL;
     const key = clientSecrets?.SUPABASE_ANON_KEY;
     if (!url || !key) return;
+
+    const currentMatchId = matchId || crypto.randomUUID();
+    if (!matchId) setMatchId(currentMatchId);
 
     const supabase = getSupabaseClient(url, key);
     const winnerTeam: TeamName =
@@ -323,6 +329,7 @@ const CardGame = () => {
         : undefined;
     setSaveStatus('saving');
     saveMatch({
+      id: currentMatchId,
       supabase,
       winnerTeam,
       team1Data,
@@ -336,6 +343,7 @@ const CardGame = () => {
       .catch(() => setSaveStatus('error'));
   }, [
     clientSecrets,
+    matchId,
     team1Data,
     team2Data,
     initialTeam1Roster,
@@ -393,7 +401,6 @@ const CardGame = () => {
 
     try {
       const { team1, team2 } = await loadPlayersFromSheet({
-        apiKey: API_KEY,
         sheetId,
         sheetRange
       });
@@ -515,7 +522,9 @@ const CardGame = () => {
         secondChanceUsedByTeams: [],
         player1SideSelected: undefined,
         player2SideSelected: undefined,
-        winningTeam: undefined
+        winningTeam: undefined,
+        aiSelectedSides: [],
+        aiRecommendationUsedByTeams: []
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
@@ -523,8 +532,12 @@ const CardGame = () => {
     [recordHistorySnapshot, roundNumber, t]
   );
 
-  const playerSelect = (side: Side) => {
-    if (isAiThinking) return;
+  const playerSelect = (side: Side, options?: { isAi?: boolean }) => {
+    if (isAiThinking && !options?.isAi) return;
+    if (duelData.isFinishDuel) return;
+    if (duelData.player1SideSelected === side) return;
+    if (duelData.removedWorstGroups?.includes(side)) return;
+    if (getPlayerDataBySide(duelData, side).cards.length > 0) return;
     recordHistorySnapshot();
 
     const currentPlayer = duelData.currentPlayerName; // Capture current player before any updates
@@ -537,7 +550,7 @@ const CardGame = () => {
     const selectedCards = getCardsBySide(duelData, side);
     const selectedSum = calculateSum(selectedCards);
 
-    if (duelData.duelIndex == 0) {
+    if (duelData.duelIndex === 0) {
       const updates: Partial<DuelData> = {
         ...applyPlayerSelectionToDuel({
           duelData,
@@ -563,89 +576,53 @@ const CardGame = () => {
         duelIndex: newDuelIndex
       });
 
-      setDuelData((prev) => {
-        const newData = { ...prev, ...updates };
+      const nextData: DuelData = { ...duelData, ...updates };
 
-        // Ensure both players have a selected side before determining the winner.
-        if (!newData.player1SideSelected || !newData.player2SideSelected) {
-          return newData;
-        }
+      if (!nextData.player1SideSelected || !nextData.player2SideSelected) {
+        setDuelData(nextData);
+        return;
+      }
 
-        const firstPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player1SideSelected
-        );
-        const secondPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player2SideSelected
-        );
+      const firstPlayerData = getPlayerDataBySide(
+        nextData,
+        nextData.player1SideSelected
+      );
+      const secondPlayerData = getPlayerDataBySide(
+        nextData,
+        nextData.player2SideSelected
+      );
 
-        const { isPlayer1Winner } = determineWinner(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          t
-        );
+      const firstPlayerTeam = nextData.player1Team;
+      const secondPlayerTeam = nextData.player2Team;
 
-        const updatedData = {
-          ...newData,
-          topLeftPlayerData:
-            newData.topLeftPlayerData.cards.length == 0 ||
-            !newData.topLeftRevealed
-              ? {
-                  ...newData.topLeftPlayerData,
-                  cards: newData.topLeftCards,
-                  sum: calculateSum(newData.topLeftCards)
-                }
-              : newData.topLeftPlayerData,
-          bottomLeftPlayerData:
-            newData.bottomLeftPlayerData.cards.length == 0 ||
-            !newData.bottomLeftRevealed
-              ? {
-                  ...newData.bottomLeftPlayerData,
-                  cards: newData.bottomLeftCards,
-                  sum: calculateSum(newData.bottomLeftCards)
-                }
-              : newData.bottomLeftPlayerData,
-          topRightPlayerData:
-            newData.topRightPlayerData.cards.length == 0 ||
-            !newData.topRightRevealed
-              ? {
-                  ...newData.topRightPlayerData,
-                  cards: newData.topRightCards,
-                  sum: calculateSum(newData.topRightCards)
-                }
-              : newData.topRightPlayerData,
-          bottomRightPlayerData:
-            newData.bottomRightPlayerData.cards.length == 0 ||
-            !newData.bottomRightRevealed
-              ? {
-                  ...newData.bottomRightPlayerData,
-                  cards: newData.bottomRightCards,
-                  sum: calculateSum(newData.bottomRightCards)
-                }
-              : newData.bottomRightPlayerData
-        };
+      const { isPlayer1Winner } = determineWinner(
+        firstPlayerData.sum,
+        secondPlayerData.sum,
+        firstPlayerData.cards,
+        secondPlayerData.cards,
+        firstPlayerData.name,
+        secondPlayerData.name,
+        t
+      );
 
-        calculateResult(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          updatedData.player1Team,
-          updatedData.player2Team
-        );
+      const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
 
-        return {
-          ...updatedData,
-          isFinishDuel: true
-        };
+      setDuelData({
+        ...nextData,
+        isFinishDuel: true,
+        winningTeam
       });
+
+      calculateResult(
+        firstPlayerData.sum,
+        secondPlayerData.sum,
+        firstPlayerData.cards,
+        secondPlayerData.cards,
+        firstPlayerData.name,
+        secondPlayerData.name,
+        nextData.player1Team,
+        nextData.player2Team
+      );
     }
   };
 
@@ -656,10 +633,9 @@ const CardGame = () => {
   };
 
   /**
-   * Determines if a PlayerCardDrawer should be disabled
-   * A drawer is enabled (not disabled) if:
-   * 1. No cards are drawn yet (normal case), OR
-   * 2. Player has used Second Chance (name is "?" and team is "") and it's their turn
+   * Determines if a PlayerCardDrawer should be disabled.
+   * A drawer is enabled if the duel is in progress, AI is not thinking,
+   * and the drawer does not already have cards drawn.
    */
   const isPlayerCardDrawerDisabled = (playerData: PlayerData) => {
     if (isAiThinking) {
@@ -670,19 +646,12 @@ const CardGame = () => {
       return true;
     }
 
-    // If no cards drawn, allow interaction
-    if (playerData.cards.length === 0) {
-      return false;
+    // If cards are already drawn (including discarded groups), disable interaction
+    if (playerData.cards.length > 0) {
+      return true;
     }
 
-    // If Second Chance was used (name is "?" and team is ""), allow interaction if it's their turn
-    if (playerData.name === '?' && playerData.team === '') {
-      // Allow interaction only if this player is the current player
-      return false; // Let them click on the calculated number to make new selection
-    }
-
-    // Otherwise, disable interaction
-    return true;
+    return false;
   };
 
   /**
@@ -746,12 +715,9 @@ const CardGame = () => {
         ...(prev.aiRecommendationUsedByTeams || []),
         teamName
       ],
-      aiSelectedSides: [
-        ...(prev.aiSelectedSides || []),
-        chosen
-      ]
+      aiSelectedSides: [...(prev.aiSelectedSides || []), chosen]
     }));
-    playerSelect(chosen);
+    playerSelect(chosen, { isAi: true });
   };
 
   /**
@@ -760,6 +726,8 @@ const CardGame = () => {
    * @param chanceType - Type of chance (secondChance or revealTwo)
    */
   const handleChanceClick = (teamName: TeamName, chanceType: ChanceType) => {
+    if (isAiThinking) return;
+
     const chanceItemName =
       chanceType === 'secondChance'
         ? t('game.secondChance')
@@ -778,66 +746,21 @@ const CardGame = () => {
   };
 
   /**
-   * Implements the Second Chance functionality
-   * When a team activates this item, it allows them to have another chance in the duel
-   * This can be used after both players have made their selections
+   * Implements the Second Chance functionality.
+   * Enables the first player to discard their initial card pick and re-pick from
+   * the remaining 3 unpicked groups before the second player takes their turn.
    */
   const implementSecondChance = (teamName: TeamName) => {
     setDuelData((prev) => {
       const currentDuelData = { ...prev };
-
-      // Revert the calculated result (reduce winning team's score by 1)
-      if (currentDuelData.winningTeam) {
-        if (currentDuelData.winningTeam === 'team1') {
-          setTeam1Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
-        } else {
-          setTeam2Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
-        }
-      }
-
-      // Revert player elimination - add the losing player back to their team
+      const firstPlayerSide = currentDuelData.player1SideSelected;
       const firstPlayerName = currentDuelData.player1Name;
-      const firstPlayerTeam = currentDuelData.player1Team;
-      const secondPlayerName = currentDuelData.player2Name;
-      const secondPlayerTeam = currentDuelData.player2Team;
 
-      // Determine who the losing player was based on the winning team
-      let losingPlayer = '';
-      let losingTeam: TeamName | undefined;
-
-      if (currentDuelData.winningTeam === firstPlayerTeam) {
-        // First player won, so second player was eliminated
-        losingPlayer = secondPlayerName;
-        losingTeam = secondPlayerTeam;
-      } else {
-        // Second player won, so first player was eliminated
-        losingPlayer = firstPlayerName;
-        losingTeam = firstPlayerTeam;
+      if (!firstPlayerSide || !firstPlayerName) {
+        return prev;
       }
 
-      // Add the losing player back to their team if they're not already there
-      if (losingPlayer && losingTeam) {
-        if (losingTeam === 'team1') {
-          setTeam1Data((prevTeam) => {
-            if (!prevTeam.players.includes(losingPlayer)) {
-              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
-            }
-            return prevTeam;
-          });
-        } else {
-          setTeam2Data((prevTeam) => {
-            if (!prevTeam.players.includes(losingPlayer)) {
-              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
-            }
-            return prevTeam;
-          });
-        }
-      }
-
-      // Determine which player in the duel belongs to the team that used Second Chance
-      const isFirstPlayerUsingIt = firstPlayerTeam === teamName;
-
-      // Create updated player data based on current state
+      // Keep the discarded group's cards and sum revealed, but clear the player info
       const updatedPlayerData = {
         topLeftPlayerData: currentDuelData.topLeftPlayerData,
         bottomLeftPlayerData: currentDuelData.bottomLeftPlayerData,
@@ -845,149 +768,53 @@ const CardGame = () => {
         bottomRightPlayerData: currentDuelData.bottomRightPlayerData
       };
 
-      if (isFirstPlayerUsingIt) {
-        // Reset only the first player's selection to reveal cards (player name is "?", team name is "")
-        const firstPlayerSide = currentDuelData.player1SideSelected;
-        if (firstPlayerSide === 'top-left') {
-          updatedPlayerData.topLeftPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.topLeftPlayerData.sum,
-            cards: currentDuelData.topLeftPlayerData.cards
-          };
-        } else if (firstPlayerSide === 'bottom-left') {
-          updatedPlayerData.bottomLeftPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.bottomLeftPlayerData.sum,
-            cards: currentDuelData.bottomLeftPlayerData.cards
-          };
-        } else if (firstPlayerSide === 'top-right') {
-          updatedPlayerData.topRightPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.topRightPlayerData.sum,
-            cards: currentDuelData.topRightPlayerData.cards
-          };
-        } else if (firstPlayerSide === 'bottom-right') {
-          updatedPlayerData.bottomRightPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.bottomRightPlayerData.sum,
-            cards: currentDuelData.bottomRightPlayerData.cards
-          };
-        }
-
-        // Also reset the second player's selection since they must pick again after first player's new selection
-        const secondPlayerSide = currentDuelData.player2SideSelected;
-        if (secondPlayerSide === 'top-left') {
-          updatedPlayerData.topLeftPlayerData = {
-            name: '',
-            team: '',
-            sum: 0,
-            cards: []
-          };
-        } else if (secondPlayerSide === 'bottom-left') {
-          updatedPlayerData.bottomLeftPlayerData = {
-            name: '',
-            team: '',
-            sum: 0,
-            cards: []
-          };
-        } else if (secondPlayerSide === 'top-right') {
-          updatedPlayerData.topRightPlayerData = {
-            name: '',
-            team: '',
-            sum: 0,
-            cards: []
-          };
-        } else if (secondPlayerSide === 'bottom-right') {
-          updatedPlayerData.bottomRightPlayerData = {
-            name: '',
-            team: '',
-            sum: 0,
-            cards: []
-          };
-        }
-
-        return {
-          ...currentDuelData,
-          // Reset the current player to allow new selection
-          currentPlayerName: firstPlayerName,
-          // Reset first player's data to reveal cards
-          player1Name: '?',
-          player1Team: undefined,
-          player2Name: '',
-          player2Team: undefined,
-          // Reset duel index to allow new selection
-          duelIndex: 0,
-          // Update the player positions
-          ...updatedPlayerData,
-          // Reset reveal flags
-          topLeftRevealed: false,
-          bottomLeftRevealed: false,
-          topRightRevealed: false,
-          bottomRightRevealed: false,
-          // Reset side selections
-          player1SideSelected: undefined,
-          player2SideSelected: undefined,
-          // Reset winning team
-          winningTeam: undefined,
-          // Reset finish duel flag so player can make new selection
-          isFinishDuel: false
+      if (firstPlayerSide === 'top-left') {
+        updatedPlayerData.topLeftPlayerData = {
+          name: '',
+          team: '',
+          sum: currentDuelData.topLeftPlayerData.sum,
+          cards: currentDuelData.topLeftPlayerData.cards
         };
-      } else {
-        // Reset only the second player's selection to reveal cards (player name is "?", team name is "")
-        const secondPlayerSide = currentDuelData.player2SideSelected;
-        if (secondPlayerSide === 'top-left') {
-          updatedPlayerData.topLeftPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.topLeftPlayerData.sum,
-            cards: currentDuelData.topLeftPlayerData.cards
-          };
-        } else if (secondPlayerSide === 'bottom-left') {
-          updatedPlayerData.bottomLeftPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.bottomLeftPlayerData.sum,
-            cards: currentDuelData.bottomLeftPlayerData.cards
-          };
-        } else if (secondPlayerSide === 'top-right') {
-          updatedPlayerData.topRightPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.topRightPlayerData.sum,
-            cards: currentDuelData.topRightPlayerData.cards
-          };
-        } else if (secondPlayerSide === 'bottom-right') {
-          updatedPlayerData.bottomRightPlayerData = {
-            name: '?',
-            team: '',
-            sum: currentDuelData.bottomRightPlayerData.sum,
-            cards: currentDuelData.bottomRightPlayerData.cards
-          };
-        }
-
-        return {
-          ...currentDuelData,
-          // Set current player to the second player so they can make a new selection
-          currentPlayerName: secondPlayerName,
-          // Reset duel index to allow the second player to make a new selection
-          duelIndex: 1,
-          // Reset second player's data
-          player2Name: '',
-          player2Team: undefined,
-          // Update the player positions
-          ...updatedPlayerData,
-          // Reset only the second player's side selection
-          player2SideSelected: undefined,
-          // Reset winning team
-          winningTeam: undefined,
-          // Reset finish duel flag so player can make new selection
-          isFinishDuel: false
+      } else if (firstPlayerSide === 'bottom-left') {
+        updatedPlayerData.bottomLeftPlayerData = {
+          name: '',
+          team: '',
+          sum: currentDuelData.bottomLeftPlayerData.sum,
+          cards: currentDuelData.bottomLeftPlayerData.cards
+        };
+      } else if (firstPlayerSide === 'top-right') {
+        updatedPlayerData.topRightPlayerData = {
+          name: '',
+          team: '',
+          sum: currentDuelData.topRightPlayerData.sum,
+          cards: currentDuelData.topRightPlayerData.cards
+        };
+      } else if (firstPlayerSide === 'bottom-right') {
+        updatedPlayerData.bottomRightPlayerData = {
+          name: '',
+          team: '',
+          sum: currentDuelData.bottomRightPlayerData.sum,
+          cards: currentDuelData.bottomRightPlayerData.cards
         };
       }
+
+      return {
+        ...currentDuelData,
+        // Reset player1 data so they can pick again from remaining groups
+        currentPlayerName: firstPlayerName,
+        duelIndex: 0,
+        player1Name: '',
+        player1Team: undefined,
+        player1SideSelected: undefined,
+        ...updatedPlayerData,
+        secondChanceUsedByTeams: [
+          ...(currentDuelData.secondChanceUsedByTeams || []),
+          teamName
+        ],
+        aiSelectedSides: (currentDuelData.aiSelectedSides || []).filter(
+          (side) => side !== firstPlayerSide
+        )
+      };
     });
   };
 
@@ -1019,6 +846,8 @@ const CardGame = () => {
    * Handles confirmation popup confirm action
    */
   const handleConfirmChance = () => {
+    if (isAiThinking) return;
+
     const { teamName, chanceType } = confirmPopup;
 
     if (teamName && chanceType) {
@@ -1263,9 +1092,6 @@ const CardGame = () => {
             }, 10);
           }
         }
-
-        // Store the winning team in duelData (only if no shield is active)
-        setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
       // Calculate streak
@@ -1350,6 +1176,7 @@ const CardGame = () => {
       duelData.revealTwoUsedBy,
       duelData.removeWorstUsedByTeams,
       duelData.secondChanceUsedByTeams,
+      duelData.aiRecommendationUsedByTeams,
       winStreaks,
       t,
       roundNumber
@@ -2772,7 +2599,7 @@ const CardGame = () => {
       />
       {/* Confirmation Popup */}
       <ConfirmPopup
-        isVisible={confirmPopup.isVisible}
+        isVisible={confirmPopup.isVisible && !isAiThinking}
         chanceItemName={confirmPopup.chanceItemName}
         onConfirm={handleConfirmChance}
         onCancel={handleCancelChance}

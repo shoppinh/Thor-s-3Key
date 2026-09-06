@@ -41,6 +41,7 @@ export default {
     usePowerUp: 'Use Power-Up',
     challengerApproaching: 'Challenger Approaching',
     nextRound: 'Next Round',
+    endMatch: 'End Match',
     nextTurn: 'Next Turn',
     roundResult: 'Round Result',
     currentTurn: 'Current Turn',
@@ -76,6 +77,8 @@ export default {
     rosterTeamEmpty: 'Each team must have at least one member.',
     rosterBlankName: 'Member names cannot be blank.',
     rosterDuplicateName: 'Member names must be unique across both teams.',
+    rosterTeamLengthMismatch:
+      'Both teams must have an equal number of members.',
     shuffleRoster: 'SHUFFLE',
     shareResult: 'SHARE RESULT',
     shareDownload: 'Download PNG',
@@ -117,7 +120,7 @@ export default {
   powerups: {
     secondChanceTitle: 'Second Chance',
     secondChanceDesc:
-      'Allows a team to redraw their cards or force a re-duel if they lose.',
+      'Allows the first player to redraw their cards from remaining groups.',
     revealTwoTitle: 'Reveal Two',
     revealTwoDesc:
       'Reveals the first two cards of all groups to give a strategic advantage.',

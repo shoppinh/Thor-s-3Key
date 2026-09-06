@@ -92,3 +92,80 @@ export const withRemoveWorstUsage = (
   removedWorstGroups: [...(duelData.removedWorstGroups || []), worstGroup],
   removeWorstUsedByTeams: [...(duelData.removeWorstUsedByTeams || []), teamName]
 });
+
+const SIDE_AVAILABILITY: {
+  side: Side;
+  isRevealed: (duelData: DuelData) => boolean;
+  cardsLength: (duelData: DuelData) => number;
+}[] = [
+  {
+    side: 'top-left',
+    isRevealed: (d) => d.topLeftRevealed,
+    cardsLength: (d) => d.topLeftPlayerData.cards.length
+  },
+  {
+    side: 'bottom-left',
+    isRevealed: (d) => d.bottomLeftRevealed,
+    cardsLength: (d) => d.bottomLeftPlayerData.cards.length
+  },
+  {
+    side: 'top-right',
+    isRevealed: (d) => d.topRightRevealed,
+    cardsLength: (d) => d.topRightPlayerData.cards.length
+  },
+  {
+    side: 'bottom-right',
+    isRevealed: (d) => d.bottomRightRevealed,
+    cardsLength: (d) => d.bottomRightPlayerData.cards.length
+  }
+];
+
+/** Unpicked, unrevealed sides still free for a Second Chance re-pick. */
+export const countAvailableSecondChanceSides = (duelData: DuelData): number => {
+  const disabled = new Set(duelData.removedWorstGroups || []);
+  return SIDE_AVAILABILITY.filter(
+    ({ side, isRevealed, cardsLength }) =>
+      !disabled.has(side) && !isRevealed(duelData) && cardsLength(duelData) === 0
+  ).length;
+};
+
+/**
+ * Whether a team may activate Second Chance in the current duel phase.
+ * Second Chance is enabled exclusively for the first player in each duel,
+ * after they have made their card pick and before the second player picks.
+ */
+export const canUseSecondChance = ({
+  teamKey,
+  duelData,
+  isFinishDuel,
+  isAiThinking = false
+}: {
+  teamKey: TeamName;
+  duelData: DuelData;
+  isFinishDuel?: boolean;
+  isAiThinking?: boolean;
+}): boolean => {
+  if (isAiThinking) {
+    return false;
+  }
+
+  if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) {
+    return false;
+  }
+
+  const finished = isFinishDuel ?? duelData.isFinishDuel;
+  if (finished) {
+    return false;
+  }
+
+  // Second Chance is strictly available only for the first player in the duel,
+  // after they have picked and before the second player picks.
+  if (duelData.player1SideSelected && !duelData.player2SideSelected) {
+    if (teamKey !== duelData.player1Team) {
+      return false;
+    }
+    return countAvailableSecondChanceSides(duelData) > 0;
+  }
+
+  return false;
+};

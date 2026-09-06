@@ -3,6 +3,7 @@ import React from 'react';
 import { PlayerData } from '~/models/PlayerData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { calculateSum } from '~/utils/gameUtil';
 
 interface Card {
   value: number;
@@ -26,6 +27,8 @@ interface PlayerCardDrawerProps {
     disabled?: boolean
   ) => React.ReactNode;
   CARDS_COVER: Card[];
+  isAiThinking?: boolean;
+  isAiSelected?: boolean;
 }
 
 export const getPlayerCardDrawerDisplayState = ({
@@ -44,17 +47,20 @@ export const getPlayerCardDrawerDisplayState = ({
   isAiThinking?: boolean;
 }) => {
   const isBlankHand = playerCards.length === 0;
-  const cards =
-    isBlankHand && isFinishDuel
-      ? fullCards
-      : playerCards.length > 0
-        ? playerCards
-        : coveredCards;
+  const isUnselectedReveal = isBlankHand && isFinishDuel;
+  const cards = isUnselectedReveal
+    ? fullCards
+    : playerCards.length > 0
+      ? playerCards
+      : coveredCards;
+
+  const canAct = isBlankHand && !isFinishDuel;
 
   return {
     cards,
-    shouldShowDrawButton: isBlankHand && !isFinishDuel,
-    canClickCards: isBlankHand && !isFinishDuel && !disabledByRemoveWorst && !isAiThinking
+    shouldShowDrawButton: canAct,
+    canClickCards: canAct && !disabledByRemoveWorst && !isAiThinking,
+    isUnselectedReveal
   };
 };
 
@@ -107,6 +113,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     disabledByRemoveWorst,
     isAiThinking
   });
+  const unselectedSum =
+    displayState.isUnselectedReveal && fullCards.length > 0
+      ? calculateSum(fullCards)
+      : null;
   const isDrawDisabled = disabled || disabledByRemoveWorst || isAiThinking;
 
   const containerStyle: React.CSSProperties = {
@@ -244,6 +254,12 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
               >
                 {playerData.sum}
               </span>
+            </div>
+          )}
+
+          {displayState.isUnselectedReveal && unselectedSum !== null && (
+            <div className="rpg-skewed unselected-score-badge">
+              <span className="unselected-score-value">{unselectedSum}</span>
             </div>
           )}
         </div>

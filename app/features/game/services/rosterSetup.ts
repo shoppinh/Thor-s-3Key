@@ -91,6 +91,10 @@ export function validateRosterSetup(
     errors.push('Each team must have at least one member.');
   }
 
+  if (team1.length !== team2.length) {
+    errors.push('Both teams must have an equal number of members.');
+  }
+
   if (trimmedNames.some((name) => !name)) {
     errors.push('Member names cannot be blank.');
   }

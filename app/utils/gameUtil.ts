@@ -178,6 +178,9 @@ export const calculateSum = (cards: Card[]): number => {
  * @returns The highest card based on game rules
  */
 export const getCardHighestSuitAndValue = (cards: Card[]): Card => {
+  if (cards.length === 0) {
+    return { value: 0, suit: '' };
+  }
   return cards.reduce((highest, current) => {
     if (suitRank[current.suit] > suitRank[highest.suit]) {
       return current;
@@ -298,4 +301,24 @@ export const getStreakMessage = (streak: number): string => {
   if (streak === 4) return 'rampage';
   if (streak === 3) return 'killingSpree';
   return '';
+};
+
+/**
+ * Reconstructs win streaks for all players from an array of duel events.
+ * @param events - List of duel events
+ * @returns Map of player name to current consecutive win streak
+ */
+export const calculateWinStreaksFromEvents = (
+  events: Array<{ winnerName?: string; loserName?: string }>
+): Record<string, number> => {
+  const streaks: Record<string, number> = {};
+  for (const event of events) {
+    if (event.loserName) {
+      streaks[event.loserName] = 0;
+    }
+    if (event.winnerName) {
+      streaks[event.winnerName] = (streaks[event.winnerName] || 0) + 1;
+    }
+  }
+  return streaks;
 };
