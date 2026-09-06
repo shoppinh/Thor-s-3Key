@@ -178,6 +178,9 @@ export const calculateSum = (cards: Card[]): number => {
  * @returns The highest card based on game rules
  */
 export const getCardHighestSuitAndValue = (cards: Card[]): Card => {
+  if (cards.length === 0) {
+    return { value: 0, suit: '' };
+  }
   return cards.reduce((highest, current) => {
     if (suitRank[current.suit] > suitRank[highest.suit]) {
       return current;

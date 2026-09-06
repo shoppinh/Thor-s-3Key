@@ -65,4 +65,30 @@ describe('loadPlayersFromSheet', () => {
       })
     ).rejects.toThrow('Sheet contains no data');
   });
+
+  it('calls /api/sheet proxy when apiKey is not provided', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        values: [
+          ['Team 1', 'Team 2'],
+          ['Alice', 'Bob']
+        ]
+      })
+    } as Response);
+
+    await expect(
+      loadPlayersFromSheet({
+        sheetId: 'sheet-id',
+        sheetRange: 'Roster!A1:B30'
+      })
+    ).resolves.toEqual({
+      team1: ['Alice'],
+      team2: ['Bob']
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/sheet?sheetId=sheet-id&sheetRange=Roster!A1%3AB30'
+    );
+  });
 });

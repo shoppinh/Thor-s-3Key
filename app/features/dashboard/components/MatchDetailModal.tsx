@@ -61,6 +61,7 @@ const MatchDetailModal = ({
 
   return (
     <div
+      role="presentation"
       style={{
         position: 'fixed',
         top: 0,
@@ -74,9 +75,25 @@ const MatchDetailModal = ({
         alignItems: 'center',
         zIndex: 3000
       }}
-      onClick={onClose}
     >
+      <button
+        type="button"
+        aria-label="Close match details modal"
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          padding: 0,
+          border: 0,
+          background: 'transparent',
+          cursor: 'default'
+        }}
+      />
       <div
+        role="dialog"
+        aria-modal="true"
         className="rpg-panel"
         style={{
           padding: '32px',
@@ -86,9 +103,9 @@ const MatchDetailModal = ({
           maxHeight: '90vh',
           overflowY: 'auto',
           background: 'rgba(15, 12, 41, 0.98)',
-          border: '2px solid var(--color-primary)'
+          border: '2px solid var(--color-primary)',
+          position: 'relative'
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div
           style={{

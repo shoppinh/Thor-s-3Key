@@ -311,7 +311,9 @@ const GameArenaScreen = ({
                     : CARDS_COVER
                 }
                 isAiThinking={isAiThinking}
-                isAiSelected={duelData.aiSelectedSides?.includes('bottom-right')}
+                isAiSelected={duelData.aiSelectedSides?.includes(
+                  'bottom-right'
+                )}
               />
             </div>
           </div>

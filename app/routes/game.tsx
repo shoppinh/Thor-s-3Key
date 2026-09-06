@@ -20,7 +20,6 @@ import {
 } from '~/features/game/services/rosterSetup';
 import {
   applyPlayerSelectionToDuel,
-  getAvailableSelectableGroupCount,
   getCardsBySide,
   getPlayerDataBySide
 } from '~/features/game/engine/duelEngine';
@@ -80,7 +79,6 @@ import Card from '../models/Card';
 const DECKS = createDeck();
 
 type RootContext = {
-  API_KEY: string;
   SITE_URL?: string;
   ANALYTICS_DOMAIN?: string;
   TWITTER_HANDLE?: string;
@@ -114,6 +112,7 @@ const CardGame = () => {
   const [winStreaks, setWinStreaks] = useState<Record<string, number>>({});
   const [duelEvents, setDuelEvents] = useState<LocalDuelEvent[]>([]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [matchId, setMatchId] = useState<string>('');
   const [showWinnerAnnouncement, setShowWinnerAnnouncement] = useState(false);
   const [initialTeam1Roster, setInitialTeam1Roster] = useState<string[]>([]);
   const [initialTeam2Roster, setInitialTeam2Roster] = useState<string[]>([]);
@@ -166,7 +165,6 @@ const CardGame = () => {
 
   const SHEET_ID = '1xFtX7mZT1yiEd4EyD6Wc4PF3LvMq9M3EzHnDdLqPaxM';
   const SHEET_RANGE = '3Key Game!A1:B30';
-  const API_KEY = clientSecrets?.API_KEY ?? '';
 
   const [sheetId, setSheetId] = useState(SHEET_ID);
   const [sheetRange, setSheetRange] = useState(SHEET_RANGE);
@@ -314,6 +312,9 @@ const CardGame = () => {
     const key = clientSecrets?.SUPABASE_ANON_KEY;
     if (!url || !key) return;
 
+    const currentMatchId = matchId || crypto.randomUUID();
+    if (!matchId) setMatchId(currentMatchId);
+
     const supabase = getSupabaseClient(url, key);
     const winnerTeam: TeamName =
       team1Data.players.length === 0 ? 'team2' : 'team1';
@@ -323,6 +324,7 @@ const CardGame = () => {
         : undefined;
     setSaveStatus('saving');
     saveMatch({
+      id: currentMatchId,
       supabase,
       winnerTeam,
       team1Data,
@@ -336,6 +338,7 @@ const CardGame = () => {
       .catch(() => setSaveStatus('error'));
   }, [
     clientSecrets,
+    matchId,
     team1Data,
     team2Data,
     initialTeam1Roster,
@@ -393,7 +396,6 @@ const CardGame = () => {
 
     try {
       const { team1, team2 } = await loadPlayersFromSheet({
-        apiKey: API_KEY,
         sheetId,
         sheetRange
       });
@@ -515,7 +517,9 @@ const CardGame = () => {
         secondChanceUsedByTeams: [],
         player1SideSelected: undefined,
         player2SideSelected: undefined,
-        winningTeam: undefined
+        winningTeam: undefined,
+        aiSelectedSides: [],
+        aiRecommendationUsedByTeams: []
       }));
       setDuelResult(''); // Clear previous duel result
       setRoundNumber((prev) => prev + 1);
@@ -523,8 +527,11 @@ const CardGame = () => {
     [recordHistorySnapshot, roundNumber, t]
   );
 
-  const playerSelect = (side: Side) => {
-    if (isAiThinking) return;
+  const playerSelect = (side: Side, options?: { isAi?: boolean }) => {
+    if (isAiThinking && !options?.isAi) return;
+    if (duelData.isFinishDuel) return;
+    if (duelData.player1SideSelected === side) return;
+    if (duelData.removedWorstGroups?.includes(side)) return;
     recordHistorySnapshot();
 
     const currentPlayer = duelData.currentPlayerName; // Capture current player before any updates
@@ -537,7 +544,7 @@ const CardGame = () => {
     const selectedCards = getCardsBySide(duelData, side);
     const selectedSum = calculateSum(selectedCards);
 
-    if (duelData.duelIndex == 0) {
+    if (duelData.duelIndex === 0) {
       const updates: Partial<DuelData> = {
         ...applyPlayerSelectionToDuel({
           duelData,
@@ -563,89 +570,53 @@ const CardGame = () => {
         duelIndex: newDuelIndex
       });
 
-      setDuelData((prev) => {
-        const newData = { ...prev, ...updates };
+      const nextData: DuelData = { ...duelData, ...updates };
 
-        // Ensure both players have a selected side before determining the winner.
-        if (!newData.player1SideSelected || !newData.player2SideSelected) {
-          return newData;
-        }
+      if (!nextData.player1SideSelected || !nextData.player2SideSelected) {
+        setDuelData(nextData);
+        return;
+      }
 
-        const firstPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player1SideSelected
-        );
-        const secondPlayerData = getPlayerDataBySide(
-          newData,
-          newData.player2SideSelected
-        );
+      const firstPlayerData = getPlayerDataBySide(
+        nextData,
+        nextData.player1SideSelected
+      );
+      const secondPlayerData = getPlayerDataBySide(
+        nextData,
+        nextData.player2SideSelected
+      );
 
-        const { isPlayer1Winner } = determineWinner(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          t
-        );
+      const firstPlayerTeam = nextData.player1Team;
+      const secondPlayerTeam = nextData.player2Team;
 
-        const updatedData = {
-          ...newData,
-          topLeftPlayerData:
-            newData.topLeftPlayerData.cards.length == 0 ||
-            !newData.topLeftRevealed
-              ? {
-                  ...newData.topLeftPlayerData,
-                  cards: newData.topLeftCards,
-                  sum: calculateSum(newData.topLeftCards)
-                }
-              : newData.topLeftPlayerData,
-          bottomLeftPlayerData:
-            newData.bottomLeftPlayerData.cards.length == 0 ||
-            !newData.bottomLeftRevealed
-              ? {
-                  ...newData.bottomLeftPlayerData,
-                  cards: newData.bottomLeftCards,
-                  sum: calculateSum(newData.bottomLeftCards)
-                }
-              : newData.bottomLeftPlayerData,
-          topRightPlayerData:
-            newData.topRightPlayerData.cards.length == 0 ||
-            !newData.topRightRevealed
-              ? {
-                  ...newData.topRightPlayerData,
-                  cards: newData.topRightCards,
-                  sum: calculateSum(newData.topRightCards)
-                }
-              : newData.topRightPlayerData,
-          bottomRightPlayerData:
-            newData.bottomRightPlayerData.cards.length == 0 ||
-            !newData.bottomRightRevealed
-              ? {
-                  ...newData.bottomRightPlayerData,
-                  cards: newData.bottomRightCards,
-                  sum: calculateSum(newData.bottomRightCards)
-                }
-              : newData.bottomRightPlayerData
-        };
+      const { isPlayer1Winner } = determineWinner(
+        firstPlayerData.sum,
+        secondPlayerData.sum,
+        firstPlayerData.cards,
+        secondPlayerData.cards,
+        firstPlayerData.name,
+        secondPlayerData.name,
+        t
+      );
 
-        calculateResult(
-          firstPlayerData.sum,
-          secondPlayerData.sum,
-          firstPlayerData.cards,
-          secondPlayerData.cards,
-          firstPlayerData.name,
-          secondPlayerData.name,
-          updatedData.player1Team,
-          updatedData.player2Team
-        );
+      const winningTeam = isPlayer1Winner ? firstPlayerTeam : secondPlayerTeam;
 
-        return {
-          ...updatedData,
-          isFinishDuel: true
-        };
+      setDuelData({
+        ...nextData,
+        isFinishDuel: true,
+        winningTeam
       });
+
+      calculateResult(
+        firstPlayerData.sum,
+        secondPlayerData.sum,
+        firstPlayerData.cards,
+        secondPlayerData.cards,
+        firstPlayerData.name,
+        secondPlayerData.name,
+        nextData.player1Team,
+        nextData.player2Team
+      );
     }
   };
 
@@ -746,12 +717,9 @@ const CardGame = () => {
         ...(prev.aiRecommendationUsedByTeams || []),
         teamName
       ],
-      aiSelectedSides: [
-        ...(prev.aiSelectedSides || []),
-        chosen
-      ]
+      aiSelectedSides: [...(prev.aiSelectedSides || []), chosen]
     }));
-    playerSelect(chosen);
+    playerSelect(chosen, { isAi: true });
   };
 
   /**
@@ -789,9 +757,15 @@ const CardGame = () => {
       // Revert the calculated result (reduce winning team's score by 1)
       if (currentDuelData.winningTeam) {
         if (currentDuelData.winningTeam === 'team1') {
-          setTeam1Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
+          setTeam1Data((prevTeam) => ({
+            ...prevTeam,
+            score: prevTeam.score - 1
+          }));
         } else {
-          setTeam2Data((prevTeam) => ({ ...prevTeam, score: prevTeam.score - 1 }));
+          setTeam2Data((prevTeam) => ({
+            ...prevTeam,
+            score: prevTeam.score - 1
+          }));
         }
       }
 
@@ -820,14 +794,20 @@ const CardGame = () => {
         if (losingTeam === 'team1') {
           setTeam1Data((prevTeam) => {
             if (!prevTeam.players.includes(losingPlayer)) {
-              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
+              return {
+                ...prevTeam,
+                players: [losingPlayer, ...prevTeam.players]
+              };
             }
             return prevTeam;
           });
         } else {
           setTeam2Data((prevTeam) => {
             if (!prevTeam.players.includes(losingPlayer)) {
-              return { ...prevTeam, players: [losingPlayer, ...prevTeam.players] };
+              return {
+                ...prevTeam,
+                players: [losingPlayer, ...prevTeam.players]
+              };
             }
             return prevTeam;
           });
@@ -1263,9 +1243,6 @@ const CardGame = () => {
             }, 10);
           }
         }
-
-        // Store the winning team in duelData (only if no shield is active)
-        setDuelData((prev) => ({ ...prev, winningTeam }));
       }
 
       // Calculate streak
@@ -1350,6 +1327,7 @@ const CardGame = () => {
       duelData.revealTwoUsedBy,
       duelData.removeWorstUsedByTeams,
       duelData.secondChanceUsedByTeams,
+      duelData.aiRecommendationUsedByTeams,
       winStreaks,
       t,
       roundNumber

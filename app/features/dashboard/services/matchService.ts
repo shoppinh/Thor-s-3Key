@@ -1,9 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, LocalDuelEvent } from '~/features/dashboard/types';
+import type {
+  CompletedDuelEventRecord,
+  CompletedMatchRecord,
+  Database,
+  LocalDuelEvent
+} from '~/features/dashboard/types';
 import type { TeamName } from '~/features/game/types/gameTypes';
 import type { TeamData } from '~/models/TeamData';
 
 export interface SaveMatchInput {
+  id: string;
   supabase: SupabaseClient<Database>;
   winnerTeam: TeamName;
   team1Data: TeamData;
@@ -14,62 +20,46 @@ export interface SaveMatchInput {
   duelEvents: LocalDuelEvent[];
 }
 
-export async function saveMatch({
-  supabase,
-  winnerTeam,
-  team1Data,
-  team2Data,
-  team1InitialRoster,
-  team2InitialRoster,
-  durationSeconds,
-  duelEvents
-}: SaveMatchInput): Promise<void> {
-  const { data: match, error: matchError } = await supabase
-    .from('matches')
-    .insert({
-      winner_team: winnerTeam,
-      team1_roster: team1Data.players,
-      team2_roster: team2Data.players,
-      team1_initial_roster: team1InitialRoster,
-      team2_initial_roster: team2InitialRoster,
-      team1_powerups: team1Data.powerUps,
-      team2_powerups: team2Data.powerUps,
-      team1_score: team1Data.score,
-      team2_score: team2Data.score,
-      total_duels: duelEvents.length,
-      duration_seconds: durationSeconds ?? null
-    })
-    .select('id')
-    .single();
+export async function saveMatch(input: SaveMatchInput): Promise<string> {
+  const p_match: CompletedMatchRecord = {
+    winner_team: input.winnerTeam,
+    team1_roster: input.team1Data.players,
+    team2_roster: input.team2Data.players,
+    team1_initial_roster: input.team1InitialRoster,
+    team2_initial_roster: input.team2InitialRoster,
+    team1_powerups: input.team1Data.powerUps,
+    team2_powerups: input.team2Data.powerUps,
+    team1_score: input.team1Data.score,
+    team2_score: input.team2Data.score,
+    total_duels: input.duelEvents.length,
+    duration_seconds: input.durationSeconds ?? null
+  };
 
-  if (matchError || !match) {
-    throw new Error(matchError?.message ?? 'Failed to insert match');
+  const p_events: CompletedDuelEventRecord[] = input.duelEvents.map((event) => ({
+    round: event.round,
+    winner_name: event.winnerName,
+    loser_name: event.loserName,
+    winner_team: event.winnerTeam,
+    loser_team: event.loserTeam,
+    shielded: event.shielded,
+    winner_cards: event.winnerCards,
+    loser_cards: event.loserCards,
+    winner_sum: event.winnerSum,
+    loser_sum: event.loserSum,
+    power_ups_used: event.powerUpsUsed
+  }));
+
+  const { data, error } = await input.supabase.rpc('save_completed_match', {
+    p_match_id: input.id,
+    p_match,
+    p_events
+  });
+
+  if (error || !data) {
+    throw new Error(error?.message ?? 'Failed to save match');
   }
 
-  if (duelEvents.length > 0) {
-    const payload = duelEvents.map((event) => ({
-      match_id: match.id,
-      round: event.round,
-      winner_name: event.winnerName,
-      loser_name: event.loserName,
-      winner_team: event.winnerTeam,
-      loser_team: event.loserTeam,
-      shielded: event.shielded,
-      winner_cards: event.winnerCards,
-      loser_cards: event.loserCards,
-      winner_sum: event.winnerSum,
-      loser_sum: event.loserSum,
-      power_ups_used: event.powerUpsUsed
-    }));
-
-    const { error: eventsError } = await supabase
-      .from('duel_events')
-      .insert(payload);
-
-    if (eventsError) {
-      throw new Error(eventsError.message);
-    }
-  }
+  return data;
 }
 
 export interface DashboardData {
@@ -93,8 +83,13 @@ export async function fetchDashboardData(
       supabase
         .from('matches')
         .select('*')
-        .order('created_at', { ascending: false }),
-      supabase.from('duel_events').select('*')
+        .order('created_at', { ascending: false })
+        .limit(100),
+      supabase
+        .from('duel_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000)
     ]);
 
   if (mErr) throw mErr;

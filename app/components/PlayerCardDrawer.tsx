@@ -36,7 +36,8 @@ export const getPlayerCardDrawerDisplayState = ({
   fullCards,
   isFinishDuel,
   disabledByRemoveWorst,
-  isAiThinking = false
+  isAiThinking = false,
+  isSecondChanceReset = false
 }: {
   playerCards: Card[];
   coveredCards: Card[];
@@ -44,6 +45,7 @@ export const getPlayerCardDrawerDisplayState = ({
   isFinishDuel: boolean;
   disabledByRemoveWorst: boolean;
   isAiThinking?: boolean;
+  isSecondChanceReset?: boolean;
 }) => {
   const isBlankHand = playerCards.length === 0;
   const cards =
@@ -53,11 +55,12 @@ export const getPlayerCardDrawerDisplayState = ({
         ? playerCards
         : coveredCards;
 
+  const canAct = (isBlankHand || isSecondChanceReset) && !isFinishDuel;
+
   return {
     cards,
-    shouldShowDrawButton: isBlankHand && !isFinishDuel,
-    canClickCards:
-      isBlankHand && !isFinishDuel && !disabledByRemoveWorst && !isAiThinking
+    shouldShowDrawButton: canAct,
+    canClickCards: canAct && !disabledByRemoveWorst && !isAiThinking
   };
 };
 
@@ -95,6 +98,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
             : null;
     return key ? disabled.has(key) : false;
   })();
+  const isSecondChanceReset =
+    playerData.name === '?' && playerData.team === '' && !duelData.isFinishDuel;
   const isBlankHand = playerData.cards.length === 0;
   const titleTeamClass =
     playerData.team === 'team1'
@@ -108,7 +113,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     fullCards,
     isFinishDuel: duelData.isFinishDuel,
     disabledByRemoveWorst,
-    isAiThinking
+    isAiThinking,
+    isSecondChanceReset
   });
   const isDrawDisabled = disabled || disabledByRemoveWorst || isAiThinking;
 
@@ -223,7 +229,7 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
             </>
           )}
 
-          {!isBlankHand && (
+          {!isBlankHand && !isSecondChanceReset && (
             <div
               className="rpg-skewed player-score-badge"
               style={{

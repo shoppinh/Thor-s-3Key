@@ -15,14 +15,14 @@ export default function ShareButtons(props: ShareButtonsProps) {
   }, [siteUrl]);
   const shareTitle = "Thor's 3Key — Chaotic team card showdown";
   const shareText =
-    "Fast, silly, team-based card chaos. Load players from Google Sheets, slam power-ups, and trash talk your way to victory.";
+    'Fast, silly, team-based card chaos. Load players from Google Sheets, slam power-ups, and trash talk your way to victory.';
   const nativeNavigator = useMemo(
     () =>
-    typeof navigator !== 'undefined'
-      ? (navigator as Navigator & {
-          share?: (data: ShareData) => Promise<void>;
-        })
-      : null,
+      typeof navigator !== 'undefined'
+        ? (navigator as Navigator & {
+            share?: (data: ShareData) => Promise<void>;
+          })
+        : null,
     []
   );
 
@@ -31,15 +31,18 @@ export default function ShareButtons(props: ShareButtonsProps) {
     typeof nativeNavigator?.share === 'function';
 
   const onNativeShare = useCallback(async () => {
-    await nativeNavigator?.share?.({
-      title: shareTitle,
-      text: shareText,
-      url: shareUrl
-    }).catch(() => {});
+    await nativeNavigator
+      ?.share?.({
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl
+      })
+      .catch(() => {});
   }, [nativeNavigator, shareTitle, shareText, shareUrl]);
 
   const onCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(shareUrl)
+    await navigator.clipboard
+      .writeText(shareUrl)
       .then(() => {
         // eslint-disable-next-line no-alert
         alert('Link copied!');
@@ -79,7 +82,12 @@ export default function ShareButtons(props: ShareButtonsProps) {
           Share
         </button>
       ) : null}
-      <a href={twitterHref} target="_blank" rel="noreferrer" style={buttonStyle}>
+      <a
+        href={twitterHref}
+        target="_blank"
+        rel="noreferrer"
+        style={buttonStyle}
+      >
         Tweet
       </a>
       <button type="button" onClick={onCopy} style={buttonStyle}>

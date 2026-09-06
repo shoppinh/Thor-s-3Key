@@ -112,10 +112,11 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       });
     const canSecondChanceNow = team1CanSecondChance || team2CanSecondChance;
 
-    if (duelResult && isFinishDuel && noPlayersLeft && !canSecondChanceNow) {
+    if (duelResult && isFinishDuel && noPlayersLeft) {
+      const delay = canSecondChanceNow ? 8000 : 3000;
       const timerId = setTimeout(() => {
         nextRound(team1Players, team2Players);
-      }, 3000);
+      }, delay);
       return () => clearTimeout(timerId);
     }
   }, [
@@ -479,23 +480,23 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             </div>
           )}
 
-        {duelResult &&
-          isFinishDuel &&
-          Math.min(team1Players.length, team2Players.length) > 0 && (
-            <div style={{ marginTop: '15px' }}>
-              <button
-                onClick={() => nextRound(team1Players, team2Players)}
-                className="rpg-button"
-                style={{
-                  fontSize: '18px',
-                  padding: '10px 40px',
-                  animation: 'pulse-glow 2s infinite'
-                }}
-              >
-                {t('game.nextRound')}
-              </button>
-            </div>
-          )}
+        {duelResult && isFinishDuel && (
+          <div style={{ marginTop: '15px' }}>
+            <button
+              onClick={() => nextRound(team1Players, team2Players)}
+              className="rpg-button"
+              style={{
+                fontSize: '18px',
+                padding: '10px 40px',
+                animation: 'pulse-glow 2s infinite'
+              }}
+            >
+              {Math.min(team1Players.length, team2Players.length) === 0
+                ? t('game.endMatch')
+                : t('game.nextRound')}
+            </button>
+          </div>
+        )}
 
         <div style={{ marginTop: '12px' }}>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>

@@ -41,6 +41,7 @@ export default {
     usePowerUp: 'Use Power-Up',
     challengerApproaching: 'Challenger Approaching',
     nextRound: 'Next Round',
+    endMatch: 'End Match',
     nextTurn: 'Next Turn',
     roundResult: 'Round Result',
     currentTurn: 'Current Turn',

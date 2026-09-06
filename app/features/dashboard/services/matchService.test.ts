@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   saveMatch,
-  fetchDashboardData
+  fetchDashboardData,
+  type SaveMatchInput
 } from '~/features/dashboard/services/matchService';
-import type { Database, LocalDuelEvent } from '~/features/dashboard/types';
+import type { LocalDuelEvent } from '~/features/dashboard/types';
 import type { TeamData } from '~/models/TeamData';
 
 const mockTeam = (overrides?: Partial<TeamData>): TeamData => ({
@@ -31,107 +32,79 @@ const mockEvent = (overrides?: Partial<LocalDuelEvent>): LocalDuelEvent => ({
   ...overrides
 });
 
-function createMockSupabase(
-  insertSequence: { data?: unknown; error?: { message: string } | null }[]
-) {
-  let callIndex = 0;
-  const fromImpl = vi.fn(() => {
-    const chain = {
-      insert: vi.fn(() => chain),
-      select: vi.fn(() => chain),
-      single: vi.fn(() => {
-        const result = insertSequence[callIndex] ?? { data: null, error: null };
-        callIndex++;
-        return Promise.resolve(result);
-      }),
-      order: vi.fn(() => chain),
-      limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      then: vi.fn((onfulfilled, onrejected) => {
-        const result = insertSequence[callIndex] ?? { data: null, error: null };
-        callIndex++;
-        return Promise.resolve(result).then(onfulfilled, onrejected);
-      })
-    };
-    return chain;
-  });
-  return { from: fromImpl } as unknown as Parameters<
-    typeof saveMatch
-  >[0]['supabase'];
-}
+const makeSaveInput = (overrides?: Partial<SaveMatchInput>): SaveMatchInput => ({
+  id: 'match-1',
+  supabase: { rpc: vi.fn() } as unknown as SaveMatchInput['supabase'],
+  winnerTeam: 'team1',
+  team1Data: mockTeam(),
+  team2Data: mockTeam(),
+  team1InitialRoster: ['A', 'B'],
+  team2InitialRoster: ['C', 'D'],
+  durationSeconds: 42,
+  duelEvents: [mockEvent()],
+  ...overrides
+});
 
 describe('saveMatch', () => {
-  it('inserts a match and its duel events', async () => {
-    const supabase = createMockSupabase([
-      { data: { id: 'match-1' }, error: null },
-      { data: null, error: null }
-    ]);
+  it('sends one completed match through save_completed_match', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 'match-1', error: null });
+    const supabase = { rpc } as unknown as SaveMatchInput['supabase'];
 
-    await saveMatch({
-      supabase,
-      winnerTeam: 'team1',
-      team1Data: mockTeam(),
-      team2Data: mockTeam(),
-      team1InitialRoster: ['A', 'B'],
-      team2InitialRoster: ['C', 'D'],
-      duelEvents: [mockEvent()]
+    await expect(
+      saveMatch(
+        makeSaveInput({
+          id: 'match-1',
+          supabase,
+          durationSeconds: 42,
+          duelEvents: [mockEvent()]
+        })
+      )
+    ).resolves.toBe('match-1');
+
+    expect(rpc).toHaveBeenCalledWith('save_completed_match', {
+      p_match_id: 'match-1',
+      p_match: expect.objectContaining({ total_duels: 1, duration_seconds: 42 }),
+      p_events: [expect.objectContaining({ winner_name: 'A' })]
     });
-
-    expect(supabase.from).toHaveBeenCalledWith('matches');
-    expect(supabase.from).toHaveBeenCalledWith('duel_events');
   });
 
-  it('throws when match insert fails', async () => {
-    const supabase = createMockSupabase([
-      { data: null, error: { message: 'db down' } }
-    ]);
+  it('preserves caller-provided identity on duplicate calls', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 'match-1', error: null });
+    const supabase = { rpc } as unknown as SaveMatchInput['supabase'];
+    const input = makeSaveInput({ id: 'match-1', supabase });
 
-    await expect(
-      saveMatch({
-        supabase,
-        winnerTeam: 'team1',
-        team1Data: mockTeam(),
-        team2Data: mockTeam(),
-        team1InitialRoster: ['A', 'B'],
-        team2InitialRoster: ['C', 'D'],
-        duelEvents: []
-      })
-    ).rejects.toThrow('db down');
+    await saveMatch(input);
+    await saveMatch(input);
+
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, 'save_completed_match', expect.objectContaining({ p_match_id: 'match-1' }));
+    expect(rpc).toHaveBeenNthCalledWith(2, 'save_completed_match', expect.objectContaining({ p_match_id: 'match-1' }));
   });
 
-  it('throws when duel_events insert fails', async () => {
-    const supabase = createMockSupabase([
-      { data: { id: 'match-1' }, error: null },
-      { data: null, error: { message: 'events error' } }
-    ]);
+  it('throws when rpc fails without querying tables directly', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'db down' } });
+    const from = vi.fn();
+    const supabase = { rpc, from } as unknown as SaveMatchInput['supabase'];
 
-    await expect(
-      saveMatch({
-        supabase,
-        winnerTeam: 'team2',
-        team1Data: mockTeam(),
-        team2Data: mockTeam(),
-        team1InitialRoster: ['A', 'B'],
-        team2InitialRoster: ['C', 'D'],
-        duelEvents: [mockEvent()]
-      })
-    ).rejects.toThrow('events error');
+    await expect(saveMatch(makeSaveInput({ supabase }))).rejects.toThrow('db down');
+    expect(from).not.toHaveBeenCalled();
   });
 });
 
 describe('fetchDashboardData', () => {
-  it('returns empty data when no rows exist', async () => {
-    const supabase = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve({ data: [], error: null }))
-          }))
-        }))
-      }))
-    } as unknown as Parameters<typeof fetchDashboardData>[0];
+  it('returns empty data when no rows exist and applies limits', async () => {
+    const limit = vi.fn(() => Promise.resolve({ data: [], error: null }));
+    const order = vi.fn(() => ({ limit }));
+    const select = vi.fn(() => ({ order }));
+    const from = vi.fn(() => ({ select }));
+    const supabase = { from } as unknown as Parameters<typeof fetchDashboardData>[0];
 
     const data = await fetchDashboardData(supabase);
     expect(data.summary.totalMatches).toBe(0);
     expect(data.summary.totalDuels).toBe(0);
+    expect(from).toHaveBeenCalledWith('matches');
+    expect(from).toHaveBeenCalledWith('duel_events');
+    expect(limit).toHaveBeenCalledWith(100);
+    expect(limit).toHaveBeenCalledWith(1000);
   });
 });

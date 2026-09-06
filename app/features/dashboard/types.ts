@@ -1,8 +1,13 @@
 import type Card from '~/models/Card';
-import type {
-  TeamName,
-  PowerUpsAllocation
-} from '~/features/game/types/gameTypes';
+import type { TeamName } from '~/features/game/types/gameTypes';
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export interface PowerUpsUsed {
   revealTwo?: TeamName;
@@ -33,6 +38,34 @@ export interface SavedPowerUps {
   removeWorst: number;
 }
 
+export type CompletedMatchRecord = {
+  winner_team: TeamName;
+  team1_roster: string[];
+  team2_roster: string[];
+  team1_initial_roster: string[];
+  team2_initial_roster: string[];
+  team1_powerups: SavedPowerUps;
+  team2_powerups: SavedPowerUps;
+  team1_score: number;
+  team2_score: number;
+  total_duels: number;
+  duration_seconds: number | null;
+};
+
+export type CompletedDuelEventRecord = {
+  round: number;
+  winner_name: string;
+  loser_name: string;
+  winner_team: TeamName;
+  loser_team: TeamName;
+  shielded: boolean;
+  winner_cards: Card[];
+  loser_cards: Card[];
+  winner_sum: number;
+  loser_sum: number;
+  power_ups_used: PowerUpsUsed;
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -50,9 +83,11 @@ export interface Database {
           team2_score: number;
           total_duels: number;
           duration_seconds: number | null;
+          save_payload?: Json | null;
           created_at: string;
         };
         Insert: {
+          id?: string;
           winner_team: TeamName;
           team1_roster: string[];
           team2_roster: string[];
@@ -64,8 +99,10 @@ export interface Database {
           team2_score: number;
           total_duels: number;
           duration_seconds?: number | null;
+          save_payload?: Json | null;
         };
         Update: {
+          id?: string;
           winner_team?: TeamName;
           team1_roster?: string[];
           team2_roster?: string[];
@@ -77,6 +114,7 @@ export interface Database {
           team2_score?: number;
           total_duels?: number;
           duration_seconds?: number | null;
+          save_payload?: Json | null;
         };
         Relationships: [];
       };
@@ -128,7 +166,16 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: {};
-    Functions: {};
+    Views: Record<string, never>;
+    Functions: {
+      save_completed_match: {
+        Args: {
+          p_match_id: string;
+          p_match: CompletedMatchRecord;
+          p_events: CompletedDuelEventRecord[];
+        };
+        Returns: string;
+      };
+    };
   };
 }

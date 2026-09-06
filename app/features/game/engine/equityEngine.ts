@@ -14,14 +14,8 @@ export type DuelEquity = {
   player2: DuelEquitySide;
 };
 
-const SIDES: Side[] = ['top-left', 'bottom-left', 'top-right', 'bottom-right'];
-
 const hasCompleteHand = (cards: Card[]): boolean => {
   return cards.length === 3 && cards.every((card) => card.value > 0 && card.suit);
-};
-
-const hasPublicCard = (card: Card): boolean => {
-  return card.value > 0 && Boolean(card.suit);
 };
 
 const isSameCard = (left: Card, right: Card): boolean => {
@@ -58,23 +52,6 @@ const createThreeCardCombinations = (cards: Card[]): Card[][] => {
   }
 
   return combinations;
-};
-
-const getRevealedCardsBySide = (
-  duelData: DuelData,
-  side: Side
-): Card[] => {
-  if (side === 'top-left') return duelData.revealedCards.topLeft;
-  if (side === 'bottom-left') return duelData.revealedCards.bottomLeft;
-  if (side === 'top-right') return duelData.revealedCards.topRight;
-  return duelData.revealedCards.bottomRight;
-};
-
-const getLegalOpponentSides = (duelData: DuelData): Side[] => {
-  const removedSides = new Set(duelData.removedWorstGroups || []);
-  return SIDES.filter((side) => {
-    return side !== duelData.player1SideSelected && !removedSides.has(side);
-  });
 };
 
 const getSelectedCards = (

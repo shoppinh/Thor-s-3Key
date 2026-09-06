@@ -41,6 +41,7 @@ export default {
     usePowerUp: 'Dùng Quyền Năng',
     challengerApproaching: 'Múc đê mấy má ơi!!!',
     nextRound: 'Vòng tiếp theo',
+    endMatch: 'Kết Thúc Trận',
     nextTurn: 'Lượt tiếp theo',
     roundResult: 'Kết quả vòng',
     currentTurn: 'Lượt hiện tại',

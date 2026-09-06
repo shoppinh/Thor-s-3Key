@@ -11,3 +11,4 @@ node_modules
 .github/prompts
 .vscode
 .opencode
+.commandcode

@@ -64,8 +64,14 @@ export function RosterSetup({
     const rawPayload = event.dataTransfer.getData('application/json');
     if (!rawPayload) return;
 
-    const payload = JSON.parse(rawPayload) as DragPayload;
-    onMoveMember(payload.team, payload.index, toTeam, toIndex);
+    try {
+      const payload = JSON.parse(rawPayload) as DragPayload;
+      if (!payload || !payload.team || typeof payload.index !== 'number')
+        return;
+      onMoveMember(payload.team, payload.index, toTeam, toIndex);
+    } catch {
+      // Ignore invalid drag-and-drop JSON payloads
+    }
   };
 
   const renderTeam = (team: TeamName, roster: string[], title: string) => (
