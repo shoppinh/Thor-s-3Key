@@ -3,11 +3,9 @@ import DuelData from '~/models/DuelData';
 import { Side, TeamName } from '~/features/game/types/gameTypes';
 import {
   calculateSum,
-  compareHands,
   getCardHighestSuitAndValue,
   suitRank
 } from '~/utils/gameUtil';
-import { getCardsBySide } from '~/features/game/engine/duelEngine';
 
 export const createRevealTwoCards = (cards: Card[]): Card[] => {
   const firstCard = cards[0] ?? { value: 0, suit: '' };
@@ -133,11 +131,8 @@ export const countAvailableSecondChanceSides = (duelData: DuelData): number => {
 
 /**
  * Whether a team may activate Second Chance in the current duel phase.
- *
- * Phases:
- * - after first pick only → first player team, if a free side remains
- * - after both picks / duel resolved → losing participant team(s)
- *   (empty-side count is ignored; implementSecondChance resets selections)
+ * Second Chance is enabled exclusively for the first player in each duel,
+ * after they have made their card pick and before the second player picks.
  */
 export const canUseSecondChance = ({
   teamKey,
@@ -152,37 +147,15 @@ export const canUseSecondChance = ({
     return false;
   }
 
-  const firstPlayerTeam = duelData.player1Team;
-  const secondPlayerTeam = duelData.player2Team;
   const finished = isFinishDuel ?? duelData.isFinishDuel;
-  const bothSelected =
-    !!duelData.player1SideSelected && !!duelData.player2SideSelected;
-
-  if (finished || bothSelected) {
-    if (teamKey !== firstPlayerTeam && teamKey !== secondPlayerTeam) {
-      return false;
-    }
-    let winningTeam = duelData.winningTeam;
-    if (
-      !winningTeam &&
-      duelData.player1SideSelected &&
-      duelData.player2SideSelected
-    ) {
-      const p1Cards = getCardsBySide(duelData, duelData.player1SideSelected);
-      const p2Cards = getCardsBySide(duelData, duelData.player2SideSelected);
-      if (p1Cards.length > 0 && p2Cards.length > 0) {
-        const isP1Winner = compareHands(p1Cards, p2Cards) === 'player1';
-        winningTeam = isP1Winner ? firstPlayerTeam : secondPlayerTeam;
-      }
-    }
-    if (!winningTeam) {
-      return false;
-    }
-    return winningTeam !== teamKey;
+  if (finished) {
+    return false;
   }
 
+  // Second Chance is strictly available only for the first player in the duel,
+  // after they have picked and before the second player picks.
   if (duelData.player1SideSelected && !duelData.player2SideSelected) {
-    if (teamKey !== firstPlayerTeam) {
+    if (teamKey !== duelData.player1Team) {
       return false;
     }
     return countAvailableSecondChanceSides(duelData) > 0;

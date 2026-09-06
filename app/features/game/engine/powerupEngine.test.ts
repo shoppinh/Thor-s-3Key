@@ -18,13 +18,6 @@ const filledPlayer = (name: string, team: string): PlayerData => ({
   ]
 });
 
-const emptyPlayer = (): PlayerData => ({
-  name: '',
-  team: '',
-  sum: 0,
-  cards: []
-});
-
 const afterFirstPick = (updates: Partial<DuelData> = {}): DuelData => ({
   ...createInitialDuelData(),
   duelIndex: 1,
@@ -105,124 +98,30 @@ describe('canUseSecondChance', () => {
     ).toBe(false);
   });
 
-  it('enables losing second player after resolve even when availableCount is 0', () => {
-    const duel = afterBothPicks({ winningTeam: 'team1' });
-    expect(countAvailableSecondChanceSides(duel)).toBe(0);
+  it('denies second player team from using Second Chance after first pick', () => {
+    const duel = afterFirstPick();
     expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: true
-      })
-    ).toBe(true);
-    expect(
-      canUseSecondChance({
-        teamKey: 'team1',
-        duelData: duel,
-        isFinishDuel: true
-      })
+      canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: false })
     ).toBe(false);
   });
 
-  it('enables losing first player after resolve', () => {
-    const duel = afterBothPicks({ winningTeam: 'team2' });
+  it('denies both teams once second player has selected (both selected)', () => {
+    const duel = afterBothPicks({ isFinishDuel: false });
     expect(
-      canUseSecondChance({
-        teamKey: 'team1',
-        duelData: duel,
-        isFinishDuel: true
-      })
-    ).toBe(true);
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: false })
+    ).toBe(false);
     expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: true
-      })
+      canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: false })
     ).toBe(false);
   });
 
-  it('denies both participants if winningTeam is missing and cards are unavailable', () => {
-    const duel = afterBothPicks({ winningTeam: undefined });
+  it('denies both teams once duel is resolved (isFinishDuel)', () => {
+    const duel = afterBothPicks({ isFinishDuel: true });
     expect(
-      canUseSecondChance({
-        teamKey: 'team1',
-        duelData: duel,
-        isFinishDuel: true
-      })
+      canUseSecondChance({ teamKey: 'team1', duelData: duel, isFinishDuel: true })
     ).toBe(false);
     expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: true
-      })
+      canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: true })
     ).toBe(false);
-  });
-
-  it('derives winner from card hands when winningTeam is omitted, denying the winner', () => {
-    const duel = afterBothPicks({
-      winningTeam: undefined,
-      topLeftCards: [
-        { value: 9, suit: '♦' },
-        { value: 9, suit: '♥' },
-        { value: 9, suit: '♠' }
-      ],
-      bottomRightCards: [
-        { value: 1, suit: '♣' },
-        { value: 1, suit: '♠' },
-        { value: 1, suit: '♥' }
-      ]
-    });
-    // team1 (topLeft) is the winner, team2 (bottomRight) is the loser
-    expect(
-      canUseSecondChance({
-        teamKey: 'team1',
-        duelData: duel,
-        isFinishDuel: true
-      })
-    ).toBe(false);
-    expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: true
-      })
-    ).toBe(true);
-  });
-
-  it('denies non-participant teams after resolve', () => {
-    // Should not happen in 1v1, but guard the predicate
-    const duel = afterBothPicks({
-      player1Team: 'team1',
-      player2Team: 'team1',
-      winningTeam: 'team1'
-    });
-    expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: true
-      })
-    ).toBe(false);
-  });
-
-  it('treats both-selected without isFinishDuel like post-resolve', () => {
-    const duel = afterBothPicks({
-      isFinishDuel: false,
-      winningTeam: 'team1',
-      // still both selected
-      topLeftPlayerData: emptyPlayer(),
-      bottomLeftPlayerData: emptyPlayer(),
-      topRightPlayerData: emptyPlayer(),
-      bottomRightPlayerData: emptyPlayer()
-    });
-    expect(
-      canUseSecondChance({
-        teamKey: 'team2',
-        duelData: duel,
-        isFinishDuel: false
-      })
-    ).toBe(true);
   });
 });

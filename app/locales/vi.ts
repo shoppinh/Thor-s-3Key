@@ -116,7 +116,8 @@ export default {
   },
   powerups: {
     secondChanceTitle: 'Hải way xe',
-    secondChanceDesc: 'Cho phép đội chơi rút lại bài hoặc đấu lại nếu thua.',
+    secondChanceDesc:
+      'Cho phép người chơi đầu rút lại bài từ các nhóm còn lại.',
     revealTwoTitle: 'Ti hí mắt nai',
     revealTwoDesc: 'Lật mở 2 lá bài đầu tiên của tất cả các tụ để xem trước.',
     lifeShieldTitle: 'Tao có khiên',

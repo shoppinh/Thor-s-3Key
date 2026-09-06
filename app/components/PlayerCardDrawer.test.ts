@@ -35,18 +35,17 @@ describe('getPlayerCardDrawerDisplayState', () => {
     expect(displayState.canClickCards).toBe(false);
   });
 
-  it('allows draw and card clicks when isSecondChanceReset is true even if playerCards has items', () => {
+  it('disallows draw and card clicks when group already has cards drawn', () => {
     const displayState = getPlayerCardDrawerDisplayState({
       playerCards: [card(1, '♦'), card(2, '♥'), card(3, '♠')],
       coveredCards: [card(0, '')],
       fullCards: [card(1, '♦'), card(2, '♥'), card(3, '♠')],
       isFinishDuel: false,
-      disabledByRemoveWorst: false,
-      isSecondChanceReset: true
+      disabledByRemoveWorst: false
     });
 
-    expect(displayState.shouldShowDrawButton).toBe(true);
-    expect(displayState.canClickCards).toBe(true);
+    expect(displayState.shouldShowDrawButton).toBe(false);
+    expect(displayState.canClickCards).toBe(false);
   });
 });
 

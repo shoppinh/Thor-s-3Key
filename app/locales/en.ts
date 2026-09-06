@@ -118,7 +118,7 @@ export default {
   powerups: {
     secondChanceTitle: 'Second Chance',
     secondChanceDesc:
-      'Allows a team to redraw their cards or force a re-duel if they lose.',
+      'Allows the first player to redraw their cards from remaining groups.',
     revealTwoTitle: 'Reveal Two',
     revealTwoDesc:
       'Reveals the first two cards of all groups to give a strategic advantage.',
