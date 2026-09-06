@@ -258,45 +258,8 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
           )}
 
           {displayState.isUnselectedReveal && unselectedSum !== null && (
-            <div
-              className="rpg-skewed unselected-score-badge"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '4px 16px',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '60px',
-                minWidth: '100px',
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px dashed rgba(148, 163, 184, 0.5)',
-                boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.5)'
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                  color: '#94a3b8',
-                  transform: 'skewX(10deg)',
-                  lineHeight: 1
-                }}
-              >
-                {t('game.unselected')}
-              </span>
-              <span
-                style={{
-                  fontSize: '32px',
-                  fontWeight: 'bold',
-                  color: '#cbd5e1',
-                  transform: 'skewX(10deg)',
-                  lineHeight: 1.1
-                }}
-              >
-                {unselectedSum}
-              </span>
+            <div className="rpg-skewed unselected-score-badge">
+              <span className="unselected-score-value">{unselectedSum}</span>
             </div>
           )}
         </div>

@@ -53,7 +53,6 @@ export default {
     killingSpree: '{{winner}} đang liên tục lập công!',
     unknown: 'Đoán xem',
     locked: 'Đã khoá',
-    unselected: 'Chưa chọn',
     isWinner: 'là đội chiến thắng',
     anonymous: 'Kẻ thế thân',
     enableUndo: 'Bật hoàn tác cho chủ trò',
