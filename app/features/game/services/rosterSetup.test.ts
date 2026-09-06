@@ -112,14 +112,22 @@ describe('validateRosterSetup', () => {
   });
 
   it('rejects blank names after trimming', () => {
-    expect(validateRosterSetup(['Alice', '   '], ['Bob']).errors).toContain(
-      'Member names cannot be blank.'
-    );
+    expect(
+      validateRosterSetup(['Alice', '   '], ['Bob', 'Charlie']).errors
+    ).toContain('Member names cannot be blank.');
   });
 
   it('rejects duplicate names across both teams case-insensitively', () => {
     expect(validateRosterSetup(['Alice'], [' alice ']).errors).toContain(
       'Member names must be unique across both teams.'
+    );
+  });
+
+  it('rejects teams with mismatched lengths', () => {
+    const result = validateRosterSetup(['Alice', 'Charlie'], ['Bob']);
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      'Both teams must have an equal number of members.'
     );
   });
 });

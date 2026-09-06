@@ -303,6 +303,9 @@ const CardGame = () => {
       if (error === 'Member names must be unique across both teams.') {
         return t('game.rosterDuplicateName');
       }
+      if (error === 'Both teams must have an equal number of members.') {
+        return t('game.rosterTeamLengthMismatch');
+      }
       return error;
     })
   ];

@@ -76,6 +76,8 @@ export default {
     rosterTeamEmpty: 'Mỗi đội phải có ít nhất một thành viên.',
     rosterBlankName: 'Tên thành viên không được để trống.',
     rosterDuplicateName: 'Tên thành viên không được trùng giữa hai đội.',
+    rosterTeamLengthMismatch:
+      'Số lượng thành viên của hai đội phải bằng nhau.',
     shuffleRoster: 'XÁO TRỘN',
     shareResult: 'CHIA SẺ KẾT QUẢ',
     shareDownload: 'Tải PNG',
