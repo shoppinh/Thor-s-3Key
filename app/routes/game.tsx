@@ -64,6 +64,7 @@ import { PlayerData } from '~/models/PlayerData';
 import { ChanceType, TeamData } from '~/models/TeamData';
 import {
   calculateSum,
+  calculateWinStreaksFromEvents,
   createDeck,
   determineWinner,
   drawCards,
@@ -751,23 +752,16 @@ const CardGame = () => {
    * This can be used after both players have made their selections
    */
   const implementSecondChance = (teamName: TeamName) => {
+    // Roll back duel events and win streaks for the invalidated duel
+    setDuelEvents((prevEvents) => {
+      const remainingEvents = prevEvents.slice(0, -1);
+      setWinStreaks(calculateWinStreaksFromEvents(remainingEvents));
+      return remainingEvents;
+    });
+    setDuelResult('');
+
     setDuelData((prev) => {
       const currentDuelData = { ...prev };
-
-      // Revert the calculated result (reduce winning team's score by 1)
-      if (currentDuelData.winningTeam) {
-        if (currentDuelData.winningTeam === 'team1') {
-          setTeam1Data((prevTeam) => ({
-            ...prevTeam,
-            score: prevTeam.score - 1
-          }));
-        } else {
-          setTeam2Data((prevTeam) => ({
-            ...prevTeam,
-            score: prevTeam.score - 1
-          }));
-        }
-      }
 
       // Revert player elimination - add the losing player back to their team
       const firstPlayerName = currentDuelData.player1Name;
@@ -787,6 +781,24 @@ const CardGame = () => {
         // Second player won, so first player was eliminated
         losingPlayer = firstPlayerName;
         losingTeam = firstPlayerTeam;
+      }
+
+      // Revert the calculated result (reduce winning team's score by 1 only if score was incremented / not shielded)
+      const shieldedTeam = currentDuelData.lifeShieldUsedBy;
+      const wasShielded = shieldedTeam && losingTeam === shieldedTeam;
+
+      if (currentDuelData.winningTeam && !wasShielded) {
+        if (currentDuelData.winningTeam === 'team1') {
+          setTeam1Data((prevTeam) => ({
+            ...prevTeam,
+            score: prevTeam.score - 1
+          }));
+        } else {
+          setTeam2Data((prevTeam) => ({
+            ...prevTeam,
+            score: prevTeam.score - 1
+          }));
+        }
       }
 
       // Add the losing player back to their team if they're not already there
@@ -914,7 +926,8 @@ const CardGame = () => {
           // Reset winning team
           winningTeam: undefined,
           // Reset finish duel flag so player can make new selection
-          isFinishDuel: false
+          isFinishDuel: false,
+          aiSelectedSides: []
         };
       } else {
         // Reset only the second player's selection to reveal cards (player name is "?", team name is "")
@@ -965,7 +978,10 @@ const CardGame = () => {
           // Reset winning team
           winningTeam: undefined,
           // Reset finish duel flag so player can make new selection
-          isFinishDuel: false
+          isFinishDuel: false,
+          aiSelectedSides: (currentDuelData.aiSelectedSides || []).filter(
+            (side) => side !== secondPlayerSide
+          )
         };
       }
     });

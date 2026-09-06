@@ -3,9 +3,11 @@ import DuelData from '~/models/DuelData';
 import { Side, TeamName } from '~/features/game/types/gameTypes';
 import {
   calculateSum,
+  compareHands,
   getCardHighestSuitAndValue,
   suitRank
 } from '~/utils/gameUtil';
+import { getCardsBySide } from '~/features/game/engine/duelEngine';
 
 export const createRevealTwoCards = (cards: Card[]): Card[] => {
   const firstCard = cards[0] ?? { value: 0, suit: '' };
@@ -160,10 +162,23 @@ export const canUseSecondChance = ({
     if (teamKey !== firstPlayerTeam && teamKey !== secondPlayerTeam) {
       return false;
     }
-    if (!duelData.winningTeam) {
-      return true;
+    let winningTeam = duelData.winningTeam;
+    if (
+      !winningTeam &&
+      duelData.player1SideSelected &&
+      duelData.player2SideSelected
+    ) {
+      const p1Cards = getCardsBySide(duelData, duelData.player1SideSelected);
+      const p2Cards = getCardsBySide(duelData, duelData.player2SideSelected);
+      if (p1Cards.length > 0 && p2Cards.length > 0) {
+        const isP1Winner = compareHands(p1Cards, p2Cards) === 'player1';
+        winningTeam = isP1Winner ? firstPlayerTeam : secondPlayerTeam;
+      }
     }
-    return duelData.winningTeam !== teamKey;
+    if (!winningTeam) {
+      return false;
+    }
+    return winningTeam !== teamKey;
   }
 
   if (duelData.player1SideSelected && !duelData.player2SideSelected) {

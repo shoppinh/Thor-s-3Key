@@ -302,3 +302,23 @@ export const getStreakMessage = (streak: number): string => {
   if (streak === 3) return 'killingSpree';
   return '';
 };
+
+/**
+ * Reconstructs win streaks for all players from an array of duel events.
+ * @param events - List of duel events
+ * @returns Map of player name to current consecutive win streak
+ */
+export const calculateWinStreaksFromEvents = (
+  events: Array<{ winnerName?: string; loserName?: string }>
+): Record<string, number> => {
+  const streaks: Record<string, number> = {};
+  for (const event of events) {
+    if (event.loserName) {
+      streaks[event.loserName] = 0;
+    }
+    if (event.winnerName) {
+      streaks[event.winnerName] = (streaks[event.winnerName] || 0) + 1;
+    }
+  }
+  return streaks;
+};

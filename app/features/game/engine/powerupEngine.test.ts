@@ -142,7 +142,7 @@ describe('canUseSecondChance', () => {
     ).toBe(false);
   });
 
-  it('enables both participants on a tie (no winningTeam)', () => {
+  it('denies both participants if winningTeam is missing and cards are unavailable', () => {
     const duel = afterBothPicks({ winningTeam: undefined });
     expect(
       canUseSecondChance({
@@ -150,7 +150,38 @@ describe('canUseSecondChance', () => {
         duelData: duel,
         isFinishDuel: true
       })
-    ).toBe(true);
+    ).toBe(false);
+    expect(
+      canUseSecondChance({
+        teamKey: 'team2',
+        duelData: duel,
+        isFinishDuel: true
+      })
+    ).toBe(false);
+  });
+
+  it('derives winner from card hands when winningTeam is omitted, denying the winner', () => {
+    const duel = afterBothPicks({
+      winningTeam: undefined,
+      topLeftCards: [
+        { value: 9, suit: '♦' },
+        { value: 9, suit: '♥' },
+        { value: 9, suit: '♠' }
+      ],
+      bottomRightCards: [
+        { value: 1, suit: '♣' },
+        { value: 1, suit: '♠' },
+        { value: 1, suit: '♥' }
+      ]
+    });
+    // team1 (topLeft) is the winner, team2 (bottomRight) is the loser
+    expect(
+      canUseSecondChance({
+        teamKey: 'team1',
+        duelData: duel,
+        isFinishDuel: true
+      })
+    ).toBe(false);
     expect(
       canUseSecondChance({
         teamKey: 'team2',
