@@ -53,6 +53,7 @@ export default {
     killingSpree: '{{winner}} is on killing spree!',
     unknown: 'Unknown',
     locked: 'Locked',
+    unselected: 'Unselected',
     isWinner: 'is winner',
     anonymous: 'ANONYMOUS',
     enableUndo: 'Enable Host Undo',

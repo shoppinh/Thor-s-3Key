@@ -3,6 +3,7 @@ import React from 'react';
 import { PlayerData } from '~/models/PlayerData';
 import DuelData from '~/models/DuelData';
 import { useLanguage } from '~/contexts/LanguageContext';
+import { calculateSum } from '~/utils/gameUtil';
 
 interface Card {
   value: number;
@@ -46,19 +47,20 @@ export const getPlayerCardDrawerDisplayState = ({
   isAiThinking?: boolean;
 }) => {
   const isBlankHand = playerCards.length === 0;
-  const cards =
-    isBlankHand && isFinishDuel
-      ? fullCards
-      : playerCards.length > 0
-        ? playerCards
-        : coveredCards;
+  const isUnselectedReveal = isBlankHand && isFinishDuel;
+  const cards = isUnselectedReveal
+    ? fullCards
+    : playerCards.length > 0
+      ? playerCards
+      : coveredCards;
 
   const canAct = isBlankHand && !isFinishDuel;
 
   return {
     cards,
     shouldShowDrawButton: canAct,
-    canClickCards: canAct && !disabledByRemoveWorst && !isAiThinking
+    canClickCards: canAct && !disabledByRemoveWorst && !isAiThinking,
+    isUnselectedReveal
   };
 };
 
@@ -111,6 +113,10 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
     disabledByRemoveWorst,
     isAiThinking
   });
+  const unselectedSum =
+    displayState.isUnselectedReveal && fullCards.length > 0
+      ? calculateSum(fullCards)
+      : null;
   const isDrawDisabled = disabled || disabledByRemoveWorst || isAiThinking;
 
   const containerStyle: React.CSSProperties = {
@@ -247,6 +253,49 @@ const PlayerCardDrawer: React.FC<PlayerCardDrawerProps> = ({
                 }}
               >
                 {playerData.sum}
+              </span>
+            </div>
+          )}
+
+          {displayState.isUnselectedReveal && unselectedSum !== null && (
+            <div
+              className="rpg-skewed unselected-score-badge"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '4px 16px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '60px',
+                minWidth: '100px',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px dashed rgba(148, 163, 184, 0.5)',
+                boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.5)'
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  color: '#94a3b8',
+                  transform: 'skewX(10deg)',
+                  lineHeight: 1
+                }}
+              >
+                {t('game.unselected')}
+              </span>
+              <span
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: '#cbd5e1',
+                  transform: 'skewX(10deg)',
+                  lineHeight: 1.1
+                }}
+              >
+                {unselectedSum}
               </span>
             </div>
           )}

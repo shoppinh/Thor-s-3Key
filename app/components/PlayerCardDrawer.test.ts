@@ -19,6 +19,30 @@ describe('getPlayerCardDrawerDisplayState', () => {
     expect(displayState.cards).toEqual(fullCards);
     expect(displayState.shouldShowDrawButton).toBe(false);
     expect(displayState.canClickCards).toBe(false);
+    expect(displayState.isUnselectedReveal).toBe(true);
+  });
+
+  it('keeps isUnselectedReveal false when duel is active or hand is not blank', () => {
+    const coveredCards = [card(0, ''), card(0, ''), card(0, '')];
+    const fullCards = [card(1, '♦'), card(1, '♥'), card(9, '♠')];
+
+    const activeDisplayState = getPlayerCardDrawerDisplayState({
+      playerCards: [],
+      coveredCards,
+      fullCards,
+      isFinishDuel: false,
+      disabledByRemoveWorst: false
+    });
+    expect(activeDisplayState.isUnselectedReveal).toBe(false);
+
+    const filledDisplayState = getPlayerCardDrawerDisplayState({
+      playerCards: [card(1, '♦')],
+      coveredCards,
+      fullCards,
+      isFinishDuel: true,
+      disabledByRemoveWorst: false
+    });
+    expect(filledDisplayState.isUnselectedReveal).toBe(false);
   });
 
   it('disables clicking cards when isAiThinking is true', () => {
