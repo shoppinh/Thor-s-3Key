@@ -126,9 +126,15 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     };
 
     const isSecondChanceEnabled = () =>
-      canUseSecondChance({ teamKey, duelData, isFinishDuel });
+      canUseSecondChance({
+        teamKey,
+        duelData,
+        isFinishDuel,
+        isAiThinking
+      });
 
     const isRevealTwoEnabled = () => {
+      if (isAiThinking) return false;
       const { firstPlayerTeam, secondPlayerTeam } = getPlayerTeams();
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey) return false;
@@ -148,11 +154,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
     };
 
     const isLifeShieldEnabled = () => {
+      if (isAiThinking) return false;
       const currentTurnTeam = getCurrentTurnTeam();
       return currentTurnTeam === teamKey && !isFinishDuel;
     };
 
     const isRemoveWorstEnabled = () => {
+      if (isAiThinking) return false;
       const currentTurnTeam = getCurrentTurnTeam();
       if (currentTurnTeam !== teamKey || isFinishDuel) return false;
       if ((duelData.removeWorstUsedByTeams || []).includes(teamKey))
@@ -195,72 +203,78 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
       icon: string;
       label: string;
       color: string;
-    }) =>
-      count > 0 && (
-        <div style={{ position: 'relative', margin: '0 8px', width: '100px' }}>
-          <button
-            onClick={() => enabled && onChanceClick(teamKey, type)}
-            disabled={!enabled}
-            className="rpg-skewed"
-            style={{
-              width: '100px',
-              height: '100px',
-              background: enabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
-              border: `3px solid ${enabled ? color : '#555'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: enabled ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s ease',
-              boxShadow: enabled ? `0 0 15px ${color}` : 'none'
-            }}
+    }) => {
+      const isEnabled = enabled && !isAiThinking;
+      return (
+        count > 0 && (
+          <div
+            style={{ position: 'relative', margin: '0 8px', width: '100px' }}
           >
-            <img
-              src={icon}
-              alt={label}
+            <button
+              onClick={() => isEnabled && onChanceClick(teamKey, type)}
+              disabled={!isEnabled}
+              className="rpg-skewed"
               style={{
-                width: '75px',
-                height: '75px',
-                filter: enabled ? 'none' : 'grayscale(100%)',
-                transform: 'skewX(5deg)'
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                background: color,
-                color: '#000',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                lineHeight: '28px',
-                transform: 'skewX(5deg)',
-                boxShadow: `0 0 10px ${color}`
+                width: '100px',
+                height: '100px',
+                background: isEnabled ? `rgba(0,0,0,0.6)` : 'rgba(0,0,0,0.3)',
+                border: `3px solid ${isEnabled ? color : '#555'}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: isEnabled ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s ease',
+                boxShadow: isEnabled ? `0 0 15px ${color}` : 'none'
               }}
             >
-              {count}
+              <img
+                src={icon}
+                alt={label}
+                style={{
+                  width: '75px',
+                  height: '75px',
+                  filter: isEnabled ? 'none' : 'grayscale(100%)',
+                  transform: 'skewX(5deg)'
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  background: isEnabled ? color : '#666',
+                  color: '#000',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  lineHeight: '28px',
+                  transform: 'skewX(5deg)',
+                  boxShadow: isEnabled ? `0 0 10px ${color}` : 'none'
+                }}
+              >
+                {count}
+              </div>
+            </button>
+            <div
+              style={{
+                fontSize: '20px',
+                marginTop: '5px',
+                color: isEnabled ? '#fff' : '#777',
+                textAlign: 'center',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-body)',
+                letterSpacing: '0.5px',
+                fontWeight: 'bold'
+              }}
+            >
+              {label}
             </div>
-          </button>
-          <div
-            style={{
-              fontSize: '20px',
-              marginTop: '5px',
-              color: enabled ? '#fff' : '#777',
-              textAlign: 'center',
-              textTransform: 'uppercase',
-              fontFamily: 'var(--font-body)',
-              letterSpacing: '0.5px',
-              fontWeight: 'bold'
-            }}
-          >
-            {label}
           </div>
-        </div>
+        )
       );
+    };
 
     return (
       <div
@@ -478,12 +492,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             {canUndo && (
               <button
                 onClick={onUndo}
+                disabled={!canUndo || isAiThinking}
                 className="rpg-button secondary"
                 style={{
                   fontSize: '16px',
                   padding: '8px 28px',
-                  opacity: canUndo ? 1 : 0.45,
-                  cursor: canUndo ? 'pointer' : 'not-allowed'
+                  opacity: canUndo && !isAiThinking ? 1 : 0.45,
+                  cursor: canUndo && !isAiThinking ? 'pointer' : 'not-allowed'
                 }}
               >
                 {t('game.undo')}
@@ -492,12 +507,13 @@ const RoundStatus: React.FC<RoundStatusProps> = ({
             {canRedo && (
               <button
                 onClick={onRedo}
+                disabled={!canRedo || isAiThinking}
                 className="rpg-button secondary"
                 style={{
                   fontSize: '16px',
                   padding: '8px 28px',
-                  opacity: canRedo ? 1 : 0.45,
-                  cursor: canRedo ? 'pointer' : 'not-allowed'
+                  opacity: canRedo && !isAiThinking ? 1 : 0.45,
+                  cursor: canRedo && !isAiThinking ? 'pointer' : 'not-allowed'
                 }}
               >
                 {t('game.redo')}

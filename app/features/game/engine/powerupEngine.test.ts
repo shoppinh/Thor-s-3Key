@@ -124,4 +124,16 @@ describe('canUseSecondChance', () => {
       canUseSecondChance({ teamKey: 'team2', duelData: duel, isFinishDuel: true })
     ).toBe(false);
   });
+
+  it('denies when isAiThinking is true', () => {
+    const duel = afterFirstPick();
+    expect(
+      canUseSecondChance({
+        teamKey: 'team1',
+        duelData: duel,
+        isFinishDuel: false,
+        isAiThinking: true
+      })
+    ).toBe(false);
+  });
 });

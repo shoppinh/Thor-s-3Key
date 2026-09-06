@@ -137,12 +137,18 @@ export const countAvailableSecondChanceSides = (duelData: DuelData): number => {
 export const canUseSecondChance = ({
   teamKey,
   duelData,
-  isFinishDuel
+  isFinishDuel,
+  isAiThinking = false
 }: {
   teamKey: TeamName;
   duelData: DuelData;
   isFinishDuel?: boolean;
+  isAiThinking?: boolean;
 }): boolean => {
+  if (isAiThinking) {
+    return false;
+  }
+
   if ((duelData.secondChanceUsedByTeams || []).includes(teamKey)) {
     return false;
   }

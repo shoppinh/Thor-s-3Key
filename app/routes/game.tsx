@@ -239,7 +239,7 @@ const CardGame = () => {
   }, [createCurrentSnapshot, gameState, undoEnabled]);
 
   const undoLastAction = useCallback(() => {
-    if (!undoEnabled) return;
+    if (!undoEnabled || isAiThinking) return;
 
     const transition = createUndoTransition({
       historyStack,
@@ -256,13 +256,14 @@ const CardGame = () => {
     applyGameSnapshot,
     createCurrentSnapshot,
     historyStack,
+    isAiThinking,
     redoEnabled,
     redoStack,
     undoEnabled
   ]);
 
   const redoLastAction = useCallback(() => {
-    if (!undoEnabled || !redoEnabled) return;
+    if (!undoEnabled || !redoEnabled || isAiThinking) return;
 
     const transition = createRedoTransition({
       historyStack,
@@ -278,6 +279,7 @@ const CardGame = () => {
     applyGameSnapshot,
     createCurrentSnapshot,
     historyStack,
+    isAiThinking,
     redoEnabled,
     redoStack,
     undoEnabled
@@ -724,6 +726,8 @@ const CardGame = () => {
    * @param chanceType - Type of chance (secondChance or revealTwo)
    */
   const handleChanceClick = (teamName: TeamName, chanceType: ChanceType) => {
+    if (isAiThinking) return;
+
     const chanceItemName =
       chanceType === 'secondChance'
         ? t('game.secondChance')
@@ -842,6 +846,8 @@ const CardGame = () => {
    * Handles confirmation popup confirm action
    */
   const handleConfirmChance = () => {
+    if (isAiThinking) return;
+
     const { teamName, chanceType } = confirmPopup;
 
     if (teamName && chanceType) {
@@ -2593,7 +2599,7 @@ const CardGame = () => {
       />
       {/* Confirmation Popup */}
       <ConfirmPopup
-        isVisible={confirmPopup.isVisible}
+        isVisible={confirmPopup.isVisible && !isAiThinking}
         chanceItemName={confirmPopup.chanceItemName}
         onConfirm={handleConfirmChance}
         onCancel={handleCancelChance}
